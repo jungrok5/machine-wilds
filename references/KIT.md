@@ -222,4 +222,4 @@ it, `?off=dof` and the `low` tier have none. A still asks for it: `shot({ dof: 1
 else the middle of the picture. The near side is held back to six tenths: a walk is not a macro shot.
 
 Walking input ends the tour; looking only pauses its head for a few seconds. A visible character would be a body that
-moves — a rig, clips and the repository's motion rules (`references/MOTION-QUALITY.md`) — and is not part of this skill.
+moves — a rig, clips and the motion rules (`references/MOTION-QUALITY.md`) — and is not part of this skill.

@@ -17,17 +17,17 @@ that place** and the ways they walk — and proves the bodies in seconds, withou
 ## Quick start
 ```bash
 # the starter (Lantern Quarry: a flooded quarry, two wardens)
-cp -r machine-wilds/starter my-realm
-node machine-wilds/scripts/gym.mjs my-realm --course --sheet     # the machine over ramp, step, side slope, ditch, mound → out/gym-course.png
-node machine-wilds/scripts/gym.mjs my-realm --map --sheet        # on its own way, on the realm's land → out/map.png, out/gym.png
-node machine-wilds/scripts/fetch-assets.mjs my-realm             # the scans (28 MB, Poly Haven, CC0) → my-realm/assets/
-node machine-wilds/scripts/build.mjs my-realm                    # → my-realm/index.html
-node machine-wilds/scripts/render.mjs my-realm --cast            # each kind alone in a studio, every side and its motion → out/cast-<kind>.jpg
-node machine-wilds/scripts/render.mjs my-realm --cast --close    # the same kinds from arm's length: what is bolted to what → out/close-<kind>.jpg
-node machine-wilds/scripts/render.mjs my-realm --views           # stills of the named views
-node machine-wilds/scripts/check.mjs my-realm                    # must print "check OK"
-node machine-wilds/scripts/film.mjs my-realm --still             # (a realm that declares a film) one frame a shot; without --still the frames, then out/film.mp4
-node machine-wilds/examples/iron-valley/trailer.mjs machine-wilds/examples/iron-valley --dry   # (a realm that declares `cine`) the film the page plays at ?film=1, stepped: --keys, a render, --sound, --join → out/cine.mp4
+cp -r starter my-realm
+node scripts/gym.mjs my-realm --course --sheet     # the machine over ramp, step, side slope, ditch, mound → out/gym-course.png
+node scripts/gym.mjs my-realm --map --sheet        # on its own way, on the realm's land → out/map.png, out/gym.png
+node scripts/fetch-assets.mjs my-realm             # the scans (28 MB, Poly Haven, CC0) → my-realm/assets/
+node scripts/build.mjs my-realm                    # → my-realm/index.html
+node scripts/render.mjs my-realm --cast            # each kind alone in a studio, every side and its motion → out/cast-<kind>.jpg
+node scripts/render.mjs my-realm --cast --close    # the same kinds from arm's length: what is bolted to what → out/close-<kind>.jpg
+node scripts/render.mjs my-realm --views           # stills of the named views
+node scripts/check.mjs my-realm                    # must print "check OK"
+node scripts/film.mjs my-realm --still             # (a realm that declares a film) one frame a shot; without --still the frames, then out/film.mp4
+node examples/iron-valley/trailer.mjs examples/iron-valley --dry   # (a realm that declares `cine`) the film the page plays at ?film=1, stepped: --keys, a render, --sound, --join → out/cine.mp4
 cd my-realm && python3 -m http.server 8000                       # walk it: http://localhost:8000/
 ```
 The worked example is `examples/iron-valley` 「쇠울림 골짜기」 (101 MB of scans): the same commands with that folder.
@@ -43,9 +43,9 @@ the way down from the viaduct to the machine under it is over the edge.
 `1`–`4` the hour, `5`–`8` clear / rain / snow / mist, `T` the automatic round, `C` the tour, `M` sound, `P` numbers.
 
 ## What it is made from
-Made in this repository from three of its skills — [`scanned-realm`](../scanned-realm) (the engine and the scans),
-[`walking-colossus`](../walking-colossus) (the stateless gait, the scale) and
-[`machine-build-reel`](../machine-build-reel) (machines as mechanisms, the cylinder search, the checks) — with scans
+Made in [motion-skills](https://github.com/jungrok5/motion-skills) from three of its skills — [`scanned-realm`](https://github.com/jungrok5/motion-skills/tree/main/scanned-realm) (the engine and the scans),
+[`walking-colossus`](https://github.com/jungrok5/motion-skills/tree/main/walking-colossus) (the stateless gait, the scale) and
+[`machine-build-reel`](https://github.com/jungrok5/motion-skills/tree/main/machine-build-reel) (machines as mechanisms, the cylinder search, the checks) — with scans
 from <https://polyhaven.com> (CC0, fetched per realm, never committed). No design, name or asset of any game is used;
 `references/SOURCE.md` says what came from where.
 
@@ -53,4 +53,13 @@ Reference: [AnyMachine](https://github.com/apekshik/anymachine) (apekshik, MIT) 
 list, built and checked by script), and what prompted the example's shelled kinds (the turtle, the crayfish, the
 woodlice). No code, design or asset of it is used here; each kind is designed for its realm.
 
-Samples: https://jungrok5.github.io/motion-skills/machine-wilds/
+Samples: https://jungrok5.github.io/machine-wilds/ (GitHub Pages from `docs/` on `main`)
+
+## Licence
+
+- **Code** — [PolyForm Noncommercial 1.0.0](LICENSE.md): use, change and share it for personal and other noncommercial
+  purposes; commercial use (paid courses, client work, products) needs a licence from the owner.
+- **Films, stills and other pictures** — © 2026 jungrok5, all rights reserved ([MEDIA-LICENSE.md](MEDIA-LICENSE.md)):
+  watch and share the original posts; no re-uploads, edits, or use in lectures, courses or ads without permission.
+- **Parts by others** keep their own licences: three.js and meshoptimizer (MIT, `vendor/`), Poly Haven scans (CC0, not
+  committed). See [CREDITS.md](CREDITS.md).
