@@ -1,6 +1,6 @@
 # SOURCE — what this skill is made from
 
-**The request.** The owner asked (in this repository) for a walkable world in scanned-realm's quality: a thick forest
+**The request.** The owner asked (in the motion-skills repository, https://github.com/jungrok5/motion-skills) for a walkable world in scanned-realm's quality: a thick forest
 grown over the ruins of a fallen civilisation, with giant walking machines roaming it — a long-necked four-legged one
 like machine-build-reel's, and others — on ground that rises and falls instead of scanned-realm's level plateau, dark,
 with the lights of the machines' eyes coming through the mist; and, when the plan was shown, that the machines' legs be
@@ -11,7 +11,7 @@ asset of that game (or any other) is used or imitated here**, and a realm made w
 **What came from where**
 | part | from | what was taken | what is new here |
 |---|---|---|---|
-| the engine (renderer, scans, plants, weather, walker, HUD, sound) | `scanned-realm` in this repository (the `living-realm` engine with scans allowed; its look after Rez's Unreal clip — see that skill's SOURCE) | all of `lib/` and `scripts/` as they stood | the skinned path, lamps in the air and light passes, `mist`, slopes for the walker, footfalls and calls, dust |
+| the engine (renderer, scans, plants, weather, walker, HUD, sound) | `scanned-realm` in motion-skills (the `living-realm` engine with scans allowed; its look after Rez's Unreal clip — see that skill's SOURCE) | all of `lib/` and `scripts/` as they stood | the skinned path, lamps in the air and light passes, `mist`, slopes for the walker, footfalls and calls, dust |
 | machines as mechanisms | `machine-build-reel` (after apek's Stilt video and AnyMachine, MIT) | the method: planar limbs solved in closed form, a drum between fork cheeks on a pin, two-part cylinders whose anchors a search finds, every part on one bone, key-posed moves, checks with numbers | written again in JavaScript for the page; the ankle that leans with the fold; a wider anchor search; levels of detail; lamps |
 | the walk | `walking-colossus` (after Walking Block by Leonxlnx, MIT) and `machine-build-reel`'s `motion.py` | a stateless gait: phase offsets, a planted foot fixed in the world, the body sinking into each step | footfalls planned on real land, the body from its feet, the soft reach limit, shorter steps on a grade, halts with arrival and leaving, ways worn into the land |
 | scans | <https://polyhaven.com> (CC0) | surfaces, models and leaf atlases, listed per realm and fetched by script | — |

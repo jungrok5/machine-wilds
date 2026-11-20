@@ -4,3 +4,5 @@ examples/*/index.html
 examples/*/assets/
 starter/index.html
 starter/assets/
+examples/*/assets
+starter/assets
