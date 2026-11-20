@@ -4,12 +4,12 @@
 
 ## 출처
 
-<!-- 사용자가 준 링크 전부 (레포, X · Threads 게시물, 영상, 글, 사이트). `references/SOURCE.md` · README · 샘플 페이지와 같게. -->
+<!-- 사용자가 준 링크 전부 (레포, X · Threads 게시물, 영상, 글, 사이트). `references/SOURCE.md` · README와 같게. -->
 
 ## 확인
 
 - [ ] `node scripts/gym.mjs <realm> --course` · `<realm>` 통과, `node scripts/check.mjs <realm>`이 `check OK` (이번 실행의 로그로 확인)
-- [ ] 샘플 페이지를 1280 px · 390 px, 다크 · 라이트에서 확인 (가로 스크롤 · 콘솔 오류 · 404 없음, 데모와 `?film=1` 재생)
+- [ ] 사이트(`docs/index.html`, 예제를 `--cdn`으로 빌드)를 1280 px · 390 px에서 확인 (콘솔 오류 · 404 없음, 걷기와 `?film=1` 재생, `demo/iron-valley/`가 루트로 넘어감)
 - [ ] 깨끗한 복사본에서 README 빠른 시작 실행
 - [ ] 캐릭터가 나오면: 캐스트 시트 좌우 양쪽 + 관절 검사 통과
 - [ ] 몸이 움직이면: `references/MOTION-QUALITY.md` 반영 — 무게감 · 관성 · 예비 동작/회복 · 숨 쉬는 대기 동작 · 디딘 발 고정, `check`에 움직임 검사

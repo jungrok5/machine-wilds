@@ -173,7 +173,7 @@ fetching. No npm install, no keys. `gym.mjs` needs only Node. The page needs Web
   few beams (the passes carry 12 lamps a frame, nearest and brightest first), colours that separate the kinds.
 - **Code-only motion, CC0 scans, nothing generated committed.** Sound is synthesised in the page. ElevenLabs or any
   paid generator only after the owner's yes for that request. Not Megascans (Fab's licence); never a ripped asset.
-- **Do not commit `assets/`, `out/` or an MP4**, and never put scans in `docs/`; the samples site reads them from
+- **Do not commit `assets/`, `out/` or an MP4**, and never put scans in `docs/`; the site (the example at the root) reads them from
   Poly Haven's server (`--cdn`) and says so. Keep the credit on the glass.
 - **Budget** (`references/PERF.md`): a kind ≤ ~50 k triangles near, ≤ 192 bones, ≤ 16 units; a view ≤ ~580 draw calls
   and 4.2 M triangles on `medium`. **A page that cannot start says so** (the engine's panels; translate their strings).

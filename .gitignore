@@ -1,6 +1,5 @@
 out/
 assets/
-!docs/assets/
 examples/*/index.html
 examples/*/assets/
 starter/index.html

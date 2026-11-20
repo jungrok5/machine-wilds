@@ -2,11 +2,11 @@
 
 **© 2026 jungrok5. All rights reserved.**
 
-이 레포와 그 게시물에 담긴 영상, 스틸, 포스터, 샘플 페이지의 이미지, 시작 · 끝 카드(이하 "작품")는 저작권으로 보호되며,
+이 레포와 그 게시물에 담긴 영상, 스틸, 포스터, 시작 · 끝 카드(이하 "작품")는 저작권으로 보호되며,
 아래에서 허용한 것 외에는 어떤 이용도 허락하지 않습니다.
 
 **허용**
-- 원래 게시물(이 레포, 샘플 페이지, 작가의 X · Threads 등)을 보는 것
+- 원래 게시물(이 레포, 사이트, 작가의 X · Threads 등)을 보는 것
 - 원래 게시물의 링크를 공유하는 것, 각 플랫폼이 제공하는 기능(리포스트, 인용)으로 원래 게시물을 공유하는 것
 
 **허락 없이 금지**
@@ -21,7 +21,7 @@
 
 ---
 
-The films, stills, posters, sample-page images and title cards in this repository and in its author's posts ("the works")
+The films, stills, posters and title cards in this repository and in its author's posts ("the works")
 are protected by copyright. **No use is licensed except the following:** watching the original posts, and sharing their
 links or sharing them through a platform's own features (repost, quote).
 
