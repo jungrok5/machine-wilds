@@ -21,32 +21,46 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="https://jungrok5.github.io/motion-skills/">motion-skills</a>에서 분리된 스킬 / machine-wilds</nav>
   <h1>machine-wilds</h1>
-  <p>장소 하나를 주면(숲 골짜기 · 물에 잠긴 채석장 · 버려진 항구 · 고갯길), 폐허가 숲에 덮인 땅을 <b>거대한 보행 기계들이 안개 속에서 걸어 다니는 세계</b>를 브라우저에서 걸을 수 있게 만듭니다. <a href="../scanned-realm/">scanned-realm</a> 엔진(Poly Haven의 CC0 스캔 재질 · 모델 · 식생, 디퍼드 렌더러, 시간과 날씨)에 세 가지를 더한 스킬입니다. 높낮이가 있는 지형, 코드로 부품 하나하나 만드는 기계(<a href="../machine-build-reel/">machine-build-reel</a>의 관절 · 유압 실린더 방식), 그리고 <b>지형 위에서 계획하는 걸음</b>입니다. 발은 내려놓는 자리의 실제 높이와 경사에 닿고, 디딘 발은 움직이지 않으며, 다리마다 자기 땅에 맞춰 따로 굽고, 몸통의 높이와 기울기는 디딘 발에서 나옵니다(<a href="../walking-colossus/">walking-colossus</a>의 걸음을 지형으로 확장). 기계는 새것이 아닙니다. 녹슬고 이끼 낀 산업용 유압에 일부만 흰 세라믹 외장을 두르고, 종류마다 정한 나이만큼 때 · 녹물 · 이끼가 기계와 함께 움직입니다. 걷는 기계뿐 아니라 <b>나는 기계</b>도 만듭니다. 날개를 구동 뼈대로 달고, 돌기 전에 기울고, 몇 번 치고 활공하며, 하늘에서 안개로 불빛을 내립니다. 걷는 사람에게도 몸이 있습니다. 주제에 맞춰 설계한 <b>2족 보행 기계</b>가 키 입력을 따라 실제 지형에 발을 딛고 걷고 달리고 뛰며, 카메라는 1인칭 · 3인칭 · 탑뷰로 바꾸고 줌할 수 있습니다. 기계의 등불은 안개 속에서 빛기둥이 됩니다. 이 레포의 세 스킬을 바탕으로 만들었고 스캔은 <a href="https://polyhaven.com">Poly Haven</a>에서 받습니다. 특정 게임의 기계 · 이름 · 에셋은 쓰지 않으며, 주제마다 장소와 기계를 새로 설계합니다.</p>
-  <ul class="tags"><li>WebGL 2 디퍼드 · 스캔 에셋</li><li>지형에 맞춘 다리 IK</li><li>부품 하나하나 코드로 · 유압 실린더</li><li>안개 속 빛기둥</li><li>날아다니는 기계 새</li><li>2족 플레이어 기계 · 1인칭/3인칭/탑뷰</li><li>브라우저 없이 몸 검사</li><li>키보드 · 터치 · 게임패드로 걷기</li></ul>
+  <p>브라우저에서 걸어 다니는 3D 세계를 만드는 Claude Code 스킬과 그 엔진입니다. 장소 하나를 주면 지형과 폐허, 그곳을 다니는 보행 기계를 새로 설계하고, 기계는 코드로 부품 하나하나 조립되어 실제 지형의 높이와 경사에 발을 디딥니다. 예제 「쇠울림 골짜기」는 가로 640 m 골짜기에 기계 8종 19대가 다니고, 페이지가 새벽부터 밤까지 2분 47초짜리 영화를 스스로 재생합니다.</p>
+  <p class="mute" style="margin-top:12px">MMO 서버 아키텍트 <a href="https://jungrok5.github.io/resume/">오정록</a>의 개인 프로젝트입니다. 기계의 상태는 시각만으로 다시 계산되고, 몸이 검사를 통과하기 전에는 아무것도 렌더하지 않습니다.</p>
+  <ul class="tags"><li>WebGL 2 디퍼드 렌더러</li><li>지형 위 다리 IK</li><li>코드로 조립한 유압 기계</li><li>시간의 함수인 걸음</li><li>Node에서 도는 몸 검사</li><li>페이지가 재생하는 영화</li></ul>
 </div></header>
 
 <main>
+<section id="tech"><div class="wrap">
+  <h2>어떻게 만들었나</h2>
+  <div class="how"><dl>
+    <dt>기계</dt><dd>다리는 평면 관절 사슬을 닫힌 식으로 풉니다. 구동 관절마다 2단 유압 실린더를 달고, 관절 가동 범위 전체에서 피스톤이 실린더 안에 15% 이상 남도록 두 고정점을 스크립트가 찾습니다. 배관 · 호스 · 리벳 · 해치 · 사다리 같은 부속은 그 위에 붙이고, 종류마다 정한 나이만큼 물이 흐를 자리에 녹물 · 때 · 이끼가 앉습니다.</dd>
+    <dt>시간의 함수인 자세</dt><dd>기계의 자세는 세계 시각 <code>t</code> 하나로 정해집니다. 프레임 사이에 상태를 들고 다니지 않아서 페이지 · 스틸 · 영상 프레임 · Node 검사가 같은 <code>t</code>에서 같은 자세를 얻고, 영상 프레임을 아무 순서로 그리거나 멈춘 렌더를 이어서 그릴 수 있습니다. 키 입력을 따라가는 플레이어의 2족 기계만 상태를 가집니다.</dd>
+    <dt>지형 위 발 디딤</dt><dd>발마다 디딜 자리의 높이와 경사를 읽습니다. 디딘 발은 월드에 고정되고(미끄러짐 실측 0.00 mm, 허용 4 mm), 몸통의 높이와 기울기는 디딘 발에서 계산하며, 경사에서는 보폭을 줄입니다.</dd>
+    <dt>렌더 전에 검사</dt><dd><code>gym.mjs</code>가 같은 걸음 코드를 브라우저 없이 Node에서 돌려, 기계마다 한 바퀴 전체를 한계값 27개로 판정합니다. 미끄러짐, 도달 거리, 관절 접힘, 실린더 행정, 배 밑 높이, 결정성(같은 <code>t</code>를 두 번 계산해 1e-9 이내), 대기 동작, 큰 동작의 예비와 회복이 들어갑니다. 14° 경사로 · 1.2 m 턱 · 12° 옆경사 · 도랑 · 둔덕이 있는 시험 코스도 통과해야 하고, 실패하면 한계값이 아니라 기계의 숫자나 길을 고칩니다.</dd>
+    <dt>렌더러</dt><dd><code>scanned-realm</code>에서 갈라져 나온 three.js r170 기반 디퍼드 WebGL 2 렌더러입니다. 재질 · 모델 · 잎은 Poly Haven CC0 스캔을 빌드할 때 받아 쓰고(저장소에는 넣지 않음), 로드할 때 meshoptimizer로 LOD를 만듭니다. 기계 등불은 안개 속을 진행하며 빛기둥과 후광이 됩니다. 날씨는 맑음 · 비 · 눈 · 안개 · 옅은 안개, 시간은 하루 전체가 돕니다.</dd>
+    <dt>페이지가 재생하는 영화</dt><dd>자유 카메라와 키로 움직이는 플레이어로 이루어진 컷 28개를 <code>?film=1</code>이 실시간으로 재생하고, 같은 컷 목록을 한 프레임씩 돌려 3,857장을 그린 뒤 기계 발소리로 합성한 소리와 합쳐 MP4를 만듭니다. GPU가 없는 환경에서 품질 항목을 하나씩 바꿔 재 보니 그림자 지도가 프레임 비용의 절반이었고, 해상도를 절반으로 내리자 프레임당 8.7초가 4.1초가 되었습니다. 960 × 540에서 화질 차이는 보이지 않았습니다.</dd>
+  </dl></div>
+</div></section>
+
 <section id="how"><div class="wrap split">
   <div class="how">
     <h2>작업 흐름</h2>
     <dl>
-      <dt>입력</dt><dd>장소 한 줄 (무엇이었고 왜 버려졌는지, 어느 시간인지)</dd>
-      <dt>브리프</dt><dd>높낮이가 있는 땅과 폐허의 배치, 기계 종류마다 쓰임새 · 크기 · 무게 · 다리 · 걸음 숫자 · 실루엣 · 대기 동작 · 큰 동작 · 등불, 기계가 다니는 길, 기계가 바로 옆을 지나가는 장면</dd>
-      <dt>숫자로 먼저 검사</dt><dd><code>gym.mjs</code>가 브라우저 없이 몇 초 만에 기계를 걸려 봄. 시험 코스(경사로 · 턱 · 옆경사 · 도랑 · 둔덕)와 실제 지형의 길에서 다리 도달, 역관절, 디딘 발 미끄러짐(4 mm 이하), 발바닥과 땅의 틈, 지지, 실린더, 몸통 가속, 대기 동작, 예비 동작과 회복, 결정성을 숫자로 보고</dd>
-      <dt>부품과 세계</dt><dd>관절마다 드럼 · 포크 · 핀, 고정점을 스크립트가 찾는 유압 실린더, 그 위에 붙는 부속품(배관 · 호스 · 리벳 · 해치 · 그릴 · 탱크 · 사다리 · 난간), 종류마다 새로 쓰는 몸통 · 머리 · 짐 · 등불, 스캔 재질과 모델로 채우는 폐허와 숲, 땅에 눌린 발자국과 닳은 기계 길</dd>
-      <dt>확인</dt><dd>종류별 캐스트 시트(앞 · 뒤 · 좌우 · 3/4 네 방향 · 걷기 · 대기 · 큰 동작)와 팔 닿는 거리의 확대 시트(몸통 · 배 밑 · 엉덩이 · 무릎 · 발 · 머리), 안개 속 등불이 보이는지까지 재는 페이지 검사, 스틸</dd>
-      <dt>출력</dt><dd>걸어 다니는 페이지(<code>index.html</code> + <code>assets/</code>, 또는 Poly Haven 서버에서 읽는 HTML 한 파일), 캐스트 시트 · 지형 지도 · 스틸</dd>
+      <dt>입력</dt><dd>장소 한 줄. 무엇이었고 왜 버려졌는지, 어느 시간인지</dd>
+      <dt>브리프</dt><dd>땅의 높낮이와 폐허 배치, 기계 종류마다 쓰임새 · 크기 · 무게 · 다리 · 걸음 숫자 · 큰 동작 · 등불, 기계가 다니는 길</dd>
+      <dt>숫자로 검사</dt><dd><code>gym.mjs</code>가 브라우저 없이 시험 코스와 실제 지형의 길에서 기계를 걸려 보고 결과를 숫자로 보고</dd>
+      <dt>부품과 세계</dt><dd>관절과 유압 실린더, 부속품, 종류마다 새로 쓰는 몸통 · 머리 · 등불, 스캔 재질과 모델로 채우는 폐허와 숲, 땅에 눌린 발자국</dd>
+      <dt>확인</dt><dd>종류별 캐스트 시트(앞 · 뒤 · 좌우 · 3/4, 걷기, 대기, 큰 동작)와 확대 시트, 페이지 검사(<code>check.mjs</code>), 스틸</dd>
+      <dt>출력</dt><dd>걸어 다니는 페이지 한 장(스캔은 <code>assets/</code> 또는 Poly Haven 서버에서 읽음)과 시트 · 지도 · 스틸</dd>
     </dl>
-    <pre><code>cp -r machine-wilds/starter my-realm
-node machine-wilds/scripts/gym.mjs my-realm --course --sheet    # 시험 코스 위의 기계 (브라우저 없이)
-node machine-wilds/scripts/gym.mjs my-realm --map --sheet       # 실제 지형의 길과 발자국
-node machine-wilds/scripts/fetch-assets.mjs my-realm            # 스캔 28 MB (Poly Haven, CC0)
-node machine-wilds/scripts/build.mjs my-realm                   # index.html
-node machine-wilds/scripts/render.mjs my-realm --cast           # 종류별 캐스트 시트
-node machine-wilds/scripts/render.mjs my-realm --cast --close   # 가까이서 본 확대 시트
-node machine-wilds/scripts/check.mjs my-realm                   # check OK
+    <pre><code>cp -r starter my-realm
+node scripts/gym.mjs my-realm --course --sheet    # 시험 코스 위의 기계 (브라우저 없이)
+node scripts/gym.mjs my-realm --map --sheet       # 실제 지형의 길과 발자국
+node scripts/fetch-assets.mjs my-realm            # 스캔 28 MB (Poly Haven, CC0)
+node scripts/build.mjs my-realm                   # index.html
+node scripts/render.mjs my-realm --cast           # 종류별 캐스트 시트
+node scripts/render.mjs my-realm --cast --close   # 가까이서 본 확대 시트
+node scripts/check.mjs my-realm                   # check OK
 cd my-realm &amp;&amp; python3 -m http.server 8000                   # 걸어 보기</code></pre>
-    <p class="mute">조작: W A S D · 방향키로 걷기, 마우스로 둘러보기(클릭하면 고정), Shift 달리기, Space 뛰기, <b>V 카메라(1인칭 · 3인칭 · 탑뷰)</b>, 휠 또는 + − 줌, B 등불. 모바일은 왼쪽 엄지가 조이스틱, 오른쪽 엄지가 시선(오른쪽을 톡 치면 뛰기, 두 손가락으로 벌리면 줌), 카메라와 줌 버튼은 화면 오른쪽 위. 방호벽과 난간은 뛰어서 올라설 수 있고, 다리에서 뛰어내리면 떨어져 착지한 뒤 기계에게 걸어갈 수 있습니다. 1–4 시간, 5–8 날씨(8이 안개), T 자동 순환, C 자동 산책, M 소리, P 성능 수치. 오르막에서는 느려지고 43°보다 가파른 면은 오르지 못합니다. 기계의 다리 사이로 지나갈 수 있고, 가까이 가면 기계가 머리를 돌려 비춥니다. 소리는 페이지에서 합성하며 먼 발소리는 거리만큼 늦게 들립니다. 요구 사항: Node 18+ · Playwright Chromium · curl · ffmpeg (<code>gym.mjs</code>는 Node만), 페이지는 WebGL 2와 GPU. 이 페이지의 스틸은 GPU가 없는 환경에서 640 × 360으로 렌더했고, 실제 GPU에서의 프레임 속도는 재지 못했습니다. 기계 등불은 자기 그림자를 만들지 않습니다(빛기둥이 나무 뒤로 샐 수 있음). 단계별 순서는 <a href="https://github.com/jungrok5/machine-wilds/blob/main/SKILL.md">SKILL.md</a>에 있습니다.</p>
+    <p class="mute">조작: W A S D 또는 방향키로 걷기, 마우스로 둘러보기, Shift 달리기, Space 뛰기, V 카메라(1인칭 · 3인칭 · 탑뷰), 휠 또는 + − 줌, B 등불. 휴대폰은 두 엄지로, 게임패드도 됩니다. 방호벽은 뛰어서 올라서고, 고가에서 뛰어내리면 떨어져 착지한 뒤 기계에게 걸어갈 수 있습니다. 1–4 시간, 5–8 날씨, T 자동 순환, M 소리, P 성능 수치.</p>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium, curl, ffmpeg(<code>gym.mjs</code>는 Node만). 페이지는 WebGL 2와 GPU가 필요합니다. 이 페이지의 스틸과 영상은 GPU가 없는 환경에서 렌더했고, 실제 GPU의 프레임 속도는 재지 못했습니다. 기계 등불은 자기 그림자를 만들지 않아 빛기둥이 나무 뒤로 샐 수 있습니다. 전체 순서는 <a href="https://github.com/jungrok5/machine-wilds/blob/main/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
   <div class="demo" style="--ar:16/10.6;--demo-bg:#07090b">
     <iframe data-src="demo/iron-valley/" title="machine-wilds 예제 실시간 실행" allow="fullscreen; autoplay" allowfullscreen></iframe>
@@ -249,11 +263,11 @@ cd my-realm &amp;&amp; python3 -m http.server 8000                   # 걸어 �
 
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
-  <p class="lead">이 스킬은 <a href="https://github.com/jungrok5/motion-skills">motion-skills</a> 레포에서 세 스킬(scanned-realm · walking-colossus · machine-build-reel)을 바탕으로 만들어, 커밋 이력과 함께 이 레포로 분리했습니다. 스캔은 <a href="https://polyhaven.com">Poly Haven</a>의 CC0 에셋이며 저장소에 넣지 않고 페이지가 Poly Haven 서버에서 읽습니다.</p>
+  <p class="lead"><a href="https://github.com/jungrok5/motion-skills">motion-skills</a>의 세 스킬(<a href="https://github.com/jungrok5/motion-skills/tree/main/scanned-realm">scanned-realm</a> 엔진, <a href="https://github.com/jungrok5/motion-skills/tree/main/walking-colossus">walking-colossus</a>의 상태 없는 걸음, <a href="https://github.com/jungrok5/motion-skills/tree/main/machine-build-reel">machine-build-reel</a>의 기계 조립과 검사)을 바탕으로 만들어 커밋 이력과 함께 이 레포로 옮겼습니다. 스캔은 <a href="https://polyhaven.com">Poly Haven</a>의 CC0 에셋이며 저장소에 넣지 않고 페이지가 Poly Haven 서버에서 읽습니다.</p>
   <div class="works">
     <a class="work" href="demo/iron-valley/" target="_blank" rel="noopener"><b>「쇠울림 골짜기」</b><span>숲 골짜기 640 m · 기계 여덟 종류 열아홉 대(자라 · 가재 · 공벌레, 솔개 다섯, 플레이어의 물떼새 포함) · 잔해 · 고가 · 정비창 · 송전탑 · 야적장</span><span class="url">machine-wilds/demo/iron-valley/</span></a>
     <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「Lantern Quarry」</b><span>물에 잠긴 채석장 · 등불 기계 두 대 · 스타터</span><span class="url">machine-wilds/demo/starter/</span></a>
-    <a class="work" href="https://github.com/jungrok5/machine-wilds/tree/main/examples/iron-valley"><b>이 레포에서 만듦 · examples/iron-valley</b><span>브리프 · 땅 · 폐허 · 기계 숫자와 부품 · 식생 소스</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://github.com/jungrok5/machine-wilds/tree/main/examples/iron-valley"><b>예제 소스 · examples/iron-valley</b><span>브리프 · 땅 · 폐허 · 기계 숫자와 부품 · 식생 소스</span><span class="url">github.com/jungrok5/machine-wilds</span></a>
     <a class="work" href="https://polyhaven.com" target="_blank" rel="noopener"><b>Poly Haven</b><span>스캔 재질 · 모델 · 잎 아틀라스 (CC0)</span><span class="url">polyhaven.com</span></a>
     <a class="work" href="https://github.com/apekshik/anymachine" target="_blank" rel="noopener"><b>AnyMachine</b><span>참고 (MIT): 기계를 부품과 유압으로 조립하는 방법(machine-build-reel을 거쳐 옴), 등딱지 기계를 넣게 된 계기. 코드 · 설계 · 에셋은 쓰지 않음</span><span class="url">github.com/apekshik/anymachine</span></a>
   </div>
@@ -266,7 +280,7 @@ cd my-realm &amp;&amp; python3 -m http.server 8000                   # 걸어 �
     <li><a href="https://github.com/jungrok5/machine-wilds">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
     <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/README.md">README.md</a> <span>빠른 시작</span></li>
     <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/references/MACHINES.md">references/MACHINES.md</a> <span>기계 설계: 숫자 · 부품 · 길 · 검사의 뜻</span></li>
-    <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/references/BRIEF.md">references/BRIEF.md</a> <span>주제에서 브리프로, 검토 기준</span></li>
     <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/references/KIT.md">references/KIT.md</a> <span>엔진의 빌더와 옵션</span></li>
     <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/references/ASSETS.md">references/ASSETS.md</a> <span>스캔 고르기 · 라이선스</span></li>
     <li><a href="https://github.com/jungrok5/machine-wilds/blob/main/references/LOOK.md">references/LOOK.md</a> <span>화면을 만드는 것과 한계</span></li>
