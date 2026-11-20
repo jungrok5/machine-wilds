@@ -13,5 +13,6 @@ V.strings = {
   taking: '직접 조작 · C 투어', lensOn: '피사계 심도 켬 · L로 끄기', lensOff: '피사계 심도 끔', lensNone: '이 화질에는 피사계 심도가 없습니다 · G로 화질 변경',
   scans: '애셋: Poly Haven · CC0',
   gate: '시작', gateOff: '애셋 없이 열기', gateLink: { text: 'github.com/jungrok5/machine-wilds', href: 'https://github.com/jungrok5/machine-wilds' },
+  link: { href: 'https://github.com/jungrok5/machine-wilds', title: 'GitHub: jungrok5/machine-wilds' },
   noglTitle: 'WebGL 2를 쓸 수 없습니다', nogl: '브라우저 설정에서 하드웨어 가속을 켜고 다시 여세요.', lostTitle: 'WebGL 컨텍스트 손실', lost: 'GPU 드라이버가 재시작됐거나 메모리가 부족합니다.', again: '다시 열기', safe: '안전 모드(최저 화질)로 열기',
 };

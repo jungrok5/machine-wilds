@@ -6,6 +6,9 @@ put together from code, part by part, and their feet land on the real height and
 
 ![쇠울림 골짜기: a relay station on eight legs walking the valley rim at dusk](docs/poster.jpg)
 
+[![Play in the browser](https://img.shields.io/badge/%E2%96%B6%20Play-in%20the%20browser-d8c38a)](https://jungrok5.github.io/machine-wilds/)
+[![Watch the film](https://img.shields.io/badge/Film-2%20min%2047%20s-2b2f36)](https://jungrok5.github.io/machine-wilds/?film=1)
+
 - Walk the worked example in the browser: https://jungrok5.github.io/machine-wilds/
 - The same valley playing its own film (2 min 47 s, dawn to night): https://jungrok5.github.io/machine-wilds/?film=1
 

@@ -22,8 +22,8 @@ walkable, ruined, overgrown world in the browser where giant walking machines ke
 - Generated video / image / voice is a reference, never a committed asset. **ElevenLabs (any tool) only after the
   owner says yes for that request** — say what, which model, how many takes, rough cost, then wait. Films are drawn by
   the engine (`examples/iron-valley/trailer.mjs`); their frames, sound and MP4s are never committed.
-- Never put MP4s (or other large media) in `docs/`. The poster (`docs/poster.jpg`, the README's picture and the
-  link preview) ~1200×675, ≤ 200 KB.
+- Never put MP4s (or other large media) in `docs/`. The poster (`docs/poster.jpg`, the README's picture) ~1200×675,
+  ≤ 200 KB; the share image (`docs/og.jpg`, the link preview and GitHub's social preview) 1280×640, ≤ 200 KB.
 - Before finishing any site change, serve `docs/` (`python3 -m http.server`) and check the page at 1280 px and 390 px:
   no console errors or 404s, the walk and `?film=1` load, `demo/iron-valley/` forwards.
 - Every link a piece of work was made from is its source: keep `references/SOURCE.md` and the README in step (Poly Haven; AnyMachine as a reference; the three motion-skills skills it grew from).
