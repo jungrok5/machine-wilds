@@ -37,9 +37,9 @@ V.details = () => {
     cmd.body = q.bodyFrame([x, gy + 2.4, z], h, -0.1, 0.42); for (const l of q.kin.limbs) { const k = l.side > 0 ? 0.55 : 1.5, px = x + fw[0] * l.home[0] * 1.25 + rt[0] * l.home[1] * k, pz = z + fw[1] * l.home[0] * 1.25 + rt[1] * l.home[1] * k; cmd.limbs[l.name] = { p: [px, L.h(px, pz) + l.ball * 0.6, pz], n: [0.3 * l.side, 0.9, 0.1], yaw: h + l.side * 0.6, gamma: 38, curl: 20 }; }
     cmd.neck = { pitch: 74, yaw: -16 }; cmd.head = { pitch: 18, yaw: -10, roll: 24, level: 0 }; } });
   // the names of things, the sounds placed in them
-  W.places.push({ x: V.spawn.x, z: V.spawn.z, r: 14, name: '들목', sub: '옛길이 숲으로 들어가는 곳' }, { x: V.lookout.x, z: V.lookout.z, r: 9, name: '망바위', sub: '골짜기가 한눈에' }, { x: D.x, z: 50, r: 16, name: '끊어진 고가', sub: '거인들이 지나며 무너뜨린 다리' },
-    { x: V.hall.x, z: V.hall.z, r: 15, name: '정비창 터', sub: '누군가 아직 불을 피운다' }, { x: V.tarn.x - 30, z: V.tarn.z + 6, r: 14, name: '쇠늪', sub: '두루미가 물을 건너는 곳' }, { x: V.wreck.x, z: V.wreck.z + 14, r: 16, name: '누운 두루미', sub: '이끼가 덮은 지 오래' },
-    { x: V.yard.x, z: V.yard.z, r: 16, name: '짐터', sub: '등짐들이 들르는 야적장' }, { x: V.ford.x, z: V.ford.z, r: 9, name: '여울', sub: '개울을 건너는 얕은 곳' });
+  W.places.push({ x: V.spawn.x, z: V.spawn.z, r: 14, name: '들목', sub: '옛길이 숲으로 들어가는 곳' }, { x: V.lookout.x, z: V.lookout.z, r: 9, name: '망바위', sub: '골짜기 전망' }, { x: D.x, z: 50, r: 16, name: '끊어진 고가', sub: '높이 22 m, 끝이 끊긴 고가도로' },
+    { x: V.hall.x, z: V.hall.z, r: 15, name: '정비창 터', sub: '모닥불이 있는 폐정비창' }, { x: V.tarn.x - 30, z: V.tarn.z + 6, r: 14, name: '쇠늪', sub: '두루미가 물을 건너는 곳' }, { x: V.wreck.x, z: V.wreck.z + 14, r: 16, name: '누운 두루미', sub: '이끼 덮인 두루미 잔해' },
+    { x: V.yard.x, z: V.yard.z, r: 16, name: '짐터', sub: '등짐이 들르는 야적장' }, { x: V.ford.x, z: V.ford.z, r: 9, name: '여울', sub: '개울을 건너는 얕은 곳' });
   for (let i = 4; i < V.brook.length - 3; i += 3) W.sounds.push({ x: V.brook[i][0], y: V.brook[i][2], z: V.brook[i][1], kind: 'stream', r: 26, gain: 0.8 });
   W.sounds.push({ x: V.tarn.x, y: V.tarn.level, z: V.tarn.z, kind: 'frogs', r: 46, gain: 0.8 }); W.fireflyAreas = [{ x: V.tarn.x, z: V.tarn.z, r: 40 }, { x: V.hall.x, z: V.hall.z + 14, r: 18 }];
 };
