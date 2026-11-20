@@ -11,7 +11,7 @@ V.strings = {
     ['휠 / + −', '줌'], ['B', '등불'], ['게임패드', '왼쪽 스틱 이동 · 오른쪽 스틱 시점 · 트리거 달리기 · A 점프'], ['1 2 3 4', '새벽 · 낮 · 저녁 · 밤'], ['5 6 7 8', '맑음 · 비 · 눈 · 안개'],
     ['T', '시간 · 날씨 자동 순환'], ['C', '카메라 투어'], ['L', '이동 중 피사계 심도'], ['G', '화질'], ['M', '소리'], ['P', 'fps · 해상도 · 드로우콜'], ['H', 'UI 숨기기'], ['F', '전체 화면']],
   taking: '직접 조작 · C 투어', lensOn: '피사계 심도 켬 · L로 끄기', lensOff: '피사계 심도 끔', lensNone: '이 화질에는 피사계 심도가 없습니다 · G로 화질 변경',
-  scans: '스캔: Poly Haven · CC0',
-  gate: '시작', gateOff: '스캔 없이 열기', gateLink: { text: 'github.com/jungrok5/machine-wilds', href: 'https://github.com/jungrok5/machine-wilds' },
+  scans: '애셋: Poly Haven · CC0',
+  gate: '시작', gateOff: '애셋 없이 열기', gateLink: { text: 'github.com/jungrok5/machine-wilds', href: 'https://github.com/jungrok5/machine-wilds' },
   noglTitle: 'WebGL 2를 쓸 수 없습니다', nogl: '브라우저 설정에서 하드웨어 가속을 켜고 다시 여세요.', lostTitle: 'WebGL 컨텍스트 손실', lost: 'GPU 드라이버가 재시작됐거나 메모리가 부족합니다.', again: '다시 열기', safe: '안전 모드(최저 화질)로 열기',
 };
