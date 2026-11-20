@@ -34,6 +34,12 @@ export function build(projectDir, { quiet = false, cdn = false, out: outFile = n
   const meta = existsSync(join(proj, 'realm.json')) ? JSON.parse(readFileSync(join(proj, 'realm.json'), 'utf8')) : {};
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   shell = shell.replace(/__TITLE__/g, esc(meta.title || basename(proj))).replace(/__SUB__/g, esc(meta.subtitle || '')).replace(/__LANG__/g, meta.lang || 'en').replace(/__BG__/g, meta.bg || '#0b0d10');
+  // what a link to the page shows where it is shared: a description, and the picture and address if realm.json gives them
+  const desc = meta.description || meta.subtitle || '';
+  const head = [desc && `<meta name="description" content="${esc(desc)}">`, `<meta property="og:type" content="website">`, `<meta property="og:title" content="${esc(meta.title || basename(proj))}">`,
+    desc && `<meta property="og:description" content="${esc(desc)}">`, meta.url && `<meta property="og:url" content="${esc(meta.url)}">`, meta.image && `<meta property="og:image" content="${esc(meta.image)}">`,
+    `<meta name="twitter:card" content="${meta.image ? 'summary_large_image' : 'summary'}">`].filter(Boolean).join('\n');
+  shell = shell.replace('__HEAD__', () => head);
   const assets = existsSync(join(proj, 'assets', 'manifest.json')) ? JSON.parse(readFileSync(join(proj, 'assets', 'manifest.json'), 'utf8')) : null;   // written by fetch-assets.mjs
   // the page reads its scans from assets/ beside it; with --cdn it reads the same files from Poly Haven's server instead
   if (assets) { assets.cdn = !!cdn; for (const t of Object.values(assets.textures || {})) { if (cdn) t.files = t.urls; delete t.urls; } for (const m of Object.values(assets.models || {})) { if (cdn) m.file = m.url; else delete m.inc; delete m.url; if (m.alpha) { if (m.alpha.diff) m.diff = cdn ? m.alpha.diff.url : m.alpha.diff.file; m.alpha = cdn ? m.alpha.url : m.alpha.file; } if (m.alphaBy) for (const k in m.alphaBy) m.alphaBy[k] = cdn ? m.alphaBy[k].url : m.alphaBy[k].file; else delete m.alphaBy; delete m.tris; }

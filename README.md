@@ -6,9 +6,8 @@ put together from code, part by part, and their feet land on the real height and
 
 ![쇠울림 골짜기: a relay station on eight legs walking the valley rim at dusk](docs/poster.jpg)
 
-- Samples, stills and the live demos: https://jungrok5.github.io/machine-wilds/
-- The worked example, walkable: https://jungrok5.github.io/machine-wilds/demo/iron-valley/
-- The same valley playing its own film (2 min 47 s, dawn to night): https://jungrok5.github.io/machine-wilds/demo/iron-valley/?film=1
+- Walk the worked example in the browser: https://jungrok5.github.io/machine-wilds/
+- The same valley playing its own film (2 min 47 s, dawn to night): https://jungrok5.github.io/machine-wilds/?film=1
 
 A personal project by [Jeongrok Oh](https://jungrok5.github.io/resume/), an MMO server architect. Two habits from
 server work run through it: every machine's state is recomputed from the clock, and nothing is rendered until
