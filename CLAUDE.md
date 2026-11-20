@@ -17,7 +17,8 @@ walkable, ruined, overgrown world in the browser where giant walking machines ke
 - Scans are Poly Haven CC0, listed per realm in `assets.json` and fetched with `scripts/fetch-assets.mjs`. Never commit
   a realm's `assets/`, `out/` or built `index.html`, and never put scans in `docs/`; the site is the example built with
   `node scripts/build.mjs examples/iron-valley --cdn --out docs/index.html` (the page reads the scans from Poly Haven;
-  `docs/demo/iron-valley/` only forwards old links to the root). No samples page: the README carries the words.
+  `docs/demo/iron-valley/` only forwards old links to the root). No samples page: the README carries the words
+  and the pictures (stills and sheets in `media/`, 640 px JPEGs, each linking to the live page or to its source).
 - Generated video / image / voice is a reference, never a committed asset. **ElevenLabs (any tool) only after the
   owner says yes for that request** — say what, which model, how many takes, rough cost, then wait. Films are drawn by
   the engine (`examples/iron-valley/trailer.mjs`); their frames, sound and MP4s are never committed.
