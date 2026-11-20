@@ -11,4 +11,6 @@
   part by part, and what prompted the example's shelled kinds. No code, design or asset of it is used.
 - No design, name or asset of any game is used. `references/SOURCE.md` says what came from where.
 
-The repository's own licence is the owner's to choose; until a `LICENSE` file is added, no licence is granted.
+**This repository's own licences.** The code: PolyForm Noncommercial 1.0.0 (`LICENSE.md`) — free for personal and other
+noncommercial use, commercial use by separate licence. The pictures and films: all rights reserved (`MEDIA-LICENSE.md`).
+The parts above keep their own licences.

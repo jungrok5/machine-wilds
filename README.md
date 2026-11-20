@@ -54,3 +54,12 @@ list, built and checked by script), and what prompted the example's shelled kind
 woodlice). No code, design or asset of it is used here; each kind is designed for its realm.
 
 Samples: https://jungrok5.github.io/machine-wilds/ (GitHub Pages from `docs/` on `main`)
+
+## Licence
+
+- **Code** — [PolyForm Noncommercial 1.0.0](LICENSE.md): use, change and share it for personal and other noncommercial
+  purposes; commercial use (paid courses, client work, products) needs a licence from the owner.
+- **Films, stills and other pictures** — © 2026 jungrok5, all rights reserved ([MEDIA-LICENSE.md](MEDIA-LICENSE.md)):
+  watch and share the original posts; no re-uploads, edits, or use in lectures, courses or ads without permission.
+- **Parts by others** keep their own licences: three.js and meshoptimizer (MIT, `vendor/`), Poly Haven scans (CC0, not
+  committed). See [CREDITS.md](CREDITS.md).
