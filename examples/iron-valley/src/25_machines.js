@@ -40,15 +40,22 @@ V.machines = () => {
   // 마루: a relic on eight legs — a relay station that never stopped walking its rounds
   const TL = { kind: 'mammal', width: 3.6, drum: 3.0, bar: 0.5, ball: 1.6, toes: 4, toeLen: 5.0, act: [1, 1], hipDrop: 1.5, style: 'casing', actLat: 1.5 };
   const titanLegs = [[18, 2.5, 1, 'A'], [6, 1.5, 1, 'B'], [-6, -1.5, -1, 'C'], [-18, -2.5, -1, 'D']].map(([x, dx, knee, n]) => Object.assign({}, TL, { name: n + 'L', at: [x, -2, -9], segs: [17, 18.5], knee, home: [x + dx, -12.5] }));
-  M.define('ridge', { title: '마루', age: 1, tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 0, lensGain: 22, build: (k) => V.parts.ridge(k),
+  M.define('ridge', { title: '마루', age: 1, tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 110, lookMax: 48, glance: [14, 10], lensGain: 22, build: (k) => V.parts.ridge(k),
     palette: { frame: ['paintmetal', '#8f8c7e'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'], casing: ['paintmetal', '#cbc5b0'], paint: ['paintmetal', '#c99f2e'] },      /* grey works paint gone to rust, cream casings, the yellow of what moves or may be stepped off */
     limbs: [...titanLegs, ...titanLegs.map(M.mirror)], neck: { at: [24, -3.5, 0], links: [[3.2, -62]] }, head: { len: 6 },
-    extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 }],
+    extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 },
+      // the lift: a cage under the bow quarter on four ropes, let down to the ground from a winch in the deck when it stops for it
+      { name: 'lift_cage', type: 'slide', channel: 'lift', parent: 'body', at: [14, -4.6, -2.5], dir: [0, 1, 0], toGround: 3.0 },
+      ...Array.from({ length: 10 }, (_, i) => ({ name: 'lift_' + i, type: 'slide', channel: 'lift', parent: 'body', at: [14, -4.6, -2.5], dir: [0, -1, 0], toGround: 3.0, k: i / 10 }))],
     gait: { cycle: 15, duty: 0.68, stride: 15, lift: 3.4, offsets: { AL: 0, BL: 0.535, CL: 0.07, DL: 0.605, AR: 0.5, BR: 0.035, CR: 0.57, DR: 0.105 }, crouch: 0.6, dip: 0.9, dipTime: 1.7, sway: 1.1, roll: 0.9, nod: 0.5, yaw: 0.3, footPitch: 8, toeCurl: 10, neckSway: 2, follow: [0.5, 0.25], smooth: 0.5, footTilt: 30, settle: 0.9, settleTime: 3.2, gather: 6, gatherDip: 0.9, gatherBack: 0.8, ease: 16, clear: 1.6 },
     idle: { period: 26, breath: 0.3, shift: 0.5, scan: 18 },
     moves: {
       // it calls: sinks, then rises to its full height with every light up, holds, comes down past rest and settles
-      call: { dur: 24, main: 'body.dy', sound: [7.6, 46, 9, 2.2], keys: { 'body.dy': [[0, 0], [2.6, -0.7], [8, 1.5], [16, 1.5], [20.5, -0.3], [24, 0]], 'body.pitch': [[0, 0], [2.6, -0.5], [8, 1.2], [16, 1.2], [20.5, -0.2], [24, 0]], 'head.pitch': [[0, 0], [2.6, 6], [8, -10], [16, -8], [21, 2], [24, 0]], 'head.yaw': [[0, 0], [8, 0], [11, 26], [14, -24], [17, 0], [24, 0]], light: [[0, 1], [6.6, 1], [8.2, 2.2], [15.5, 2.2], [18, 1], [24, 1]] } } } });
+      call: { dur: 24, main: 'body.dy', sound: [7.6, 46, 9, 2.2], keys: { 'body.dy': [[0, 0], [2.6, -0.7], [8, 1.5], [16, 1.5], [20.5, -0.3], [24, 0]], 'body.pitch': [[0, 0], [2.6, -0.5], [8, 1.2], [16, 1.2], [20.5, -0.2], [24, 0]], 'head.pitch': [[0, 0], [2.6, 6], [8, -10], [16, -8], [21, 2], [24, 0]], 'head.yaw': [[0, 0], [8, 0], [11, 26], [14, -24], [17, 0], [24, 0]], light: [[0, 1], [6.6, 1], [8.2, 2.2], [15.5, 2.2], [18, 1], [24, 1]] } },
+      // it lets down its lift: the deck lifts a little as the winch takes the weight, then settles low and level while the cage goes
+      // down its ropes to the ground, waits, and comes back up; the deck rises past rest as it takes the cage in, and settles
+      lift: { dur: 58, main: 'body.dy', sound: [4.2, 64, 13, 1.3], keys: { 'body.dy': [[0, 0], [3.2, 0.35], [9, -1.3], [42, -1.3], [50, 0.3], [58, 0]], 'body.pitch': [[0, 0], [3.2, 0.2], [9, -0.5], [42, -0.5], [50, 0.15], [58, 0]],
+        'extra.lift': [[0, 0], [4.5, 0], [17.5, 1], [39, 1], [51.5, 0], [58, 0]], 'head.pitch': [[0, 0], [4, -3], [12, 9], [40, 9], [50, -2], [58, 0]], light: [[0, 1], [4, 1], [6, 1.6], [50, 1.6], [53, 1], [58, 1]] } } } });
   // 솔개: a kite — it has no legs to speak of.  Two-part wings on a keel, a fan of a tail, one eye that looks down into the mist.
   // 0.9 t on a 9 m span: 14 m/s, a beat every 1.15 s in bouts of nine seconds, banked by what each turn asks.
   M.define('kite', { title: '솔개', age: 0.45, tonnes: 0.9, ride: 1.2, tall: 2, aware: 80, lensGain: 30, lodK: 5, cry: [47, 560, 0.8, 0.5], build: (k) => V.parts.kite(k),
@@ -116,7 +123,7 @@ V.machines = () => {
   // five kites in a string: each two seconds behind the one before, a little to one side and above, each beating in its own time
   // (closer, or abreast, and their wings cross in the tight turn over the saddle: check.mjs measures every pair)
   [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
-  M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
+  M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }, { at: 0.72, hold: 66, move: 'lift' }] });
   // the shelled ones: the crayfish in the brook west of the viaduct, a turtle on the eastern floor and one standing at the tarn, four woodlice in file on the lower shelf
   M.spawn('gajae', { name: '가재', route: 'brook', offset: 40, halts: [{ at: 0.32, hold: 14, move: 'rear' }, { at: 0.78, hold: 9 }] });
   M.spawn('jara', { name: '자라 1', route: 'east', offset: 0, halts: [{ at: 0.55, hold: 22, move: 'tuck' }] });

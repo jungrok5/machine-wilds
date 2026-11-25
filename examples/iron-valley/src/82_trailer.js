@@ -6,6 +6,10 @@
     const relic = U('마루'), jara = U('자라 1'), gajae = U('가재'), crane1 = U('두루미 1'), porter = U('등짐 1'), kite = U('솔개 3'), kp = (t) => M.cmd(kite, t).body.p;
     const q1 = pose(relic, 142.0), q2 = pose(relic, 145.4), q3 = pose(relic, 149.6), far = rel(q1, 220, 0), c3 = rel(q3, 78, 7), qh = pose(relic, 150);
     const qn = pose(relic, 1006), qw = pose(jara, 66), qc = pose(crane1, 108), qt = pose(jara, 106), sg = qt.rt[1] > 0 ? 1 : -1, tGoal = rel(qt, 30, sg * 9.5), camp = V.camp || { x: 30, z: 123 };
+    // the relic's lift (27_lift): where the cage comes down, where the walker comes from (out of its open side), where the cameras stand
+    const lift = (t) => V.liftAt(t).lift, cageNow = () => relic.pose.W.lift_cage, lf = (() => { const L = V.liftAt(831), c = L.cage, ox = -c.x[0], oz = -c.x[2], hl = Math.hypot(ox, oz) || 1, o = [ox / hl, oz / hl], sd = [-o[1], o[0]], g = floor(c.p[0], c.p[2], c.p[1]);
+      const out = [c.p[0] + o[0] * 10, c.p[2] + o[1] * 10], cam = [c.p[0] + o[0] * 16 + sd[0] * 2.5, c.p[2] + o[1] * 16 + sd[1] * 2.5], cam2 = [c.p[0] + o[0] * 7 + sd[0] * -5, c.p[2] + o[1] * 7 + sd[1] * -5];
+      return { c: [c.p[0], g, c.p[2]], out, cam, cam2, camY: floor(cam[0], cam[1], g + 3) + 1.5, camY2: floor(cam2[0], cam2[1], g + 3) + 1.1, yawIn: (Math.atan2(-o[0], o[1]) * 180) / Math.PI, yawOut: (Math.atan2(o[0], -o[1]) * 180) / Math.PI }; })();
     // run, jump onto the barrier at the broken end, off it, and on across the floor below
     const leap = (s, K, st) => { if (P.air) st.flew = true; if (st.flew && !P.air && st.landed === undefined) st.landed = s;
       if (st.landed === undefined) { if (s > 0.3) { K.KeyW = true; K.ShiftLeft = true; } if (P.z < 39.75 && P.z > 38.9 && !P.air) K.Space = true; P.pitch = damp(P.pitch, -0.1, 1.6); }
@@ -109,6 +113,20 @@
       R3: { dur: 4.25, tod: 18.4, weather: 'haze', T0: 149.6, start: [rel(q3, 7, 0)[0], rel(q3, 7, 0)[1], yawOf(q3)],
         act(s, K) { goTo(far[0], far[1], K, true); },
         cam(s) { const q = pose(relic, 149.6 + s); return [low([c3[0], 0, c3[1]], 1.5), [q.p[0], q.p[1] - 14, q.p[2]], 52]; } },
+      // ── the relic's lift ──
+      // it stops on the rim and lets its lift down; the walker crosses to it as the cage comes down its ropes, and steps in
+      LIFT1: { dur: 10.5, tod: 18.45, weather: 'haze', T0: 821.5, start: [lf.out[0], lf.out[1], lf.yawIn],
+        act(s, K, st) { if (s > 3.9 && !st.in) st.in = goTo(lf.c[0], lf.c[2], K) ? s : 0; if (st.in && !st.used && lift(821.5 + s) > 0.97) { K.KeyR = true; st.used = s; } if (st.used) { P.yaw += LR.wrapPi(lf.yawOut * Math.PI / 180 - P.yaw) * Math.min(1, 2.2 / 24); } P.pitch = damp(P.pitch, st.used ? 0.42 : 0.12, 1.2); },
+        cam(s) { const k = ease((s - 1) / 8), c = cageNow(); return [[lf.cam[0], lf.camY, lf.cam[1]], look([c.p[0], c.p[1] - 1.5, c.p[2]], me(1.2), 0.25 + 0.45 * k), 58]; } },
+      // … and goes up with it, under the belly of five thousand tonnes
+      LIFT2: { dur: 14.6, tod: 18.5, weather: 'haze', T0: 850.4, start: [lf.c[0], lf.c[2], lf.yawOut],
+        act(s, K, st) { if (!st.on) { V.liftBoard([0.4, 0, 0]); st.on = true; } P.pitch = damp(P.pitch, -0.3, 0.8); },
+        cam(s) { const c = cageNow(), u = ease(s / 11); return [[lf.cam2[0], lf.camY2, lf.cam2[1]], [c.p[0], c.p[1] - 2.2 + 3 * u, c.p[2]], 60 - 6 * u]; } },
+      // on its back as it walks on: out along the bow to the rail, the valley fifty metres down
+      TOP: { dur: 9, tod: 18.6, weather: 'haze', T0: 884, start: [lf.c[0], lf.c[2], lf.yawOut], aware: false,
+        act(s, K, st) { if (!st.on) { V.liftDeck(-5.9, 0); const B = relic.pose.W.body; P.yaw = Math.atan2(B.x[0], -B.x[2]); st.on = true; } if (s > 0.6 && s < 6.4) K.KeyW = true; P.pitch = damp(P.pitch, s > 6 ? -0.32 : 0.02, 1.0); },
+        cam(s) { const B = relic.pose.W.body, l = P.ride ? P.ride.local : [14, 0, -7.8], ap = (v) => [B.p[0] + B.x[0] * v[0] + B.y[0] * v[1] + B.z[0] * v[2], B.p[1] + B.x[1] * v[0] + B.y[1] * v[1] + B.z[1] * v[2], B.p[2] + B.x[2] * v[0] + B.y[2] * v[1] + B.z[2] * v[2]], u = ease((s - 5.4) / 3.6);
+          return [ap([l[0] - 4.6 + 1.4 * u, 1.9 + 2.2 * u, l[2] - 0.4 - 2.6 * u]), ap([l[0] + 12 + 10 * u, 0.9 - 14 * u, l[2] + 0.2 - 4 * u]), 56]; } },
       // ── dusk mist ──
       // a crane on the floor, its light ahead of it in the mist
       CR: { dur: 6.2, tod: 19.6, weather: 'mist', T0: 105, start: [rel(qc, 7, 13)[0], rel(qc, 7, 13)[1], yawOf(qc) - 110],
@@ -132,9 +150,11 @@
         act(s, K) { if (s > 0.3 && s < 4.5) K.KeyW = true; if (s > 4.9) P.pitch = damp(P.pitch, 0.62, 1.6); },
         cam(s) { const u = ease((s - 5.0) / 2.6), v = ease(s / 4.6); return [at(-5.2 + 0.6 * v, -1.4, 1.0 - 0.55 * v), at(7, 0, 1.5 + 0.4 * v + u * 6.6), 60]; } },
     };
+    // the machines near the walker turn their heads to it in every shot it is in (not in the ones it is not: dawn, the kite, the lookout)
+    for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
     return { fps: 24, shots, title: { big: '쇠울림 골짜기', small: 'MACHINE-WILDS', line: '브라우저에서 걷는 기계의 숲', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · 영상 무단 사용 · 재가공 금지', skip: 'Esc · 직접 걷기' },
-      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'CR', 'C2', 'C', 'N1', 'A'],
+      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
-      range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80] } };
+      range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
   };
 }
