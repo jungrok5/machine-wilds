@@ -31,6 +31,14 @@ V.lift = () => {
     const inside = Math.abs(l[0]) < IN + 0.5 && Math.abs(l[2]) < IN + 0.3 && Math.abs(l[1] - FLOOR) < 0.9;
     if (d < 5.5) hint(say.board); if (P.use && (inside || d < 3.2)) board(l);
   });
+  // the cage meeting the ground and locking back into the belly: a hiss of the brakes' steam, sparks off the rail, the dust it
+  // lands in (lib/62_vfx; the same ids each time, so a stop is one burst whatever the frame rate)
+  let was = 0;
+  LR.on('frame', (time) => { if (!LR.vfx || !LR.vfx.burst) return; const c = W('lift_cage'); if (!c) return; const fr = lift();
+    const at = (v) => [c.p[0] + c.x[0] * v[0] + c.y[0] * v[1] + c.z[0] * v[2], c.p[1] + c.x[1] * v[0] + c.y[1] * v[1] + c.z[1] * v[2], c.p[2] + c.x[2] * v[0] + c.y[2] * v[1] + c.z[2] * v[2]];
+    if (was < 0.995 && fr >= 0.995) { LR.vfx.burst('dust', at([0, -2.95, 0]), { t: time, size: 0.9, id: 'lift-dust' }); LR.vfx.burst('steam', at([0, 0.5, 0]), { t: time + 0.05, size: 0.7, dir: [0, -1, 0.3], id: 'lift-steam' }); LR.vfx.burst('sparks', at([1.62, -2.9, 1.62]), { t: time - 0.05, size: 0.6, dir: [1, 0.4, 0], n: 0.7, id: 'lift-sparks' }); }
+    if (was > 0.03 && fr <= 0.03 && was < 0.5) { LR.vfx.burst('sparks', at([0, 0.2, 0]), { t: time, size: 0.7, dir: [0, -1, 0], n: 0.8, id: 'lift-lock' }); LR.vfx.burst('steam', at([1.4, 0.4, -1.4]), { t: time + 0.1, size: 0.6, dir: [0, -1, 0], id: 'lift-lock-steam' }); }
+    was = fr; });
   // where the cage hangs at a time of the machines' clock (a film places the walker by it)
   V.liftAt = (t) => { const u = relic(), r = M.poseAt(u, t), c = r.cmd; return { cage: r.W.lift_cage, body: r.W.body, lift: c.extras && c.extras.lift !== undefined ? c.extras.lift : 0 }; };
 };
