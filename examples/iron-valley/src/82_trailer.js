@@ -6,6 +6,10 @@
     const relic = U('마루'), jara = U('자라 1'), gajae = U('가재'), crane1 = U('두루미 1'), porter = U('등짐 1'), kite = U('솔개 3'), kp = (t) => M.cmd(kite, t).body.p;
     const q1 = pose(relic, 142.0), q2 = pose(relic, 145.4), q3 = pose(relic, 149.6), far = rel(q1, 220, 0), c3 = rel(q3, 78, 7), qh = pose(relic, 150);
     const qn = pose(relic, 1006), qw = pose(jara, 66), qc = pose(crane1, 108), qt = pose(jara, 106), sg = qt.rt[1] > 0 ? 1 : -1, tGoal = rel(qt, 30, sg * 9.5), camp = V.camp || { x: 30, z: 123 };
+    // run, jump onto the barrier at the broken end, off it, and on across the floor below
+    const leap = (s, K, st) => { if (P.air) st.flew = true; if (st.flew && !P.air && st.landed === undefined) st.landed = s;
+      if (st.landed === undefined) { if (s > 0.3) { K.KeyW = true; K.ShiftLeft = true; } if (P.z < 39.75 && P.z > 38.9 && !P.air) K.Space = true; P.pitch = damp(P.pitch, -0.1, 1.6); }
+      else { const a = s - st.landed; if (a > 0.9) K.KeyW = true; P.pitch = damp(P.pitch, a > 1.0 ? 0.32 : -0.1, 1.6); } };
     const headOf = (u) => (u.pose && u.pose.W && u.pose.W.head ? u.pose.W.head.p : pose(u, 0).p), look = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)], me = (up) => [P.x, P.y + up, P.z];
     const shots = {
       // ── dawn ──
@@ -69,19 +73,21 @@
       E2: { dur: 6.2, tod: 15.05, weather: 'rain', T0: 156.4, start: [-22, 41.6, 0], pitch: 0.2,
         act(s, K) { P.pitch = damp(P.pitch, 0.5, 1.0); },
         cam(s) { const hd = headOf(crane1); return [at(-2.6, -1.7, 0.55), look(me(1.7), [hd[0], hd[1], hd[2]], 0.82), 50]; } },
-      // it runs, leaps the barrier and drops to the floor in front of the crane (the page's own third view)
-      JUMP: { dur: 11, tod: 15.1, weather: 'rain', T0: 162.6, start: [-22, 61, 0], view: 'third', zoom: 5.4,
-        act(s, K, st) { if (P.air) st.flew = true; if (st.flew && !P.air && st.landed === undefined) st.landed = s;
-          if (st.landed === undefined) { if (s > 0.3) { K.KeyW = true; K.ShiftLeft = true; } if (P.z < 39.75 && P.z > 38.9 && !P.air) K.Space = true; P.pitch = damp(P.pitch, -0.1, 1.6); }
-          else { const a = s - st.landed; if (a > 0.9) K.KeyW = true; P.pitch = damp(P.pitch, a > 1.0 ? 0.32 : -0.1, 1.6); } } },
+      // it runs and leaps the barrier: the camera runs behind it and rises over the barrier as it goes over the broken end …
+      JUMP: { dur: 6, tod: 15.1, weather: 'rain', T0: 162.6, start: [-22, 61, 0], aware: true, act: leap,
+        cam(s) { const u = ease((s - 4.2) / 1.8); return [look(at(-5.6, 1.3, 2.3), [-16.4, 25.8, 34.2], u), me(1.1), 54]; } },
+      // … cut on the leap to the floor, behind it (the page's own third view) as it lands in front of the crane and walks on;
+      // the crane turns its head to it.  The cut starts once the follow camera is clear of the deck it comes down past
+      DROP: { dur: 9.4, tod: 15.1, weather: 'rain', T0: 164.9, start: [-22, 44, 0], view: 'third', zoom: 5.4, aware: true, act: leap },
       // … and on along the old road in the rain, through its eyes
       RW: { dur: 4.2, tod: 15.3, weather: 'rain', T0: 200, start: [-112, 127.5, 90], view: 'first',
         act(s, K) { goTo(-72, 127.6, K); P.pitch = damp(P.pitch, -0.06, 1.2); } },
       // ── snow ──
       // snow at the old hall; someone has kept a fire
-      SNOW: { dur: 5.6, tod: 15.8, weather: 'snow', T0: 150, start: [camp.x - 16, camp.z - 0.6, 88],
-        act(s, K, st) { if (s > 0.3 && !st.there) st.there = goTo(camp.x - 3.2, camp.z - 0.4, K) ? s : 0; },
-        cam(s) { return [low([camp.x - 21 + 0.5 * s, 0, camp.z - 3.4], 1.5), look(me(1.3), [camp.x, floor(camp.x, camp.z, 60) + 1.2, camp.z], 0.6), 50]; } },
+      // it comes in out of the snow through the hall's open side (the west side is walled) and stops at the fire, head down to it
+      SNOW: { dur: 6.4, tod: 15.8, weather: 'snow', T0: 150, start: [camp.x + 2.2, camp.z + 10.5, -4],
+        act(s, K, st) { if (s > 0.3 && !st.there) st.there = goTo(camp.x + 0.9, camp.z + 2.0, K) ? s : 0; if (st.there) P.pitch = damp(P.pitch, -0.42, 1.4); },
+        cam(s) { const fy = floor(camp.x, camp.z, 60); return [[camp.x + 1.3 - 0.06 * s, fy + 1.45, camp.z - 4.2 + 0.1 * s], look(me(1.25), [camp.x, fy + 0.4, camp.z], 0.3), 50]; } },
       // ── evening ──
       // golden hour at the tarn: it walks up to the turtle that stands there, and looks up
       B: { dur: 8.2, tod: 17.9, weather: 'clear', T0: 20, start: [99, 102.5, 14],
@@ -127,7 +133,7 @@
         cam(s) { const u = ease((s - 5.0) / 2.6), v = ease(s / 4.6); return [at(-5.2 + 0.6 * v, -1.4, 1.0 - 0.55 * v), at(7, 0, 1.5 + 0.4 * v + u * 6.6), 60]; } },
     };
     return { fps: 24, shots, title: { big: '쇠울림 골짜기', small: 'MACHINE-WILDS', line: '브라우저에서 걷는 기계의 숲', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · 영상 무단 사용 · 재가공 금지', skip: 'Esc · 직접 걷기' },
-      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'CR', 'C2', 'C', 'N1', 'A'],
+      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80] } };
   };
