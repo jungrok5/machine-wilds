@@ -72,7 +72,7 @@ went from 8.7 s to 4.1 s with no difference visible at 960 × 540.
 5. **Look**: a cast sheet per kind (four sides, walk, idle, set piece), close sheets, the page check (`check.mjs`), stills.
 6. **Output**: one walkable page (scans read from `assets/` or from Poly Haven's server), with the sheets, map and stills.
 
-## The example: 쇠울림 골짜기
+## The example: Iron Valley
 
 A pass where a maintenance yard was left forty years ago. The land is 640 m across, from −3 m at the brook to 47 m
 on the north ridge, with a broken viaduct, a hall, pylons, a container yard. Nineteen machines of eight kinds: two long-necked watchers, three
@@ -143,10 +143,14 @@ and walks with `?scan=0`, on surfaces baked from code. `SKILL.md` has the whole 
 realm; `references/` holds the notes behind each step.
 
 Controls: W A S D or the arrows to walk, the mouse to look, Shift to run, Space to hop, V to switch the camera
-(first person, behind, above), the wheel or + and − to zoom, B for the lamp. On a phone, two thumbs; a gamepad works
-too. You can hop onto the barriers, and jump off the viaduct, land and walk up to a machine. When 마루, the biggest, stops on the rim and lets its cage down, R takes you
-up to its deck to walk the bow while it walks on, and R again takes you down. `1` to `4` set the hour,
-`5` to `8` the weather, `T` runs the automatic round, `M` toggles sound, `P` shows numbers.
+(first person, behind, above), the wheel or + and − to zoom, B for the lamp, Tab for the menu (the hour, the weather,
+quality, sound and every key). On a phone, two thumbs and the ☰ button; a gamepad works too, and the HUD then shows its
+buttons. The HUD is laid out like a console game's: the walker's machine and the hour top left, a compass with the giants
+(red while one is watching you), the named places and anything you can use, and the buttons that matter bottom right.
+Walk up to something you can use and a marker shows it from afar, then a prompt with its key: when Ridge, the biggest,
+stops on the rim and lets its cage down, R takes you up to its deck to walk the bow while it walks on, and R again takes
+you down. `1` to `4` set the hour, `5` to `8` the weather, `T` cycles both, `M` toggles sound, `P` shows numbers,
+`H` hides the HUD.
 
 ## Limits
 
