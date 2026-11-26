@@ -92,6 +92,12 @@
       SNOW: { dur: 6.4, tod: 15.8, weather: 'snow', T0: 150, start: [camp.x + 2.2, camp.z + 10.5, -4],
         act(s, K, st) { if (s > 0.3 && !st.there) st.there = goTo(camp.x + 0.9, camp.z + 2.0, K) ? s : 0; if (st.there) P.pitch = damp(P.pitch, -0.42, 1.4); },
         cam(s) { const fy = floor(camp.x, camp.z, 60); return [[camp.x + 1.3 - 0.06 * s, fy + 1.45, camp.z - 4.2 + 0.1 * s], look(me(1.25), [camp.x, fy + 0.4, camp.z], 0.3), 50]; } },
+      // ── effects, for looking at them (not in the cut): a dry landing off the barrier (its dust, its fault), the walker close
+      // with its fault crackling over its skin
+      FXL: { dur: 9.4, tod: 11, weather: 'clear', T0: 164.9, start: [-22, 44, 0], view: 'third', zoom: 5.4, act: leap },
+      FXA: { dur: 8, tod: 17.6, weather: 'clear', T0: 60, start: [-118, 119, 80], fault: 3,
+        act(s, K) { if (s > 1.2 && s < 5.5) goTo(-112, 120.5, K); P.pitch = damp(P.pitch, -0.1, 1.2); },
+        cam(s) { const t = s / 8; return [[P.x - 3.3 + t * 0.7, P.y + 1.45, P.z + 3.1 - t * 0.9], me(0.95), 36]; } },
       // ── night, rain, the old depot (30_details: the workshop, its tubes and lamps, the van, the forklift, the hoist) ──
       // out in the rain by the van, the depot's lights inside; the walker comes past the van and goes in
       DV: { dur: 7, tod: 22.6, weather: 'rain', T0: 260, start: [40.5, 141, 175],
