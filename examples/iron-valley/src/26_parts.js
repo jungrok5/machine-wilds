@@ -1,8 +1,8 @@
-// 쇠울림 골짜기 · the machines' parts.  The legs are the kit's stock mechanisms (k.limbs); everything that makes a machine
+// Iron Valley · the machines' parts.  The legs are the kit's stock mechanisms (k.limbs); everything that makes a machine
 // this machine — hull, neck, head, load — is written here, each part in the frame of the one bone it rides.
 // A body, a head: x forward, y up, z right.  A neck link: X the pin, Y along it, Z its back.
 V.parts = {
-  // 두루미: a keel under a pale carapace, hip girders, a counterweight boom, a ladder neck and a head like a bird's — a
+  // Crane: a keel under a pale carapace, hip girders, a counterweight boom, a ladder neck and a head like a bird's — a
   // sensor block with one great lens and a long bill
   crane(k) {
     k.limbs({ style: 'shell' });
@@ -70,7 +70,7 @@ V.parts = {
     for (const e of k.S.extras) k.bone(e.name, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], e.name === 'mast' ? [0.07, 0.045, 0.02] : [0.045, 0.03, 0.012], { sides: k.n(6), caps: true }); });
     k.lamp('mast', { at: [0, 5.15, 0], dir: [0, 1, 0], color: [1, 0.18, 0.08], power: 0.7, range: 10, lens: 0.07, glow: 0.9 });
   },
-  // 솔개: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail (the blades weathered plate, only the leading one of each wing and the back still pale), an eye under a hooked brow.
+  // Kite: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail (the blades weathered plate, only the leading one of each wing and the back still pale), an eye under a hooked brow.
   // (a wing bone: X the leading edge's way (forward), Y out along the wing, Z up on the left wing and down on the right)
   kite(k) {
     k.bone('body', (g) => {
@@ -104,7 +104,7 @@ V.parts = {
     k.lamp('head', { name: 'eye', at: [0.3, -0.19, 0], dir: [0.62, -0.78, 0], color: [0.78, 0.92, 1.0], power: 30, cone: 7, range: 120, lens: 0.11, proud: 0.02 });
     k.lamp('wing_L2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [1, 0.08, 0.05], power: 0.9, range: 9, lens: 0.05, glow: 0.9 }); k.lamp('wing_R2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [0.1, 1, 0.3], power: 0.9, range: 9, lens: 0.05, glow: 0.9 });
   },
-  // 물떼새: the walker's own machine.  A pod between two hips, a counterweight boom behind, a short neck and a head that is mostly
+  // Plover: the walker's own machine.  A pod between two hips, a counterweight boom behind, a short neck and a head that is mostly
   // lamp; a bedroll, a canister and a whip aerial — somebody lives on it
   plover(k) {
     k.limbs({ style: 'shell' });
@@ -133,7 +133,7 @@ V.parts = {
     k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
     k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
   },
-  // 자라: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
+  // Turtle: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
   // three rows, forty years of moss on top; four sprawled girder legs come out from under the rim; a blunt head on a short neck
   jara(k) {
     k.limbs({ style: 'casing' });
@@ -167,7 +167,7 @@ V.parts = {
     for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.72, 0.05, s * 0.88], dir: [0.86, -0.28, s * 0.42], color: [1.0, 0.72, 0.3], power: 20, cone: 13, range: 80, lens: 0.24, proud: 0.03 });
     k.bone('tail', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 1.1, 0], [0, 2.2, 0]], [0.36, 0.22, 0.07], { sides: k.n(8), caps: true }); if (k.mid) { k.mat('rust'); for (const y of [0.3, 0.9, 1.5]) g.box(0, y, 0.2, 0.5 - y * 0.2, 0.3, 0.1, { soft: 0.3 }); } });
   },
-  // 가재: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
+  // Crayfish: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
   // it, two claws carried low in front, feelers, and two eyes on stalks that burn red
   gajae(k) {
     k.limbs({ style: 'casing' });
@@ -203,7 +203,7 @@ V.parts = {
       for (const s of [-1, 1]) { k.mat('joint'); g.tube([[0.3, 0.3, s * 0.4], [0.5, 0.75, s * 0.62], [0.72, 0.95, s * 0.7]], [0.07, 0.06, 0.09], { sides: k.n(7), caps: true }); } });
     for (const s of [-1, 1]) { k.lamp('head', { name: 'eye', at: [0.8, 0.96, s * 0.7], dir: [0.9, -0.3, s * 0.2], color: [1.0, 0.2, 0.08], power: 26, cone: 12, range: 90, lens: 0.11, proud: 0.03 }); k.lamp('head', { at: [1.22, -0.02, s * 0.2], dir: [1, -0.1, s * 0.2], color: [1, 0.3, 0.1], power: 1.2, range: 8, lens: 0.06, glow: 0.8 }); }
   },
-  // 공벌레: seven arches of plate from a closed nose to a closed tail, rust with two pale ones that were replaced, over a hull no bigger than a bath; six quick legs;
+  // Woodlouse: seven arches of plate from a closed nose to a closed tail, rust with two pale ones that were replaced, over a hull no bigger than a bath; six quick legs;
   // two feelers and two small lamps
   gong(k) {
     k.limbs({ style: 'girder' });
@@ -221,7 +221,7 @@ V.parts = {
     k.lamp('body', { at: [-1.36, 0.0, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.2, range: 3, lens: 0.03, glow: 0.7 });
     for (const n of ['feeler_L', 'feeler_R']) k.bone(n, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.4, 0], [0, 0.8, 0]], [0.014, 0.009, 0.003], { sides: k.n(5), caps: true }); });
   },
-  // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
+  // Porter: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
     k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
@@ -267,7 +267,7 @@ V.parts = {
     for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.3, -0.05, s * 0.48], dir: [0.96, -0.26, s * 0.08], color: [1.0, 0.62, 0.2], power: 22, cone: 14, range: 70, lens: 0.17, proud: 0.02 });
     k.lamp('body', { at: [-4.95, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.8, range: 9, lens: 0.1, glow: 0.8 });
   },
-  // 마루: a deck of girders as long as a street, a station on it gone to ruin and moss, a prow with two great eyes
+  // Ridge: a deck of girders as long as a street, a station on it gone to ruin and moss, a prow with two great eyes
   ridge(k) {
     k.limbs({ style: 'casing' });
     k.bone('body', (g) => {

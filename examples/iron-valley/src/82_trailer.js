@@ -1,9 +1,9 @@
-// 쇠울림 골짜기 · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
+// Iron Valley · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
 // trailer.mjs to draw its frames.  The camera is free; the walker's body is driven by keys; every shot sets its own hour,
 // weather and machines' clock.  Every machine in the cut is walking, flying or doing its big move.
 {
   V.cine = (h) => { const { P, M, ease, lerp, damp, at, low, floor, goTo, U, pose, rel, yawOf } = h;
-    const relic = U('마루'), jara = U('자라 1'), gajae = U('가재'), crane1 = U('두루미 1'), porter = U('등짐 1'), kite = U('솔개 3'), kp = (t) => M.cmd(kite, t).body.p;
+    const relic = U('Ridge'), jara = U('Turtle 1'), gajae = U('Crayfish'), crane1 = U('Crane 1'), porter = U('Porter 1'), kite = U('Kite 3'), kp = (t) => M.cmd(kite, t).body.p;
     const q1 = pose(relic, 142.0), q2 = pose(relic, 145.4), q3 = pose(relic, 149.6), far = rel(q1, 220, 0), c3 = rel(q3, 78, 7), qh = pose(relic, 150);
     const qn = pose(relic, 1006), qw = pose(jara, 66), qc = pose(crane1, 108), qt = pose(jara, 106), sg = qt.rt[1] > 0 ? 1 : -1, tGoal = rel(qt, 30, sg * 9.5), camp = V.camp || { x: 30, z: 123 };
     // the relic's lift (27_lift): where the cage comes down, where the walker comes from (out of its open side), where the cameras stand
@@ -152,7 +152,7 @@
     };
     // the machines near the walker turn their heads to it in every shot it is in (not in the ones it is not: dawn, the kite, the lookout)
     for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
-    return { fps: 24, shots, title: { big: '쇠울림 골짜기', small: 'MACHINE-WILDS', line: '브라우저에서 걷는 기계의 숲', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · 영상 무단 사용 · 재가공 금지', skip: 'Esc · 직접 걷기' },
+    return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };

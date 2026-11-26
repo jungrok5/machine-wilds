@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>쇠울림 골짜기</title>
-<meta name="description" content="거대 보행 기계 19대가 다니는 골짜기를 브라우저에서 걷는 WebGL 2 실시간 렌더링. ?film=1은 2분 47초 영화.">
+<title>Iron Valley</title>
+<meta name="description" content="Walk a valley where nineteen giant walking machines keep their rounds in the mist: real-time WebGL 2 in the browser. ?film=1 plays the film.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="쇠울림 골짜기">
-<meta property="og:description" content="거대 보행 기계 19대가 다니는 골짜기를 브라우저에서 걷는 WebGL 2 실시간 렌더링. ?film=1은 2분 47초 영화.">
+<meta property="og:title" content="Iron Valley">
+<meta property="og:description" content="Walk a valley where nineteen giant walking machines keep their rounds in the mist: real-time WebGL 2 in the browser. ?film=1 plays the film.">
 <meta property="og:url" content="https://jungrok5.github.io/machine-wilds/">
 <meta property="og:image" content="https://jungrok5.github.io/machine-wilds/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -35,10 +35,10 @@
 <body>
 <canvas id="view" tabindex="0"></canvas>
 <div id="hud"></div>
-<div id="veil"><div><b>쇠울림 골짜기</b><small>giants walk the valley where iron rings</small><div id="bar"><i></i></div><div id="step"></div></div></div>
+<div id="veil"><div><b>Iron Valley</b><small>giants walk the valley where iron rings</small><div id="bar"><i></i></div><div id="step"></div></div></div>
 <div id="err"></div>
 <script type="module">
-const REALM_META={"title":"쇠울림 골짜기","subtitle":"giants walk the valley where iron rings","lang":"ko","bg":"#07090b","description":"거대 보행 기계 19대가 다니는 골짜기를 브라우저에서 걷는 WebGL 2 실시간 렌더링. ?film=1은 2분 47초 영화.","url":"https://jungrok5.github.io/machine-wilds/","image":"https://jungrok5.github.io/machine-wilds/og.jpg"};
+const REALM_META={"title":"Iron Valley","subtitle":"giants walk the valley where iron rings","lang":"en","bg":"#07090b","description":"Walk a valley where nineteen giant walking machines keep their rounds in the mist: real-time WebGL 2 in the browser. ?film=1 plays the film.","url":"https://jungrok5.github.io/machine-wilds/","image":"https://jungrok5.github.io/machine-wilds/og.jpg"};
 const REALM_ASSETS={"source":"Poly Haven (https://polyhaven.com), CC0","res":"1k","textures":{"forest_leaves_03":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_03/forest_leaves_03_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_03/forest_leaves_03_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_03/forest_leaves_03_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_03/forest_leaves_03_disp_1k.jpg"},"tile":2.3,"name":"Forest Leaves 03","authors":["Rob Tuytel","Dimitrios Savva"]},"mud_forest":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mud_forest/mud_forest_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mud_forest/mud_forest_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mud_forest/mud_forest_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mud_forest/mud_forest_disp_1k.jpg"},"tile":2.35,"name":"Mud Forest","authors":["eye-candy.xyz"]},"river_small_rocks":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_disp_1k.jpg"},"tile":2.9,"name":"River Small Rocks","authors":["Rob Tuytel","Rico Cilliers"]},"mossy_rock":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_disp_1k.jpg"},"tile":3,"name":"Mossy Rock","authors":["Rob Tuytel"]},"pine_bark":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/pine_bark/pine_bark_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/pine_bark/pine_bark_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/pine_bark/pine_bark_arm_1k.jpg"},"tile":2,"name":"Pine Bark","authors":["Dimitrios Savva"]},"asphalt_02":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_disp_1k.jpg"},"tile":3,"name":"Asphalt 02","authors":["Rob Tuytel"]},"dirty_concrete":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirty_concrete/dirty_concrete_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirty_concrete/dirty_concrete_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirty_concrete/dirty_concrete_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirty_concrete/dirty_concrete_disp_1k.jpg"},"tile":3,"name":"Dirty Concrete","authors":["Rob Tuytel"]},"cracked_concrete":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cracked_concrete/cracked_concrete_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cracked_concrete/cracked_concrete_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cracked_concrete/cracked_concrete_arm_1k.jpg","disp":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cracked_concrete/cracked_concrete_disp_1k.jpg"},"tile":2,"name":"Cracked Concrete","authors":["Dimitrios Savva"]},"rusty_metal_02":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_arm_1k.jpg"},"tile":1,"name":"Rusty Metal 02","authors":["Rob Tuytel"]},"rust_coarse_01":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rust_coarse_01/rust_coarse_01_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rust_coarse_01/rust_coarse_01_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rust_coarse_01/rust_coarse_01_arm_1k.jpg"},"tile":2.2,"name":"Rust Coarse 01","authors":["Dimitrios Savva","Rico Cilliers"]},"corrugated_iron_02":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/corrugated_iron_02/corrugated_iron_02_diff_1k.jpg","nor":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/corrugated_iron_02/corrugated_iron_02_nor_gl_1k.jpg","arm":"https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/corrugated_iron_02/corrugated_iron_02_arm_1k.jpg"},"tile":2.7,"name":"Corrugated Iron 02","authors":["Jenelle van Heerden","Sergej Majboroda"]}},"models":{"covered_car":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/covered_car/covered_car_1k.gltf","inc":{"covered_car.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/covered_car/covered_car.bin","textures/covered_car_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/covered_car/covered_car_nor_gl_1k.jpg","textures/covered_car_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/covered_car/covered_car_arm_1k.jpg","textures/covered_car_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/covered_car/covered_car_diff_1k.jpg"},"maps":"dna","alpha":null,"name":"Covered Car","authors":["MP"],"roots":[{"min":[0.67713,0.00088,0.98148],"max":[0.83816,0.59912,1.57972],"tris":2016},{"min":[-0.76296,0,0.9806],"max":[-0.60193,0.6,1.5806],"tris":2016},{"min":[-0.75296,0.00003,-1.59937],"max":[-0.59193,0.59997,-0.99943],"tris":2016},{"min":[0.66713,0,-1.5994],"max":[0.82816,0.6,-0.9994],"tris":2016},{"min":[-0.84668,0.12576,-2.16632],"max":[0.94228,1.41111,2.21394],"tris":4528}],"bytes":2349276},"concrete_road_barrier_02":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/concrete_road_barrier_02/concrete_road_barrier_02_1k.gltf","inc":{"concrete_road_barrier_02.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/concrete_road_barrier_02/concrete_road_barrier_02.bin","textures/concrete_road_barrier_02_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier_02/concrete_road_barrier_02_arm_1k.jpg","textures/concrete_road_barrier_02_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier_02/concrete_road_barrier_02_nor_gl_1k.jpg","textures/concrete_road_barrier_02_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier_02/concrete_road_barrier_02_diff_1k.jpg"},"maps":"dna","alpha":null,"name":"Concrete Road Barrier 02","authors":["Amal Kumar"],"roots":[{"min":[-0.77618,-0.00279,-0.25405],"max":[0.78923,1.10916,0.18809],"tris":23822}],"bytes":2928100},"old_tyre":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/old_tyre/old_tyre_1k.gltf","inc":{"textures/old_tyre_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_diff_1k.jpg","textures/old_tyre_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_arm_1k.jpg","old_tyre.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/old_tyre/old_tyre.bin","textures/old_tyre_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_nor_gl_1k.jpg"},"maps":"dna","alpha":null,"name":"Old Tyre","authors":["MP"],"roots":[{"min":[-0.3,-0.3,-0.08276],"max":[0.3,0.3,0.08224],"tris":2880}],"bytes":2237203},"rusted_wheel_rim_01":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rusted_wheel_rim_01/rusted_wheel_rim_01_1k.gltf","inc":{"textures/rusted_wheel_rim_01_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rusted_wheel_rim_01/rusted_wheel_rim_01_arm_1k.jpg","rusted_wheel_rim_01.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rusted_wheel_rim_01/rusted_wheel_rim_01.bin","textures/rusted_wheel_rim_01_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rusted_wheel_rim_01/rusted_wheel_rim_01_nor_gl_1k.jpg","textures/rusted_wheel_rim_01_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rusted_wheel_rim_01/rusted_wheel_rim_01_diff_1k.jpg"},"maps":"dna","alpha":null,"name":"Rusted Wheel Rim 01","authors":["John Hutcheson"],"roots":[{"min":[-0.20245,-0.20246,-0.07502],"max":[0.20245,0.20246,0.07502],"tris":16440}],"bytes":2597489},"barrel_03":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/barrel_03/barrel_03_1k.gltf","inc":{"textures/barrel_03_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/barrel_03/barrel_03_diff_1k.jpg","barrel_03.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/barrel_03/barrel_03.bin","textures/barrel_03_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/barrel_03/barrel_03_nor_gl_1k.jpg","textures/barrel_03_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/barrel_03/barrel_03_arm_1k.jpg"},"maps":"dna","alpha":null,"name":"Barrel 03","authors":["Serhii Khromov"],"roots":[{"min":[-0.31697,0,-0.3193],"max":[0.31697,0.93047,0.3193],"tris":1473}],"bytes":574136},"old_military_crate":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/old_military_crate/old_military_crate_1k.gltf","inc":{"textures/old_military_crate_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_military_crate/old_military_crate_nor_gl_1k.jpg","textures/old_military_crate_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_military_crate/old_military_crate_diff_1k.jpg","textures/old_military_crate_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_military_crate/old_military_crate_arm_1k.jpg","old_military_crate.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/old_military_crate/old_military_crate.bin"},"maps":"dna","alpha":null,"name":"Old Military Crate","authors":["Jack Mava"],"roots":[{"min":[-0.885,0.24395,-0.229],"max":[-0.115,0.30092,0.23323],"tris":2177},{"min":[-0.71804,0.20643,0.2197],"max":[-0.28196,0.26913,0.22573],"tris":660},{"min":[-0.70776,0.12521,0.21821],"max":[-0.29224,0.23568,0.23771],"tris":1128},{"min":[-0.91304,0.04622,-0.18813],"max":[-0.19585,0.25823,0.30862],"tris":1806},{"min":[-0.90235,-0.00001,-0.229],"max":[-0.09765,0.25793,0.219],"tris":4705},{"min":[0.115,0.12335,-0.66709],"max":[0.885,0.25794,-0.21501],"tris":2177},{"min":[0.28196,0.15296,0.22057],"max":[0.71804,0.21253,0.24677],"tris":660},{"min":[0.29224,0.12521,0.21821],"max":[0.70776,0.23568,0.23771],"tris":1128},{"min":[0.08696,0.04622,-0.18813],"max":[0.80415,0.25823,0.30862],"tris":1806},{"min":[0.09765,-0.00001,-0.229],"max":[0.90235,0.25793,0.219],"tris":4705}],"bytes":2495423},"metal_jerrycan":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/metal_jerrycan/metal_jerrycan_1k.gltf","inc":{"textures/metal_jerrycan_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/metal_jerrycan/metal_jerrycan_nor_gl_1k.jpg","textures/metal_jerrycan_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/metal_jerrycan/metal_jerrycan_diff_1k.jpg","textures/metal_jerrycan_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/metal_jerrycan/metal_jerrycan_arm_1k.jpg","metal_jerrycan.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/metal_jerrycan/metal_jerrycan.bin"},"maps":"dna","alpha":null,"name":"Metal Jerrycan","authors":["Sean Buckley"],"roots":[{"min":[-0.17016,0.00001,-0.08861],"max":[0.18017,0.45517,0.08313],"tris":20022}],"bytes":3034558},"portable_generator":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/portable_generator/portable_generator_1k.gltf","inc":{"textures/portable_generator_spec_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/portable_generator/portable_generator_spec_1k.jpg","textures/portable_generator_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/portable_generator/portable_generator_nor_gl_1k.jpg","textures/portable_generator_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/portable_generator/portable_generator_diff_1k.jpg","textures/portable_generator_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/portable_generator/portable_generator_arm_1k.jpg","portable_generator.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/portable_generator/portable_generator.bin"},"maps":"dna","alpha":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/portable_generator/portable_generator_alpha_1k.jpg","name":"Portable Generator","authors":["James Ray Cock"],"roots":[{"min":[-0.41452,0.00006,-0.282],"max":[0.40382,0.57698,0.282],"tris":26299},{"min":[0.08895,0.41267,0.23528],"max":[0.09948,0.44295,0.24425],"tris":38},{"min":[-0.27348,0.42883,0.21718],"max":[-0.24689,0.44879,0.25541],"tris":32},{"min":[0.00829,0.42523,0.2323],"max":[0.01643,0.43346,0.24719],"tris":50}],"bytes":3493912,"diff":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/portable_generator/portable_generator_diff_1k.jpg"},"utility_box_01":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/utility_box_01/utility_box_01_1k.gltf","inc":{"textures/utility_box_01_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/utility_box_01/utility_box_01_diff_1k.jpg","textures/utility_box_01_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/utility_box_01/utility_box_01_nor_gl_1k.jpg","textures/utility_box_01_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/utility_box_01/utility_box_01_arm_1k.jpg","utility_box_01.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/utility_box_01/utility_box_01.bin"},"maps":"dna","alpha":null,"name":"Utility Box 01","authors":["James Ray Cock"],"roots":[{"min":[-0.26,0,-0.21],"max":[0.26,1.12033,0.222],"tris":4404}],"bytes":1977061},"rock_moss_set_01":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_01/rock_moss_set_01_1k.gltf","inc":{"textures/rock_moss_set_01_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_nor_gl_1k.jpg","rock_moss_set_01.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_01/rock_moss_set_01.bin","textures/rock_moss_set_01_rough_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_rough_1k.jpg","textures/rock_moss_set_01_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_diff_1k.jpg"},"maps":"dna","alpha":null,"name":"Rock Moss Set 01","authors":["Kless Gyzen"],"roots":[{"min":[-3.91402,-0.65657,-3.82382],"max":[-1.67639,0.81613,-0.45502],"tris":11000},{"min":[-1.27305,-0.46562,-3.7672],"max":[1.38233,0.79637,-0.50348],"tris":10996},{"min":[1.982,-0.41087,-3.1464],"max":[4.09058,0.68882,-1.06682],"tris":5000},{"min":[-3.65028,-0.66097,0.6898],"max":[-1.52265,1.10735,2.65454],"tris":10589},{"min":[-0.71067,-0.57255,0.12628],"max":[1.10666,0.6329,3.12494],"tris":16548},{"min":[1.59922,-0.52806,0.09707],"max":[3.72521,0.7338,2.85438],"tris":8994}],"bytes":1937065},"rock_moss_set_02":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_02/rock_moss_set_02_1k.gltf","inc":{"textures/rock_moss_set_02_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_02/rock_moss_set_02_nor_gl_1k.jpg","textures/rock_moss_set_02_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_02/rock_moss_set_02_diff_1k.jpg","textures/rock_moss_set_02_rough_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_02/rock_moss_set_02_rough_1k.jpg","rock_moss_set_02.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_02/rock_moss_set_02.bin"},"maps":"dna","alpha":null,"name":"Rock Moss Set 02","authors":["Kless Gyzen"],"roots":[{"min":[-1.50187,-0.011,0.28473],"max":[-0.29554,0.51767,1.26837],"tris":8000},{"min":[0.07619,-0.03788,0.20277],"max":[1.70512,0.57198,1.21424],"tris":7894},{"min":[-0.59798,-0.03222,-1.68709],"max":[0.98158,0.70379,-0.24363],"tris":7999},{"min":[1.58072,-0.31518,-1.69257],"max":[3.67215,0.94125,-0.55429],"tris":7928},{"min":[2.26658,-0.02432,-0.05571],"max":[4.46951,0.74413,1.49593],"tris":8000},{"min":[-3.11022,-0.25733,-1.91449],"max":[-1.15652,1.05319,-0.3856],"tris":8000},{"min":[-3.80865,-0.09288,0.11632],"max":[-2.11564,0.65192,1.33147],"tris":9826}],"bytes":1942240},"boulder_01":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/boulder_01/boulder_01_1k.gltf","inc":{"textures/boulder_01_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/boulder_01/boulder_01_arm_1k.jpg","textures/boulder_01_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/boulder_01/boulder_01_diff_1k.jpg","boulder_01.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/boulder_01/boulder_01.bin","textures/boulder_01_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/boulder_01/boulder_01_nor_gl_1k.jpg"},"maps":"dna","alpha":null,"name":"Boulder 01","authors":["Rico Cilliers"],"roots":[{"min":[-0.74816,-0.07364,-0.94844],"max":[0.52398,0.93019,0.88189],"tris":66122}],"bytes":5771986},"rock_face_02":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_face_02/rock_face_02_1k.gltf","inc":{"textures/rock_face_02_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_face_02/rock_face_02_nor_gl_1k.jpg","textures/rock_face_02_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_face_02/rock_face_02_arm_1k.jpg","rock_face_02.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_face_02/rock_face_02.bin","textures/rock_face_02_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_face_02/rock_face_02_diff_1k.jpg"},"maps":"dna","alpha":null,"name":"Rock Face 02","authors":["Dario Barresi","Rico Cilliers"],"roots":[{"min":[-2.2611,-0.13962,-1.18819],"max":[0.45009,2.33235,0.93851],"tris":29566}],"bytes":3528386},"dead_tree_trunk":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/dead_tree_trunk/dead_tree_trunk_1k.gltf","inc":{"textures/dead_tree_trunk_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_arm_1k.jpg","textures/dead_tree_trunk_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_nor_gl_1k.jpg","textures/dead_tree_trunk_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_diff_1k.jpg","dead_tree_trunk.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/dead_tree_trunk/dead_tree_trunk.bin"},"maps":"dna","alpha":null,"name":"Dead Tree Trunk","authors":["Rob Tuytel"],"roots":[{"min":[-1.5391,-0.02773,-0.1708],"max":[1.51191,0.2627,0.10672],"tris":101802}],"bytes":4787539},"tree_stump_02":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/tree_stump_02/tree_stump_02_1k.gltf","inc":{"textures/tree_stump_02_nor_gl_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_02/tree_stump_02_nor_gl_1k.jpg","tree_stump_02.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/tree_stump_02/tree_stump_02.bin","textures/tree_stump_02_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_02/tree_stump_02_diff_1k.jpg","textures/tree_stump_02_arm_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_02/tree_stump_02_arm_1k.jpg"},"maps":"dna","alpha":null,"name":"Tree Stump 02","authors":["Rob Tuytel"],"roots":[{"min":[-0.71789,-0.23349,-0.67431],"max":[0.80381,0.2886,0.71823],"tris":62345}],"bytes":4469340},"dry_branches_medium_01":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/dry_branches_medium_01/dry_branches_medium_01_1k.gltf","inc":{"textures/dry_branches_medium_01_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dry_branches_medium_01/dry_branches_medium_01_diff_1k.jpg","dry_branches_medium_01.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/dry_branches_medium_01/dry_branches_medium_01.bin"},"maps":"d","alpha":null,"name":"Dry Branches Medium 01","authors":["Rico Cilliers"],"roots":[{"min":[0.38148,-0.00462,-0.45561],"max":[0.51205,0.13864,0.32151],"tris":5616},{"min":[-0.0426,-0.00179,-0.51707],"max":[0.10856,0.1401,0.52143],"tris":5254},{"min":[-0.54744,-0.01653,-0.68983],"max":[-0.22437,0.32446,0.60932],"tris":5933}],"bytes":1249815},"fern_02":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fern_02/fern_02_1k.gltf","inc":{"textures/fern_02_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg","fern_02.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fern_02/fern_02.bin"},"maps":"d","alpha":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_alpha_1k.jpg","name":"Fern 02","authors":["Rob Tuytel","Rico Cilliers"],"roots":[{"min":[-0.52814,-0.03051,-0.42187],"max":[0.4616,0.39718,0.47182],"tris":2384},{"min":[0.57006,-0.02877,-0.41728],"max":[1.44439,0.32025,0.34794],"tris":2248},{"min":[-0.29766,-0.02877,0.68873],"max":[0.25428,0.25803,1.30215],"tris":784},{"min":[0.70922,-0.01358,0.64786],"max":[1.282,0.19951,1.24114],"tris":816}],"bytes":744818,"diff":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg"},"shrub_02":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_02/shrub_02_1k.gltf","inc":{"shrub_02.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_02/shrub_02.bin","textures/shrub_02_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_diff_1k.jpg"},"maps":"d","alpha":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_alpha_1k.jpg","name":"Shrub 02","authors":["Rico Cilliers"],"roots":[{"min":[-2.09217,-0.01162,-0.8834],"max":[-0.78016,1.67736,0.7576],"tris":7590},{"min":[-0.54994,-0.00806,-0.51632],"max":[0.5603,1.49825,0.7636],"tris":5242},{"min":[0.82727,-0.02226,-1.13002],"max":[2.59405,1.2925,1.15504],"tris":9234},{"min":[2.88147,-0.02519,-0.65397],"max":[3.96171,1.20405,0.44404],"tris":5188}],"bytes":1278487,"diff":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_diff_1k.jpg"},"fir_sapling":{"file":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_sapling/fir_sapling_1k.gltf","inc":{"textures/fir_sapling_branches_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling/fir_sapling_branches_diff_1k.jpg","textures/fir_sapling_twigs_diff_1k.jpg":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling/fir_sapling_twigs_diff_1k.jpg","fir_sapling.bin":"https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fir_sapling/fir_sapling.bin"},"maps":"d","alpha":null,"alphaBy":{"twigs":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_sapling/fir_sapling_twigs_alpha_1k.jpg"},"name":"Fir Sapling","authors":["Rob Tuytel","Rico Cilliers"],"roots":[{"min":[-0.43696,-0.0079,-0.42621],"max":[0.42419,1.29284,0.39603],"tris":157402},{"min":[0.67424,-0.00001,-0.43038],"max":[1.31415,0.95158,0.38718],"tris":150876},{"min":[1.68358,-0.00007,-0.31993],"max":[2.30577,0.73563,0.31407],"tris":124743}],"bytes":22810508,"heavy":true}},"atlases":{"fir_tree_01:twig":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_twig_diff_1k.jpg","alpha":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fir_tree_01/fir_tree_01_twig_alpha_1k.jpg"}},"pine_tree_01:twig":{"files":{"diff":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_twig_diff_1k.jpg","alpha":"https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_tree_01/pine_tree_01_twig_alpha_1k.jpg"}}},"heavyBytes":22810508,"bytes":100998746,"cdn":true};
 /**
  * @license
@@ -8095,7 +8095,7 @@ void main(){
 // where on it, clamp(x, z) → [x, z] (where on it one may walk), update(P, F) (the realm's: getting off, moving on) }.
 {
   const T = THREE;
-  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, view: 'first', zoom: { first: 1, third: 4.4, top: 13 }, torch: !LR.RENDER || LR.q('torch') === '1', prep: 0, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
+  const P = (LR.player = { input: 'keys', x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, view: 'first', zoom: { first: 1, third: 4.4, top: 13 }, torch: !LR.RENDER || LR.q('torch') === '1', prep: 0, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
   const W = LR.world; P.hooks = []; P.ride = null;
   // the floor under a point: land, or a deck within a step of where we stand
   P.groundAt = (x, z, yNow) => {
@@ -8145,7 +8145,7 @@ void main(){
   P.zoomBy = (k) => { const r = ZR[P.view], z = P.zoom; z[P.view] = LR.clamp(z[P.view] * (P.view === 'first' ? 1 / k : k), r[0], r[1]); LR.emit('zoom', P.view, z[P.view]); };
   P.bind = (canvas) => {
     const K = P.keys, move = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyQ', 'KeyE', 'Space']);
-    window.addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; const was = K[e.code]; K[e.code] = true; if (move.has(e.code)) { e.preventDefault(); P.stopTour(); } if (!was && !e.ctrlKey && !e.metaKey) { if (e.code === 'KeyR') P.useKey = true; else if (e.code === 'KeyV') P.setView(); else if (e.code === 'KeyB') { P.torch = !P.torch; LR.emit('torch', P.torch); } else if (e.code === 'Equal' || e.code === 'NumpadAdd') P.zoomBy(0.8); else if (e.code === 'Minus' || e.code === 'NumpadSubtract') P.zoomBy(1.25); } LR.emit('key', e.code, e); });
+    window.addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; P.input = 'keys'; if (LR.hud && LR.hud.menu) { if (!e.repeat) LR.emit('key', e.code, e); return; }      /* the menu is open: its keys, not the walk */ const was = K[e.code]; K[e.code] = true; if (move.has(e.code)) { e.preventDefault(); P.stopTour(); } if (!was && !e.ctrlKey && !e.metaKey) { if (e.code === 'KeyR') P.useKey = true; else if (e.code === 'KeyV') P.setView(); else if (e.code === 'KeyB') { P.torch = !P.torch; LR.emit('torch', P.torch); } else if (e.code === 'Equal' || e.code === 'NumpadAdd') P.zoomBy(0.8); else if (e.code === 'Minus' || e.code === 'NumpadSubtract') P.zoomBy(1.25); } LR.emit('key', e.code, e); });
     canvas.addEventListener('wheel', (e) => { e.preventDefault(); P.zoomBy(Math.exp(LR.clamp(e.deltaY, -240, 240) * 0.0016)); }, { passive: false });
     window.addEventListener('keyup', (e) => { K[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in K) K[k] = false; });
@@ -8162,7 +8162,7 @@ void main(){
         if (o) { const d0 = Math.hypot(s.x - o.x, s.y - o.y), d1 = Math.hypot(t.clientX - o.x, t.clientY - o.y); if (d0 > 8 && d1 > 8) P.zoomBy(d0 / d1); s.t0 = -1e9; o.t0 = -1e9; } else { P.look.dx += (t.clientX - s.x) * 2.4; P.look.dy += (t.clientY - s.y) * 2.4; P.stopTourLook(); } } s.x = t.clientX; s.y = t.clientY; } e.preventDefault(); };
     const tup = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (s && s.left) { P.stick.active = false; P.stick.x = P.stick.y = 0; LR.emit('stick', P.stick); }
         else if (s && performance.now() - s.t0 < 260 && Math.hypot(t.clientX - s.x0, t.clientY - s.y0) < 14) { P.tapHop = true; P.stopTour(); }      /* a tap of the looking thumb is a hop */ touches.delete(t.identifier); } e.preventDefault(); };
-    canvas.addEventListener('touchstart', tdown, { passive: false }); canvas.addEventListener('touchmove', tmove, { passive: false }); canvas.addEventListener('touchend', tup, { passive: false }); canvas.addEventListener('touchcancel', tup, { passive: false });
+    canvas.addEventListener('touchstart', (e) => { P.input = 'touch'; tdown(e); }, { passive: false }); canvas.addEventListener('touchmove', tmove, { passive: false }); canvas.addEventListener('touchend', tup, { passive: false }); canvas.addEventListener('touchcancel', tup, { passive: false });
   };
   // looking about during the tour only pauses its own head movement; walking input ends it
   P.stopTourLook = () => { P.lookHold = 4; };
@@ -8180,6 +8180,8 @@ void main(){
     if (navigator.getGamepads) { const dz = (v) => (Math.abs(v) < 0.16 ? 0 : (v - Math.sign(v) * 0.16) / 0.84);
       for (const gp of navigator.getGamepads()) { if (!gp || !gp.connected || gp.axes.length < 2) continue;
         const ax = dz(gp.axes[0]), ay = dz(gp.axes[1]), rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0), b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
+        if (ax || ay || rx || ry || gp.buttons.some((q) => q.pressed)) P.input = 'pad';      /* (the HUD shows a pad's buttons from then on) */
+        if (b(9) && !pad.s9) LR.emit('key', 'PadStart'); pad.s9 = b(9);
         if (ax || ay) { pad.x += ax; pad.y += ay; P.stopTour(); }
         if (rx || ry) { P.yaw += rx * Math.abs(rx) * 2.6 * dt; P.pitch = LR.clamp(P.pitch - ry * Math.abs(ry) * 1.9 * dt, -1.35, 1.35); P.stopTourLook(); }
         if (b(6) || b(7) || b(10)) pad.run = true; if (b(0)) { pad.hop = true; P.stopTour(); } if (b(2)) pad.use = true;
@@ -8735,107 +8737,178 @@ void main(){
 
 
 // ── lib/88_hud.js ──
-// machine-wilds · 88_hud — what is on the glass: the place and the hour, buttons for the hour and the weather, an
-// automatic round, quality and sound, a name card when you walk into a named place, the thumb stick on touch screens,
-// and the governor that keeps the frame rate by changing the internal resolution.
+// machine-wilds · 88_hud — what is on the glass, laid out the way a console game lays it out: the walker's own machine and
+// where it is (top left), a compass with the giants, the named places and anything you can use on it (top), what the
+// buttons do now (bottom right: keys, or a pad's face buttons once a pad is used), a prompt with its key when something can
+// be used (and a marker over it from further off), the place's name when you walk into it, and a menu (Tab · the ☰ chip ·
+// a pad's Start) holding the hour, the weather, the camera, quality, sound and every key.  Also the thumb stick on touch
+// screens, and the governor that keeps the frame rate by changing the internal resolution.
+//
+// Things to use: LR.interact.add({ poll(P) → null | { state: 'ready' | 'wait', label, sub, at: [x, y, z] | null, range, see } }).
+// 'ready' within range (or anywhere, at: null) puts up the prompt with the use key (R · a pad's X); a marker with its
+// distance stands over `at` from `see` metres (default 60).  The realm does the thing itself when P.use comes (80_player).
 {
-  const H = (LR.hud = { els: {}, fps: 60, show: true });
+  const H = (LR.hud = { els: {}, fps: 60, show: true, menu: false });
+  LR.interact = LR.interact || { list: [], add(o) { this.list.push(o); return o; } };
   // strings: a realm overrides any of these with LR.start({ strings: { … } })
   H.t = {
-    dawn: 'Dawn', day: 'Day', dusk: 'Dusk', night: 'Night', clear: 'Clear', rain: 'Rain', snow: 'Winter', auto: 'Auto', walk: 'Tour',
-    wx: { clear: 'clear', rain: 'rain', snow: 'snow', winter: 'winter', overcast: 'overcast', mist: 'mist' }, mist: 'Mist',
-    hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
-    hintTouch: 'left thumb walks · right thumb looks',
-    scans: 'Scanned surfaces and objects: Poly Haven · CC0',
-    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['R', 'use: the lift\'s cage, off the deck'], ['V', 'camera: inside · behind · above'], ['wheel / + −', 'nearer · further'], ['B', 'lamp'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['L', 'the lens while you walk: depth of field (the tour always has it)'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
-    cam: 'Camera: inside · behind · above (V)', zin: 'Nearer (+ or wheel)', zout: 'Further (− or wheel)', torch: 'Lamp (B)', views: { first: 'inside', third: 'behind', top: 'above' }, quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour', lensOn: 'Lens on: what you are not looking at goes soft — L again to switch it off', lensOff: 'Lens off', lensNone: 'This quality has no lens — raise it with G',
+    dawn: 'Dawn', day: 'Day', dusk: 'Dusk', night: 'Night', clear: 'Clear', rain: 'Rain', snow: 'Snow', auto: 'Cycle', walk: 'Tour', mist: 'Mist',
+    wx: { clear: 'clear', rain: 'rain', snow: 'snow', winter: 'winter', overcast: 'overcast', mist: 'mist', autumn: 'autumn' },
+    hint: 'Tab · the menu, the hour, the weather and every key',
+    hintTouch: 'left thumb walks · right thumb looks · ☰ menu',
+    scans: 'Scans: Poly Haven · CC0',
+    cam: 'Camera', zin: 'Nearer', zout: 'Further', torch: 'Lamp', lens: 'Depth of field', views: { first: 'inside', third: 'behind', top: 'above' },
+    quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', stats: 'Stats', hide: 'Hide HUD',
+    menu: 'Menu', close: 'Close', time: 'Time', weather: 'Weather', camera: 'Camera', system: 'System', controls: 'Controls', on: 'on', off: 'off',
+    keyboard: 'Keyboard', gamepad: 'Gamepad', discovered: 'Discovered', fault: 'Fault', watching: 'is watching you', tap: 'Tap', noticed: 'has seen you', use: 'Use',
+    legend: { move: 'Move', look: 'Look', run: 'Run', hop: 'Hop', view: 'Camera', lamp: 'Lamp', menu: 'Menu' },
+    help: [['W A S D · ↑ ↓', 'walk', 'left stick'], ['Q E · ← →', 'turn', 'right stick'], ['mouse', 'look (click to capture, Esc to release)', 'right stick'], ['Shift', 'run', 'trigger'], ['Space', 'hop', 'A'],
+      ['R', 'use (when a prompt shows)', 'X'], ['V', 'camera: inside · behind · above', 'Y'], ['wheel · + −', 'nearer · further', 'd-pad ↑ ↓'], ['B', 'lamp', ''], ['Tab', 'menu', 'Start'],
+      ['1 2 3 4', 'dawn · day · dusk · night', ''], ['5 6 7 8', 'clear · rain · snow · mist', ''], ['T', 'cycle the hour and the weather', ''], ['C', 'camera tour', ''], ['L', 'depth of field while walking', ''],
+      ['G', 'quality', ''], ['M', 'sound', ''], ['F', 'full screen', ''], ['P', 'fps · resolution · draw calls', ''], ['H', 'hide the HUD', '']],
+    taking: 'You have the walk · C for the tour', lensOn: 'Depth of field on · L to turn it off', lensOff: 'Depth of field off', lensNone: 'No depth of field at this quality · G to change it',
   };
   const ICON = {
-    mist: '<path d="M4 8h13M7 12h13M4 16h11M9 20h9"/>',
-    cam: '<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.4"/>', zin: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5M7.8 10.5h5.4M10.5 7.8v5.4"/>', zout: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5M7.8 10.5h5.4"/>', torch: '<path d="M9 3h6l-1 6v9a2 2 0 0 1-4 0V9z"/><path d="M12 12v2"/>',
-    dawn: '<path d="M3 17h18M6 13a6 6 0 0 1 12 0M12 3v3M4.5 7.5l2 2M19.5 7.5l-2 2"/>', day: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
-    dusk: '<path d="M3 18h18M7 14a5 5 0 0 1 10 0M12 4v4M9 6l3 3 3-3"/>', night: '<path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/>',
-    clear: '<circle cx="9" cy="9" r="3.2"/><path d="M9 2.5v1.8M2.5 9h1.8M4.4 4.4l1.3 1.3M13.6 4.4l-1.3 1.3"/><path d="M8 19h9a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.3 1.5A2.8 2.8 0 0 0 8 19z"/>', rain: '<path d="M7 14h10a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.4 1.4A2.9 2.9 0 0 0 7 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
-    snow: '<path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17M12 6l-2-2M12 6l2-2M12 18l-2 2M12 18l2 2"/>', auto: '<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/>',
-    walk: '<circle cx="13" cy="4.5" r="1.8"/><path d="M9 21l2-6-2-3 1.5-4.5 3 1.5 2 3 3 1M11 15l3 2 1 4M10.5 7.5 7 9.5l-1 3"/>', sound: '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/>', mute: '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/>',
-    full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', keys: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+    gh: '<path fill="currentColor" stroke="none" d="M12 1.6a10.4 10.4 0 0 0-3.3 20.3c.5.1.7-.2.7-.5v-1.8c-2.9.6-3.5-1.4-3.5-1.4-.5-1.2-1.2-1.5-1.2-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.5 1.1 3.1.9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.2-4.7-5.1 0-1.1.4-2 1.1-2.8-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.2 0c2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8.7.8 1.1 1.7 1.1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.4 10.4 0 0 0 12 1.6z"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', bolt: '<path fill="currentColor" stroke="none" d="M13 2 4 14h6l-1 8 9-12h-6z"/>', eye: '<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/>',
   };
-  // the GitHub mark (filled), for a realm that links its source: strings.link = { href, title }
-  ICON.gh = '<path fill="currentColor" stroke="none" d="M12 1.6a10.4 10.4 0 0 0-3.3 20.3c.5.1.7-.2.7-.5v-1.8c-2.9.6-3.5-1.4-3.5-1.4-.5-1.2-1.2-1.5-1.2-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.5 1.1 3.1.9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.2-4.7-5.1 0-1.1.4-2 1.1-2.8-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.2 0c2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8.7.8 1.1 1.7 1.1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.4 10.4 0 0 0 12 1.6z"/>';
-  const svg = (n) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+  const svg = (n, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
   const CSS = `
-#hud{font:13px/1.35 system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#efe8d6;--gold:#dcc88f;--pane:rgba(14,15,18,.56);--line:rgba(220,200,143,.34)}
-#hud *{box-sizing:border-box} #hud.off .pane,#hud.off .card{opacity:0;pointer-events:none}
-.pane{position:absolute;pointer-events:auto;background:var(--pane);border:1px solid var(--line);border-radius:10px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:opacity .4s}
-#lr-place{left:max(14px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 14px 9px;pointer-events:none}
-#lr-place b{display:block;font:500 16px/1.2 Georgia,"Noto Serif KR","Nanum Myeongjo",serif;letter-spacing:.14em;color:var(--gold)}
-#lr-place span{display:block;margin-top:3px;font-size:12px;letter-spacing:.06em;opacity:.86;font-variant-numeric:tabular-nums}
-#lr-bar{left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:4px;padding:5px;max-width:calc(100vw - 20px)}
-#lr-top{right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;gap:4px;padding:5px}
-.pane button{appearance:none;border:0;background:transparent;color:inherit;font:inherit;display:flex;align-items:center;gap:6px;height:36px;min-width:36px;padding:0 10px;border-radius:7px;cursor:pointer;letter-spacing:.04em;white-space:nowrap}
-.pane a.ic{display:flex;align-items:center;justify-content:center;height:36px;min-width:36px;padding:0 9px;border-radius:7px;color:inherit} .pane a.ic:hover{background:rgba(255,255,255,.09)} .pane a.ic:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
-.pane button:hover{background:rgba(255,255,255,.09)} .pane button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
-.pane button[aria-pressed="true"]{background:rgba(220,200,143,.2);color:#fff3cf;box-shadow:inset 0 0 0 1px var(--line)}
-.pane .sep{width:1px;margin:6px 3px;background:var(--line)} .pane button.ic{padding:0 9px} .pane .wide{display:flex}
-#lr-num{position:absolute;right:max(14px,env(safe-area-inset-right));top:64px;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;text-align:right;opacity:.82;text-shadow:0 1px 2px #000;white-space:pre;pointer-events:none}
-#lr-hint{position:absolute;left:50%;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 62px);transform:translateX(-50%);padding:7px 14px;border-radius:99px;background:rgba(10,10,12,.5);font-size:12px;letter-spacing:.04em;opacity:0;transition:opacity .8s;pointer-events:none;text-align:center;max-width:calc(100vw - 24px)}
-#lr-hint.on{opacity:.92}
-#lr-credit{position:absolute;left:max(16px,env(safe-area-inset-left));top:calc(max(12px,env(safe-area-inset-top)) + 64px);font-size:10.5px;letter-spacing:.05em;color:#efe8d6;opacity:.78;text-decoration:none;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6);pointer-events:auto}
+#hud{font:13px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#f1ede4;--acc:#f0b552;--red:#ff5b49;--arc:#8fd2ff;--dim:rgba(241,237,228,.62);--sh:0 1px 2px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.55)}
+#hud *{box-sizing:border-box} #hud.off>*:not(#lr-flash):not(#lr-credit){opacity:0!important;pointer-events:none!important}
+#hud .k{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border:1px solid rgba(241,237,228,.75);border-bottom-width:2px;border-radius:4px;font:600 11px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:0;color:#fff;background:rgba(0,0,0,.38);text-shadow:none;white-space:nowrap}
+#hud .k.pad{border-radius:50%;min-width:22px;width:22px;padding:0;border-width:1.5px}
+#hud .k.pA{border-color:#7fdc7f;color:#9ff09f} #hud .k.pB{border-color:#ff7b6b;color:#ffa497} #hud .k.pX{border-color:#77b6ff;color:#a6ceff} #hud .k.pY{border-color:#f2d266;color:#ffe48f}
+#lr-unit{position:absolute;left:max(18px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));text-shadow:var(--sh);pointer-events:none;transition:opacity .4s}
+#lr-unit .nm{display:flex;align-items:baseline;gap:8px;font:700 13px/1 system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase}
+#lr-unit .nm i{font:500 10px/1 system-ui,sans-serif;letter-spacing:.2em;font-style:normal;color:var(--dim)}
+#lr-unit .bar{display:flex;gap:2px;margin:7px 0 0;width:188px;height:6px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+#lr-unit .bar b{flex:1;background:var(--acc);opacity:.92;transform:skewX(-18deg)} #lr-unit .bar b.dead{background:rgba(241,237,228,.18)} #lr-unit .bar b.zap{background:var(--arc);box-shadow:0 0 8px var(--arc)}
+#lr-unit .flt{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.24em;color:var(--arc);opacity:0;transition:opacity .08s;text-transform:uppercase}
+#lr-unit .flt.on{opacity:1}
+#lr-unit .loc{margin-top:10px;font:600 11px/1.2 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase}
+#lr-unit .loc span{display:block;margin-top:3px;font-weight:500;letter-spacing:.12em;color:var(--dim);font-variant-numeric:tabular-nums}
+#lr-unit.nobody .nm,#lr-unit.nobody .bar,#lr-unit.nobody .flt{display:none} #lr-unit.nobody .loc{margin-top:0}
+#lr-comp{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);width:min(560px,52vw);height:38px;pointer-events:none}
+#lr-comp canvas{width:100%;height:100%;display:block}
+#lr-watch{position:absolute;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 42px);transform:translateX(-50%);display:flex;align-items:center;gap:6px;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--red);text-shadow:var(--sh);opacity:0;transition:opacity .35s;pointer-events:none;white-space:nowrap}
+#lr-watch.on{opacity:1} #lr-watch.seen{animation:lrpulse .5s ease-out 3}
+@keyframes lrpulse{0%{transform:translateX(-50%) scale(1.25)}100%{transform:translateX(-50%) scale(1)}}
+#lr-chip{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;gap:6px;pointer-events:auto}
+#lr-chip button,#lr-chip a{appearance:none;display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid rgba(241,237,228,.28);border-radius:6px;background:rgba(8,9,11,.42);color:inherit;font:600 11px/1 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#lr-chip button:hover,#lr-chip a:hover{border-color:var(--acc)} #lr-chip button:focus-visible,#lr-chip a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#lr-legend{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-shadow:var(--sh);pointer-events:none;transition:opacity .4s}
+#lr-legend div{display:flex;align-items:center;gap:8px;font:600 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+#lr-legend div.use{color:var(--acc)} #lr-legend .ks{display:flex;gap:3px}
+#lr-prompt{position:absolute;left:50%;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 74px);transform:translateX(-50%) translateY(6px);display:flex;align-items:center;gap:12px;padding:10px 18px 10px 12px;background:linear-gradient(90deg,rgba(8,9,11,.72),rgba(8,9,11,.3));border-left:3px solid var(--acc);text-shadow:var(--sh);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+#lr-prompt{width:max-content;max-width:calc(100vw - 32px)} #lr-prompt.on{opacity:1;transform:translateX(-50%)} #hud.touch #lr-prompt.on:not(.wait){pointer-events:auto;cursor:pointer} #lr-prompt.wait{border-left-color:rgba(241,237,228,.4)}
+#lr-prompt .k{min-width:32px;height:32px;font-size:14px} #lr-prompt .k.pad{width:32px}
+#lr-prompt b{display:block;font:700 15px/1.15 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+#lr-prompt small{display:block;margin-top:3px;font-size:11px;letter-spacing:.1em;color:var(--dim)}
+#lr-prompt.wait .k{display:none} #lr-prompt .ring{width:32px;height:32px;border-radius:50%;border:2px solid rgba(241,237,228,.25);border-top-color:var(--acc);animation:lrspin 1s linear infinite;display:none} #lr-prompt.wait .ring{display:block}
+@keyframes lrspin{to{transform:rotate(360deg)}}
+#lr-marks{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#lr-marks .m{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:3px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:var(--sh);color:var(--acc);white-space:nowrap}
+#lr-marks .m i{width:12px;height:12px;border:2px solid currentColor;transform:rotate(45deg);box-shadow:0 0 8px rgba(0,0,0,.6)} #lr-marks .m.ready i{background:currentColor}
+#lr-marks .m span{color:#f1ede4} #lr-marks .m em{font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums}
+#lr-hint{position:absolute;left:50%;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 26px);transform:translateX(-50%);padding:7px 14px;font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;text-shadow:var(--sh);opacity:0;transition:opacity .8s;pointer-events:none;text-align:center;max-width:calc(100vw - 340px);white-space:nowrap}
+#lr-hint.on{opacity:.95}
+#lr-credit{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));font-size:10px;letter-spacing:.08em;color:#f1ede4;opacity:.62;text-decoration:none;text-shadow:var(--sh);pointer-events:auto}
 #lr-credit:hover,#lr-credit:focus-visible{opacity:1;text-decoration:underline}
-.card{position:absolute;left:50%;top:19%;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity 1.2s;pointer-events:none;text-shadow:0 2px 14px rgba(0,0,0,.75)}
-.card.on{opacity:1} .card b{display:block;font:500 clamp(22px,4.4vw,40px)/1.15 Georgia,"Noto Serif KR","Nanum Myeongjo",serif;letter-spacing:.2em;color:#f1e3b4}
-.card i{display:block;width:150px;height:1px;margin:10px auto 8px;background:linear-gradient(90deg,transparent,var(--gold),transparent)} .card span{font-size:13px;letter-spacing:.24em;opacity:.9}
-#lr-help{left:50%;top:50%;transform:translate(-50%,-50%);padding:16px 20px;display:none;max-width:calc(100vw - 28px);max-height:calc(100vh - 40px);overflow:auto}
-#lr-help.on{display:block} #lr-help table{border-collapse:collapse} #lr-help td{padding:3px 10px 3px 0;vertical-align:top} #lr-help td:first-child{color:var(--gold);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:nowrap}
-#lr-stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:1px solid var(--line);background:rgba(14,15,18,.25);display:none;pointer-events:none}
-#lr-stick i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(220,200,143,.4);border:1px solid var(--gold)}
+#lr-num{position:absolute;right:max(16px,env(safe-area-inset-right));top:60px;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;text-align:right;opacity:.85;text-shadow:0 1px 2px #000;white-space:pre;pointer-events:none}
+.card{position:absolute;left:50%;top:21%;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity 1.1s;pointer-events:none;text-shadow:0 2px 16px rgba(0,0,0,.8)}
+.card.on{opacity:1} .card em{display:block;font:700 10.5px/1 system-ui,sans-serif;font-style:normal;letter-spacing:.42em;text-transform:uppercase;color:var(--acc);min-height:1em}
+.card b{display:block;margin-top:10px;font:600 clamp(24px,4.2vw,44px)/1.1 system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#fff}
+.card i{display:block;width:220px;height:1px;margin:12px auto 9px;background:linear-gradient(90deg,transparent,rgba(241,237,228,.8),transparent)} .card span{font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.86}
+#lr-toast{position:absolute;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 64px);transform:translateX(-50%);padding:6px 14px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,transparent,rgba(160,28,18,.7),transparent);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#lr-toast.on{opacity:1}
+#lr-menu{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(6,7,9,.55),rgba(6,7,9,.86));pointer-events:auto;padding:20px}
+#lr-menu.on{display:flex}
+#lr-menu .box{width:min(860px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px 26px 24px;border-top:2px solid var(--acc);background:rgba(10,11,13,.82)}
+#lr-menu header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+#lr-menu header button.x{appearance:none;width:auto;height:auto;margin:0 0 0 8px;padding:6px 10px;background:transparent;border:1px solid rgba(241,237,228,.3);font:600 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase} #lr-menu header b{font:700 18px/1 system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase} #lr-menu header span{font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+#lr-menu .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px 22px}
+#lr-menu h4{margin:0 0 8px;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
+#lr-menu button{appearance:none;display:flex;align-items:center;gap:10px;width:100%;height:34px;margin:0 0 4px;padding:0 10px;border:1px solid transparent;border-radius:4px;background:rgba(255,255,255,.04);color:inherit;font:500 12.5px/1 system-ui,sans-serif;letter-spacing:.06em;cursor:pointer;text-align:left}
+#lr-menu button:hover{background:rgba(255,255,255,.1)} #lr-menu button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+#lr-menu button[aria-pressed="true"]{border-color:rgba(240,181,82,.7);background:rgba(240,181,82,.14)} #lr-menu button .k{min-width:26px} #lr-menu button em{margin-left:auto;font-style:normal;color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+#lr-menu table{width:100%;border-collapse:collapse;margin-top:6px} #lr-menu td{padding:5px 8px 5px 0;vertical-align:middle;font-size:12px;border-top:1px solid rgba(255,255,255,.06)} #lr-menu td:first-child,#lr-menu td:last-child{white-space:nowrap}
+#lr-menu th{text-align:left;font:600 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);padding:0 8px 6px 0}
+#lr-menu .ctl{margin-top:20px}
+#lr-stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:1px solid rgba(241,237,228,.4);background:rgba(8,9,11,.22);display:none;pointer-events:none}
+#lr-stick i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(240,181,82,.35);border:1px solid var(--acc)}
 #lr-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen}
-@media (max-width:720px){.pane button .lb{display:none}.pane button{padding:0 8px;height:40px;min-width:38px}#lr-place b{font-size:14px}#lr-num{top:66px;font-size:10px}#lr-top .wide{display:none}.pane a.ic{height:40px;min-width:38px;padding:0 8px}}
-@media (max-width:430px){#lr-bar{gap:1px;padding:4px}#lr-bar button{padding:0 5px;min-width:34px;height:38px}#lr-bar .sep{margin:7px 1px}}
-@media (prefers-reduced-motion:reduce){.pane,.card,#lr-hint{transition:none}}`;
+#hud.touch #lr-legend{display:none} #hud.touch .hk{display:none}
+@media (max-width:720px){#lr-toast{top:calc(max(14px,env(safe-area-inset-top)) + 128px)}#lr-comp{width:min(300px,46vw);top:calc(max(14px,env(safe-area-inset-top)) + 2px)}#lr-unit .bar{width:120px}#lr-unit .nm{font-size:11px}#lr-unit .nm i{display:none}#lr-chip .lb,#lr-chip .hk{display:none}#lr-legend{display:none}#lr-hint{max-width:calc(100vw - 24px);white-space:normal}#lr-watch{top:calc(max(14px,env(safe-area-inset-top)) + 44px)}#lr-menu .box{padding:16px}#lr-menu .ctl td:nth-child(3),#lr-menu .ctl th:nth-child(3){display:none}}
+@media (max-width:430px){#lr-comp{display:none}#lr-watch{top:calc(max(14px,env(safe-area-inset-top)) + 96px);left:18px;transform:none}}
+@media (prefers-reduced-motion:reduce){#lr-prompt,.card,#lr-hint,#lr-watch{transition:none;animation:none}}`;
   const el = (tag, attrs = {}, html = '') => { const e = document.createElement(tag); for (const k in attrs) e.setAttribute(k, attrs[k]); e.innerHTML = html; return e; };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  // the keys, or a pad's buttons once a pad has been used (P.input: 'keys' | 'pad' | 'touch')
+  const PAD = { R: ['X', 'pX'], Space: ['A', 'pA'], V: ['Y', 'pY'], Tab: ['☰', ''], Shift: ['RT', ''], WASD: ['LS', ''], Mouse: ['RS', ''], B: null };
+  const cap = (k) => { const pad = LR.player && LR.player.input === 'pad'; if (pad && PAD[k] !== undefined) { const p = PAD[k]; return p ? `<span class="k pad ${p[1]}">${p[0]}</span>` : ''; } return `<span class="k">${k}</span>`; };
   H.init = () => {
     if (LR.RENDER || LR.q('hud') === '0') return;
-    const t = Object.assign(H.t, (LR.cfg && LR.cfg.strings) || {}), root = document.getElementById('hud'), E = H.els, wx = LR.wx, meta = typeof REALM_META !== 'undefined' ? REALM_META : {};
-    document.head.appendChild(el('style', {}, CSS));
-    E.place = root.appendChild(el('div', { id: 'lr-place', class: 'pane' }, `<b>${meta.title || ''}</b><span></span>`));
+    const t = Object.assign(H.t, (LR.cfg && LR.cfg.strings) || {}), root = document.getElementById('hud'), E = H.els, wx = LR.wx, P = LR.player, meta = typeof REALM_META !== 'undefined' ? REALM_META : {};
+    document.head.appendChild(el('style', {}, CSS)); if (LR.gpu.mobile) root.classList.add('touch');
+    const body = () => LR.mech && LR.mech.units && LR.mech.units.find((u) => u.avatar);
+    E.unit = root.appendChild(el('div', { id: 'lr-unit' }, `<div class="nm"><span></span><i></i></div><div class="bar">${'<b></b>'.repeat(14)}</div><div class="flt">${svg('bolt', 11)}<span>${esc(t.fault)}</span></div><div class="loc">${esc(meta.title || t.title || '')}<span></span></div>`));
+    E.segs = [...E.unit.querySelectorAll('.bar b')]; E.flt = E.unit.querySelector('.flt');
+    E.comp = root.appendChild(el('div', { id: 'lr-comp' }, '<canvas></canvas>')); E.cv = E.comp.firstChild;
+    E.watch = root.appendChild(el('div', { id: 'lr-watch' }, `${svg('eye', 14)}<span></span>`));
+    E.toast = root.appendChild(el('div', { id: 'lr-toast' }));
+    const link = t.link && t.link.href ? `<a class="gh" href="${esc(t.link.href)}" target="_blank" rel="noopener" title="${esc(t.link.title || t.link.href)}" aria-label="${esc(t.link.title || t.link.href)}">${svg('gh', 16)}</a>` : '';
+    E.chip = root.appendChild(el('div', { id: 'lr-chip' }, `<button type="button" data-k="menu" aria-label="${esc(t.menu)}">${svg('menu', 16)}<span class="lb">${esc(t.menu)}</span><span class="k hk">Tab</span></button>${link}`));
     // where the scans come from stays on the glass (Poly Haven asks for it of pages that read from its server)
     // — and, while they are still arriving (the walk starts on the generated place), how many have
     { const MS = LR.models || {}, due = () => (LR.mat.due || 0) + (MS.due || 0), got = () => (LR.mat.arrived || 0) + (MS.arrived || 0);
       if (LR.ASSETS && (LR.mat.scanned > 0 || due() > 0)) { E.credit = root.appendChild(el('a', { id: 'lr-credit', href: 'https://polyhaven.com', target: '_blank', rel: 'noopener' }, t.scans));
         const say = () => { E.credit.textContent = t.scans + (got() < due() ? ` · ${got()} / ${due()}` : ''); }; say(); LR.on('scan', say); } }
-    const btn = (id, icon, label, title) => `<button type="button" data-k="${id}" title="${title || label}" aria-label="${title || label}" aria-pressed="false" class="${label ? '' : 'ic'}">${svg(icon)}${label ? `<span class="lb">${label}</span>` : ''}</button>`;
-    E.bar = root.appendChild(el('div', { id: 'lr-bar', class: 'pane', role: 'toolbar' }, btn('dawn', 'dawn', t.dawn) + btn('day', 'day', t.day) + btn('dusk', 'dusk', t.dusk) + btn('night', 'night', t.night) + '<span class="sep"></span>' + btn('clear', 'clear', t.clear) + btn('mist', 'mist', t.mist) + btn('rain', 'rain', t.rain) + btn('snow', 'snow', t.snow) + '<span class="sep"></span>' + btn('auto', 'auto', t.auto) + btn('walk', 'walk', t.walk)));
-    E.top = root.appendChild(el('div', { id: 'lr-top', class: 'pane', role: 'toolbar' }, (LR.mech && LR.mech.units && LR.mech.units.some((u) => u.avatar) ? btn('cam', 'cam', '', t.cam) + `<span class="wide">${btn('zin', 'zin', '', t.zin)}${btn('zout', 'zout', '', t.zout)}</span>` + btn('torch', 'torch', '', t.torch) + '<span class="sep"></span>' : '')      /* (on a narrow screen a pinch zooms: the two buttons go) */ + btn('gear', 'gear', '', t.quality) + btn('sound', 'mute', '', t.sound) + (t.link && t.link.href ? `<a class="ic" href="${String(t.link.href).replace(/"/g, '&quot;')}" target="_blank" rel="noopener" title="${(t.link.title || 'GitHub').replace(/"/g, '&quot;')}" aria-label="${(t.link.title || 'GitHub').replace(/"/g, '&quot;')}">${svg('gh')}</a>` : '') + `<span class="wide">${btn('keys', 'keys', '', t.keys)}${btn('full', 'full', '', t.full)}</span>`));
+    E.legend = root.appendChild(el('div', { id: 'lr-legend' }));
+    E.marks = root.appendChild(el('div', { id: 'lr-marks' }));
+    E.prompt = root.appendChild(el('div', { id: 'lr-prompt' }, '<span class="kk"></span><span class="ring"></span><div><b></b><small></small></div>'));
     E.num = root.appendChild(el('div', { id: 'lr-num' })); E.num.style.display = LR.q('stats') || LR.q('prof') ? '' : 'none';
     E.hint = root.appendChild(el('div', { id: 'lr-hint' }, LR.gpu.mobile ? t.hintTouch : t.hint));
-    E.card = root.appendChild(el('div', { class: 'card' }, '<b></b><i></i><span></span>'));
-    E.help = root.appendChild(el('div', { id: 'lr-help', class: 'pane' }, '<table>' + t.help.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('') + '</table>'));
+    E.card = root.appendChild(el('div', { class: 'card' }, '<em></em><b></b><i></i><span></span>'));
+    // the menu: every button says its key
+    const mb = (k, key, label) => `<button type="button" data-k="${k}" aria-pressed="false"><span class="k hk">${key}</span><span>${esc(label)}</span><em></em></button>`;
+    const hasBody = !!body();
+    E.menu = root.appendChild(el('div', { id: 'lr-menu', role: 'dialog', 'aria-modal': 'true', 'aria-label': t.menu }, `<div class="box"><header><b>${esc(t.menu)}</b><span><span class="k hk">Tab</span> <span class="k hk">Esc</span><button type="button" class="x" data-k="menu">${esc(t.close)}</button></span></header><div class="cols">
+      <div><h4>${esc(t.time)}</h4>${mb('dawn', '1', t.dawn)}${mb('day', '2', t.day)}${mb('dusk', '3', t.dusk)}${mb('night', '4', t.night)}${mb('auto', 'T', t.auto)}</div>
+      <div><h4>${esc(t.weather)}</h4>${mb('clear', '5', t.clear)}${mb('rain', '6', t.rain)}${mb('snow', '7', t.snow)}${mb('mist', '8', t.mist)}</div>
+      <div><h4>${esc(t.camera)}</h4>${hasBody ? mb('cam', 'V', t.cam) + mb('zin', '+', t.zin) + mb('zout', '−', t.zout) : ''}${mb('torch', 'B', t.torch)}${mb('lens', 'L', t.lens)}${mb('walk', 'C', t.walk)}</div>
+      <div><h4>${esc(t.system)}</h4>${mb('gear', 'G', t.quality)}${mb('sound', 'M', t.sound)}${mb('full', 'F', t.full)}${mb('stats', 'P', t.stats)}${mb('hide', 'H', t.hide)}</div></div>
+      <div class="ctl"><h4>${esc(t.controls)}</h4><table><tr><th>${esc(t.keyboard)}</th><th></th><th>${esc(t.gamepad)}</th></tr>${t.help.map((r) => `<tr><td><span class="k">${esc(r[0])}</span></td><td>${esc(r[1])}</td><td>${r[2] ? `<span class="k">${esc(r[2])}</span>` : ''}</td></tr>`).join('')}</table></div></div>`));
     E.stick = root.appendChild(el('div', { id: 'lr-stick' }, '<i></i>')); E.flash = root.appendChild(el('div', { id: 'lr-flash' }));
     const TOD = { dawn: 6.2, day: 13.0, dusk: 19.7, night: 23.2 };
+    const menu = (on) => { H.menu = on === undefined ? !H.menu : on; E.menu.classList.toggle('on', H.menu); if (H.menu) { for (const k in P.keys) P.keys[k] = false; if (document.pointerLockElement) document.exitPointerLock(); sync(); const f = E.menu.querySelector('button'); if (f) f.focus({ preventScroll: true }); } else document.getElementById('view').focus(); };
+    H.openMenu = menu;
     const act = (k) => {
       if (TOD[k] !== undefined) wx.set({ tod: TOD[k], manual: true });
-      else if (k === 'cam') { LR.player.stopTour(); LR.player.setView(); } else if (k === 'zin') LR.player.zoomBy(0.75); else if (k === 'zout') LR.player.zoomBy(1 / 0.75); else if (k === 'torch') { LR.player.torch = !LR.player.torch; LR.emit('torch', LR.player.torch); }
+      else if (k === 'cam') { P.stopTour(); P.setView(); } else if (k === 'zin') P.zoomBy(0.75); else if (k === 'zout') P.zoomBy(1 / 0.75); else if (k === 'torch') { P.torch = !P.torch; LR.emit('torch', P.torch); }
       else if (k === 'clear' || k === 'rain' || k === 'snow' || k === 'mist') wx.set({ weather: k, manual: true });
       else if (k === 'auto') wx.set({ auto: !wx.auto });
-      else if (k === 'walk') { if (LR.player.touring) LR.player.stopTour(); else LR.player.startTour(); }
+      else if (k === 'walk') { if (P.touring) P.stopTour(); else P.startTour(); }
       else if (k === 'gear') { const order = ['auto', 'low', 'medium', 'high', 'ultra'], cur = LR.gpu.auto ? 'auto' : LR.gpu.tierName, nx = order[(order.indexOf(cur) + 1) % order.length]; H.reload(nx === 'auto' ? null : nx); }
-      else if (k === 'sound') { if (LR.audio) { if (!LR.audio.ready) { LR.audio.init(); LR.audio.mute(false); } else LR.audio.mute(!LR.audio.muted); } sync(); }
+      else if (k === 'sound') { if (LR.audio) { if (!LR.audio.ready) { LR.audio.init(); LR.audio.mute(false); } else LR.audio.mute(!LR.audio.muted); } }
       else if (k === 'lens') { const z = LR.render.lens; if (!z.on) H.hint(t.lensNone, 4); else { z.walk = z.walk ? 0 : 1; H.hint(z.walk ? t.lensOn : t.lensOff, 4); } }
-      else if (k === 'keys') E.help.classList.toggle('on');
+      else if (k === 'stats') E.num.style.display = E.num.style.display === 'none' ? '' : 'none';
+      else if (k === 'hide') { H.show = !H.show; root.classList.toggle('off', !H.show); if (!H.show) menu(false); }
+      else if (k === 'menu' || k === 'keys') menu();
       else if (k === 'full') { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(() => {}); }
       sync();
     };
     H.act = act;
-    root.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) { act(b.dataset.k); b.blur(); document.getElementById('view').focus(); } });
-    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', Digit8: 'mist', KeyT: 'auto', KeyC: 'walk', KeyL: 'lens', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
-    LR.on('key', (code) => { if (KEY[code]) act(KEY[code]); else if (code === 'KeyH') { H.show = !H.show; root.classList.toggle('off', !H.show); } else if (code === 'KeyP') E.num.style.display = E.num.style.display === 'none' ? '' : 'none'; else if (code === 'Slash' || code === 'F1') E.help.classList.toggle('on'); else if (code === 'Escape') E.help.classList.remove('on'); });
-    const sync = () => { const q = (k) => E.bar.querySelector(`[data-k="${k}"]`), w = wx.want.weather;
-      q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter' || w === 'autumn'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow'); q('mist').setAttribute('aria-pressed', w === 'mist');
-      q('auto').setAttribute('aria-pressed', !!wx.auto); q('walk').setAttribute('aria-pressed', !!LR.player.touring);
-      const sb = E.top.querySelector('[data-k="sound"]'), on = LR.audio && LR.audio.ready && !LR.audio.muted; sb.innerHTML = svg(on ? 'sound' : 'mute'); sb.setAttribute('aria-pressed', !!on);
-      E.top.querySelector('[data-k="gear"]').title = t.quality + ': ' + (LR.gpu.auto ? t.tiers.auto + ' (' + t.tiers[LR.gpu.tierName] + ')' : t.tiers[LR.gpu.tierName]); };
-    H.sync = sync; wx.onChange(sync); LR.on('tour', sync);
+    E.prompt.addEventListener('click', () => { if (!E.prompt.classList.contains('wait')) P.useKey = true; });      /* on a touch screen the prompt is the button */
+    root.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) { act(b.dataset.k); if (b.dataset.k !== 'menu' && !H.menu) document.getElementById('view').focus(); return; } if (e.target === E.menu) menu(false); });
+    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', Digit8: 'mist', KeyT: 'auto', KeyC: 'walk', KeyL: 'lens', KeyG: 'gear', KeyM: 'sound', KeyF: 'full', KeyP: 'stats', KeyH: 'hide' };
+    LR.on('key', (code, e) => { if (code === 'Tab' || code === 'PadStart' || code === 'Slash' || code === 'F1') { if (e && e.preventDefault) e.preventDefault(); menu(); } else if (code === 'Escape') { if (H.menu) menu(false); } else if (KEY[code]) act(KEY[code]); });
+    const sync = () => { const q = (k) => E.menu.querySelector(`[data-k="${k}"]`), w = wx.want.weather, on = LR.audio && LR.audio.ready && !LR.audio.muted, set = (k, p, note) => { const b = q(k); if (!b) return; b.setAttribute('aria-pressed', !!p); if (note !== undefined) b.lastChild.textContent = note; };
+      set('clear', w === 'clear' || w === 'winter' || w === 'autumn'); set('rain', w === 'rain'); set('snow', w === 'snow'); set('mist', w === 'mist'); set('auto', !!wx.auto, wx.auto ? t.on : t.off); set('walk', !!P.touring);
+      const tod = wx.tod; set('dawn', !wx.auto && Math.abs(tod - TOD.dawn) < 0.6); set('day', !wx.auto && Math.abs(tod - TOD.day) < 0.6); set('dusk', !wx.auto && Math.abs(tod - TOD.dusk) < 0.6); set('night', !wx.auto && Math.abs(tod - TOD.night) < 0.6);
+      set('cam', false, t.views[P.view] || P.view); set('torch', !!P.torch, P.torch ? t.on : t.off); set('lens', !!(LR.render.lens && LR.render.lens.walk), LR.render.lens && LR.render.lens.walk ? t.on : t.off);
+      set('sound', !!on, on ? t.on : t.off); set('stats', E.num.style.display !== 'none'); set('gear', false, LR.gpu.auto ? t.tiers.auto + ' · ' + t.tiers[LR.gpu.tierName] : t.tiers[LR.gpu.tierName]); set('full', !!document.fullscreenElement); };
+    H.sync = sync; wx.onChange(sync); LR.on('tour', sync); LR.on('view', sync); LR.on('torch', sync);
     LR.on('tour', (on) => { if (!on) H.hint(t.taking, 4); });
     LR.on('stick', (s) => { E.stick.style.display = s.active ? 'block' : 'none'; if (s.active) { E.stick.style.left = s.ox + 'px'; E.stick.style.top = s.oy + 'px'; E.stick.firstChild.style.transform = `translate(${s.x * 40}px,${s.y * 40}px)`; } });
     // sound starts on the first gesture (browsers require one)
@@ -8844,7 +8917,55 @@ void main(){
     sync(); setTimeout(() => H.hint(null, 9), 1200);
   };
   let hintT = 0; H.hint = (text, sec = 5) => { const e = H.els.hint; if (!e) return; if (text) e.textContent = text; e.classList.add('on'); clearTimeout(hintT); hintT = setTimeout(() => e.classList.remove('on'), sec * 1000); };
-  let cardT = 0; H.card = (title, sub) => { const e = H.els.card; if (!e) return; e.firstChild.textContent = title; e.lastChild.textContent = sub || ''; e.classList.add('on'); clearTimeout(cardT); cardT = setTimeout(() => e.classList.remove('on'), 4200); };
+  let cardT = 0; H.card = (title, sub, kicker) => { const e = H.els.card; if (!e) return; e.children[0].textContent = kicker || ''; e.children[1].textContent = title; e.children[3].textContent = sub || ''; e.classList.add('on'); clearTimeout(cardT); cardT = setTimeout(() => e.classList.remove('on'), 4600); };
+  let toastT = 0; H.toast = (text, sec = 3) => { const e = H.els.toast; if (!e) return; e.textContent = text; e.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), sec * 1000); };
+
+  // ── the glass, every frame: the walker's machine, the compass, who is watching, the prompt and markers, the legend ──
+  const bearing = (P, x, z) => LR.wrapPi(Math.atan2(x - P.x, -(z - P.z)) - P.yaw);      // 0 ahead, + to the right (P.yaw: 0 faces −z)
+  let pv = null; const proj = (x, y, z) => { const c = LR.cam; if (!c) return null; const v = (pv = pv || new THREE.Vector3()).set(x, y, z).project(c); if (v.z > 1 || v.z < -1) return null; return [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight]; };
+  let legendKey = '', promptKey = '', seenAt = new Map(), discovered = new Set(), markPool = [];
+  H.frame = (time, dt) => {
+    const E = H.els, P = LR.player, t = H.t; if (!E.unit || !H.show) return;
+    const M = LR.mech, units = (M && M.units) || [], av = units.find((u) => u.avatar);
+    { const touch = LR.gpu.mobile || P.input === 'touch'; if (touch !== H.touch) { H.touch = touch; document.getElementById('hud').classList.toggle('touch', touch); promptKey = legendKey = ''; } }
+    // the walker's machine: its name, the camera it is seen by, a power line with a cell gone dark — and when its fault
+    // crackles (lib/63_glow's arcs), the line flickers blue with it
+    E.unit.classList.toggle('nobody', !av);
+    if (av) { E.unit.querySelector('.nm span').textContent = av.name; E.unit.querySelector('.nm i').textContent = t.views[P.view] || P.view;
+      const arc = LR.vfx && LR.vfx.arcAt ? LR.vfx.arcAt(time) : null, live = arc && time - arc.t0 < arc.dur, fl = live && (Math.floor(time * 30) % 3 !== 0);
+      E.segs.forEach((s, i) => { s.className = i >= E.segs.length - 2 ? 'dead' : live && ((i * 7 + Math.floor(time * 24)) % 5 === 0) ? 'zap' : fl && i >= E.segs.length - 4 ? 'dead' : ''; });
+      E.flt.classList.toggle('on', !!live); }
+    // the compass: north, the quarters, the giants near (red while one is looking at the walker), the named places, things to use
+    { const cv = E.cv, w = cv.clientWidth, h = cv.clientHeight, dpr = Math.min(2, devicePixelRatio || 1); if (w > 0) { if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+      const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h); const fov = Math.PI * 0.9, X = (a) => w / 2 + (a / (fov / 2)) * (w / 2), cy = 13;
+      const grad = g.createLinearGradient(0, 0, w, 0); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.15, 'rgba(0,0,0,.35)'); grad.addColorStop(0.85, 'rgba(0,0,0,.35)'); grad.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = grad; g.fillRect(0, 4, w, 18);
+      g.font = '700 11px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.9)'; g.shadowBlur = 3;
+      for (let d = 0; d < 360; d += 15) { const a = LR.wrapPi((d * Math.PI) / 180 - P.yaw); if (Math.abs(a) > fov / 2) continue; const x = X(a), fade = 1 - Math.pow(Math.abs(a) / (fov / 2), 3);
+        g.globalAlpha = fade; const lab = { 0: 'N', 90: 'E', 180: 'S', 270: 'W', 45: 'NE', 135: 'SE', 225: 'SW', 315: 'NW' }[d];
+        if (lab) { g.fillStyle = d === 0 ? '#f0b552' : '#f1ede4'; g.font = lab.length === 1 ? '700 12px system-ui,sans-serif' : '600 9.5px system-ui,sans-serif'; g.fillText(lab, x, cy); } else { g.fillStyle = 'rgba(241,237,228,.55)'; g.fillRect(x - 0.5, cy - 3, 1, 6); } }
+      g.globalAlpha = 1; g.fillStyle = '#f1ede4'; g.beginPath(); g.moveTo(w / 2, 24); g.lineTo(w / 2 - 4, 29); g.lineTo(w / 2 + 4, 29); g.fill();
+      const pip = (a, col, kind, alpha = 1) => { if (Math.abs(a) > fov / 2) a = Math.sign(a) * fov / 2; const x = X(a); g.globalAlpha = alpha; g.fillStyle = col; g.beginPath();
+        if (kind === 'giant') { g.moveTo(x, 26); g.lineTo(x - 5, 35); g.lineTo(x + 5, 35); } else { g.moveTo(x, 26); g.lineTo(x + 4, 30.5); g.lineTo(x, 35); g.lineTo(x - 4, 30.5); } g.closePath(); g.fill(); g.globalAlpha = 1; };
+      for (const pl of LR.world.places || []) { const d = Math.hypot(pl.x - P.x, pl.z - P.z); if (d < 260 && d > pl.r) pip(bearing(P, pl.x, pl.z), 'rgba(241,237,228,.55)', 'place', LR.clamp(1.4 - d / 260, 0.3, 1)); }
+      for (const u of units) { if (u.avatar || u.fly || !u.pose || !u.pose.W || !u.pose.W.body) continue; const B = u.pose.W.body.p, d = Math.hypot(B[0] - P.x, B[2] - P.z); if (d > 320) continue;
+        const A = u.aware || {}, hot = (A.w || 0) > 0.3; pip(bearing(P, B[0], B[2]), hot ? '#ff5b49' : '#f0b552', 'giant', LR.clamp(1.25 - d / 320, 0.35, 1)); }
+      for (const it of H.its || []) if (it.at) pip(bearing(P, it.at[0], it.at[2]), '#ffd27a', 'place'); } }
+    // who is watching: the giant whose eyes are on the walker now; the moment one first finds it, a line says so
+    { let top = null, tw = 0.3; for (const u of units) { const A = u.aware; if (!A || u.avatar) continue; if ((A.w || 0) > tw) { tw = A.w; top = u; }
+        if ((A.n || 0) > 0.85 && !(seenAt.get(u) > time - 12)) { seenAt.set(u, time); H.toast(`${u.name} ${t.noticed}`, 3.2); E.watch.classList.remove('seen'); void E.watch.offsetWidth; E.watch.classList.add('seen'); } }
+      E.watch.classList.toggle('on', !!top); if (top) E.watch.lastChild.textContent = `${top.name} ${t.watching}`; }
+    // things to use: the nearest ready one gets the prompt; any within sight gets a marker
+    const its = []; for (const o of LR.interact.list) { const r = o.poll && o.poll(P); if (!r) continue; r.d = r.at ? Math.hypot(r.at[0] - P.x, r.at[2] - P.z) : 0; its.push(r); } H.its = its;
+    let pr = null; for (const r of its) { const near = !r.at || r.d < (r.range || 3); if (r.state === 'ready' && near && (!pr || r.d < pr.d)) pr = r; } if (!pr) for (const r of its) if (r.state === 'wait' && (!r.at || r.d < (r.range || 3) * 4) && (!pr || r.d < pr.d)) pr = r;
+    { const key = pr ? pr.state + '|' + pr.label + '|' + (pr.sub || '') + '|' + P.input : ''; if (key !== promptKey) { promptKey = key; E.prompt.classList.toggle('on', !!pr); if (pr) { E.prompt.classList.toggle('wait', pr.state !== 'ready'); E.prompt.querySelector('.kk').innerHTML = P.input === 'touch' || LR.gpu.mobile ? `<span class="k">${esc(t.tap)}</span>` : cap('R'); E.prompt.querySelector('b').textContent = pr.label; E.prompt.querySelector('small').textContent = pr.sub || ''; } } }
+    { let n = 0; for (const r of its) { if (!r.at || r.d > (r.see || 60) || (r === pr && r.d < (r.range || 3))) continue; const s = proj(r.at[0], r.at[1], r.at[2]); if (!s || s[0] < 0 || s[0] > innerWidth || s[1] < 0 || s[1] > innerHeight) continue;
+        let m = markPool[n]; if (!m) { m = markPool[n] = E.marks.appendChild(el('div', { class: 'm' }, '<span></span><em></em><i></i>')); } m.style.display = ''; m.style.left = s[0] + 'px'; m.style.top = s[1] + 'px'; m.classList.toggle('ready', r.state === 'ready');
+        m.children[0].textContent = r.mark || r.label; m.children[1].textContent = Math.round(r.d) + ' m'; n++; }
+      for (let i = n; i < markPool.length; i++) markPool[i].style.display = 'none'; }
+    // the legend: what the buttons do now
+    { const key = P.input + '|' + (pr && pr.state === 'ready' ? pr.label : '') + '|' + !!av; if (key !== legendKey) { legendKey = key; const L = t.legend, row = (ks, label, cls = '') => `<div class="${cls}"><span class="ks">${ks}</span>${esc(label)}</div>`;
+        E.legend.innerHTML = (pr && pr.state === 'ready' ? row(cap('R'), pr.label, 'use') : '') + row(cap('WASD'), L.move) + row(cap('Shift'), L.run) + row(cap('Space'), L.hop) + (av ? row(cap('V'), L.view) : '') + (P.input === 'pad' ? '' : row(cap('B'), L.lamp)) + row(cap('Tab'), L.menu); } }
+  };
   // reload keeping where we stand, the hour and the weather
   H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.delete('safe');      /* choosing a quality by hand leaves safe mode */ if (LR.ASSETS && LR.q('scan') !== '0') u.searchParams.set('go', '1');      /* the start was pressed once: a reload — another quality, or the step down a slow device is given — does not ask again (in a frame or on a phone it came back to the start button, mid-walk) */ u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
 
@@ -8854,7 +8975,7 @@ void main(){
     const E = H.els, R = LR.render, G = LR.gpu, wx = LR.wx, p = LR.player; acc += dt; n++; sec += dt;
     if (acc >= 0.5) {
       const fps = n / acc; H.fps = fps; acc = 0; n = 0;
-      if (E.place) { const c = wx.clock(), tl = H.t.wx[wx.label()] || wx.label(); E.place.lastChild.textContent = c.text + ' · ' + tl; }
+      if (E.unit) { const c = wx.clock(), tl = H.t.wx[wx.label()] || wx.label(); E.unit.querySelector('.loc span').textContent = c.text + ' · ' + tl; }
       if (E.num && E.num.style.display !== 'none') E.num.textContent = `${fps.toFixed(0)} fps\n${R.w}×${R.h} (${R.scale.toFixed(2)}×)\n${G.tierName}${G.auto ? ' · auto' : ''}\n${R.info.allCalls} calls · ${(R.info.tris / 1e6).toFixed(2)} M tris\n${R.info.lights || 0} lights${R.info.scans && R.info.scans.inst ? `\nscans ${R.info.scans.inst} × ${(R.info.scans.tris / 1e6).toFixed(2)} M` : ''}${R.prof && R.prof.on ? R.prof.text() : ''}`;
       // governor: hold the display's rate by trading internal resolution; probe upward when there is room
       if (LR.q('scale') === null || LR.q('scale') === undefined) {
@@ -8876,7 +8997,8 @@ void main(){
     if (dt > 0.001) { H.minDt = Math.min(H.minDt || 1, dt); if (sec > 1.5 && !H.refresh) H.refresh = H.minDt < 0.0075 ? 144 : H.minDt < 0.0095 ? 120 : H.minDt < 0.0125 ? 90 : 60; }
     // named places
     let here = null; for (const pl of LR.world.places) if (Math.hypot(p.x - pl.x, p.z - pl.z) < pl.r) { here = pl; break; }
-    if (here !== lastPlace) { if (here && sec > 3) H.card(here.name, here.sub); lastPlace = here; }
+    if (here !== lastPlace) { if (here && sec > 3) { H.card(here.name, here.sub, discovered.has(here) ? '' : H.t.discovered); discovered.add(here); } lastPlace = here; }
+    if (!H.menu) H.frame(time, dt);
     if (E.flash) E.flash.style.opacity = Math.min(0.5, wx.flash * 0.35);
     if (LR.audio && LR.audio.ready) LR.audio.update(dt, { x: p.x, y: p.y + p.eye, z: p.z, yaw: p.yaw, speed: p.speed, moving: p.moving, running: p.running, surface: p.surface, sheltered: 0 });
   });
@@ -9079,7 +9201,7 @@ void main(){
 
 
 // ── src/10_land.js ──
-// 쇠울림 골짜기 (Soeullim, "the valley where iron rings") · the land.  A valley running west to east with a brook in it:
+// Iron Valley ("the valley where iron rings") · the land.  A valley running west to east with a brook in it:
 // the north side climbs steeply to a ridge of crags, the south side rises in two shelves — the first holds a tarn in a
 // bog, the second ends at a lookout rock.  Nothing is level: 36 m of height inside the walk.  V is this realm's shared
 // sheet (places, the ways the machines walk, what other sources build on).
@@ -9169,28 +9291,17 @@ V.land = () => {
 
 
 // ── src/15_words.js ──
-// 쇠울림 골짜기 · the words on the glass (Korean): place names are in 30_details.js, the HUD's strings here
+// Iron Valley · the words on the glass: place names are in 30_details.js; the HUD's own words (lib/88_hud.js) are the
+// engine's English, so only what is this realm's is here
 V.strings = {
-  title: '쇠울림 골짜기', sub: '거인들이 걷는 숲',
-  dawn: '새벽', day: '낮', dusk: '저녁', night: '밤', clear: '맑음', rain: '비', snow: '눈', mist: '안개', auto: '자동 순환', walk: '투어', lens: '심도', gear: '화질',
-  wx: { clear: '맑음', rain: '비', snow: '눈', winter: '겨울', overcast: '흐림', mist: '안개' },
-  cam: '카메라: 1인칭 · 3인칭 · 탑뷰 (V)', zin: '줌 인 (+ · 휠)', zout: '줌 아웃 (− · 휠)', torch: '등불 (B)',
-  views: { first: '1인칭', third: '3인칭', top: '탑뷰' }, quality: '화질', tiers: { auto: '자동', low: '낮음', medium: '보통', high: '높음', ultra: '최고' },
-  sound: '소리', full: '전체 화면', keys: '조작키',
-  hint: 'WASD 이동 · 마우스 시점 · Shift 달리기 · Space 점프 · V 카메라 · 휠 줌', hintTouch: '왼손 이동 · 오른손 시점',
-  help: [['W A S D / ↑ ↓', '이동'], ['← → / Q E', '회전'], ['마우스', '시점 (클릭하면 고정, Esc로 해제)'], ['Shift', '달리기'], ['Space', '점프'], ['V', '카메라: 1인칭 · 3인칭 · 탑뷰'],
-    ['휠 / + −', '줌'], ['B', '등불'], ['게임패드', '왼쪽 스틱 이동 · 오른쪽 스틱 시점 · 트리거 달리기 · A 점프'], ['1 2 3 4', '새벽 · 낮 · 저녁 · 밤'], ['5 6 7 8', '맑음 · 비 · 눈 · 안개'],
-    ['T', '시간 · 날씨 자동 순환'], ['C', '카메라 투어'], ['L', '이동 중 피사계 심도'], ['G', '화질'], ['M', '소리'], ['P', 'fps · 해상도 · 드로우콜'], ['H', 'UI 숨기기'], ['F', '전체 화면']],
-  taking: '직접 조작 · C 투어', lensOn: '피사계 심도 켬 · L로 끄기', lensOff: '피사계 심도 끔', lensNone: '이 화질에는 피사계 심도가 없습니다 · G로 화질 변경',
-  scans: '애셋: Poly Haven · CC0',
-  gate: '시작', gateOff: '애셋 없이 열기', gateLink: { text: 'github.com/jungrok5/machine-wilds', href: 'https://github.com/jungrok5/machine-wilds' },
+  title: 'Iron Valley', sub: 'where the giants walk the wood',
+  gate: 'Start', gateOff: 'open without scans', gateLink: { text: 'github.com/jungrok5/machine-wilds', href: 'https://github.com/jungrok5/machine-wilds' },
   link: { href: 'https://github.com/jungrok5/machine-wilds', title: 'GitHub: jungrok5/machine-wilds' },
-  noglTitle: 'WebGL 2를 쓸 수 없습니다', nogl: '브라우저 설정에서 하드웨어 가속을 켜고 다시 여세요.', lostTitle: 'WebGL 컨텍스트 손실', lost: 'GPU 드라이버가 재시작됐거나 메모리가 부족합니다.', again: '다시 열기', safe: '안전 모드(최저 화질)로 열기',
 };
 
 
 // ── src/20_ruins.js ──
-// 쇠울림 골짜기 · what people left.  A viaduct that carried a road over the valley (the machines' way goes through where
+// Iron Valley · what people left.  A viaduct that carried a road over the valley (the machines' way goes through where
 // one span is gone; the southern half can still be walked, out to the broken edge), a maintenance hall with a camp in it,
 // a line of pylons on the north ridge, a yard of containers the carriers still call at.  Concrete, asphalt and plate are
 // the engine's recipes with scans laid over them (90_main.js); moss, rain and grime come from the engine.
@@ -9274,17 +9385,17 @@ V.ruins = () => {
 
 
 // ── src/25_machines.js ──
-// 쇠울림 골짜기 · the machines.  Three kinds, each designed for this valley (numbers here, parts in 26_parts.js):
-//   두루미 (crane)   a 25 m four-legged watcher on heron legs with a long neck — it walks the long round and wades the tarn
-//   등짐 (porter)    a 9 m six-legged carrier with an overgrown load — a string of three works the north bank
-//   마루 (ridge)     a 58 m eight-legged relic that keeps to the rim; from the valley only its lights show
+// Iron Valley · the machines.  Three kinds, each designed for this valley (numbers here, parts in 26_parts.js):
+//   Crane (crane)   a 25 m four-legged watcher on heron legs with a long neck — it walks the long round and wades the tarn
+//   Porter (porter)    a 9 m six-legged carrier with an overgrown load — a string of three works the north bank
+//   Ridge (ridge)     a 58 m eight-legged relic that keeps to the rim; from the valley only its lights show
 // A machine's numbers follow from its mass: heavier → a longer cycle, more of it on the ground, a lower lift, a deeper,
 // slower sink into each step.  references/MACHINES.md lists every key.
 V.machines = () => {
   const M = LR.mech;
   const CL = { kind: 'mammal', width: 0.7, drum: 0.76, ball: 0.44, toes: 3, toeLen: 1.5, act: [1, 1, 1], hipDrop: 0.35 };
   const craneLegs = [Object.assign({}, CL, { name: 'FL', at: [3.2, -1.0, -1.5], segs: [6.4, 5.7, 3.4], knee: 1, gamma: 11, home: [4.4, -2.9] }), Object.assign({}, CL, { name: 'RL', at: [-3.5, -1.0, -1.7], segs: [6.4, 5.7, 3.4], knee: -1, gamma: 11, home: [-4.9, -3.2] })];
-  M.define('crane', { title: '두루미', age: 0.6, tonnes: 86, ride: 15.6, belly: [4.6, 1.9, 1.2], aware: 60, build: (k) => V.parts.crane(k),
+  M.define('crane', { title: 'Crane', age: 0.6, tonnes: 86, ride: 15.6, belly: [4.6, 1.9, 1.2], aware: 60, build: (k) => V.parts.crane(k),
     palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#4f8f96'] },
     limbs: [...craneLegs, ...craneLegs.map(M.mirror)],
     neck: { at: [5.0, 0.4, 0], links: [[2.5, 68], [2.4, 60], [2.2, 48], [2.0, 34], [1.7, 20]] }, head: { len: 3.0 },
@@ -9300,10 +9411,10 @@ V.machines = () => {
         'neck.pitch': [[0, 0], [1.1, 6], [3.6, -22], [9.4, -22], [11.6, 4.5], [13, 0]], 'body.dy': [[0, 0], [1.1, -0.22], [3.6, 0.3], [9.4, 0.3], [11.6, -0.12], [13, 0]], 'body.pitch': [[0, 0], [1.1, -0.8], [3.6, 1.6], [9.4, 1.6], [11.6, -0.4], [13, 0]],
         'head.pitch': [[0, 0], [1.2, 8], [3.8, 4], [9.4, 6], [11.6, -3], [13, 0]], 'head.yaw': [[0, 0], [3.4, 0], [4.0, -8], [5.6, 56], [6.0, 54], [8.2, -50], [8.7, -48], [10.4, 4], [11, 0], [13, 0]], 'neck.yaw': [[0, 0], [3.6, 0], [5.6, 14], [8.2, -12], [10.4, 0], [13, 0]],
         light: [[0, 1], [3.2, 1], [3.8, 1.7], [9.2, 1.7], [10.4, 1], [13, 1]] } } } });
-  // 등짐: six insect legs under a flat bed; it carries what it was last given and has not been unloaded since
+  // Porter: six insect legs under a flat bed; it carries what it was last given and has not been unloaded since
   const PL = { kind: 'insect', width: 0.56, drum: 0.5, ball: 0.3, toes: 4, toeLen: 0.8, act: [1, 1], coxa: 1.2, style: 'casing' };
   const porterLegs = [[3.6, 4.4, 'F'], [0, 0, 'M'], [-3.6, -4.4, 'R']].map(([x, hx, n]) => Object.assign({}, PL, { name: n + 'L', at: [x, -0.3, -1.5], segs: [4.4, 5.6], knee: 1, home: [hx, n === 'M' ? -5.0 : -4.6] }));
-  M.define('porter', { title: '등짐', age: 0.8, tonnes: 38, ride: 4.9, belly: [3.6, 0.9, 1.0], aware: 26, lensGain: 18, build: (k) => V.parts.porter(k),
+  M.define('porter', { title: 'Porter', age: 0.8, tonnes: 38, ride: 4.9, belly: [3.6, 0.9, 1.0], aware: 26, lensGain: 18, build: (k) => V.parts.porter(k),
     palette: { frame: ['paintmetal', '#8f9468'], rust: ['rustplate', '#cfc6b6'], dark: ['paintmetal', '#33362f'], casing: ['paintmetal', '#b7ad84'], paint: ['paintmetal', '#c79a2c'] },
     limbs: [...porterLegs, ...porterLegs.map(M.mirror)], head: { len: 1.4 }, neck: { at: [4.3, 0.35, 0], links: [[0.9, 12]] },
     extras: [{ name: 'radar', type: 'spin', parent: 'body', at: [-2.6, 5.3, 0.6], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0], rate: 34, len: 0.6 },
@@ -9313,10 +9424,10 @@ V.machines = () => {
     moves: {
       // it sets its load down: rises a little first, folds until the bed is low, waits, then stands past its height and settles
       kneel: { dur: 12, main: 'body.dy', keys: { 'body.dy': [[0, 0], [1.0, 0.2], [4.0, -1.7], [8.2, -1.7], [10.6, 0.22], [12, 0]], 'body.pitch': [[0, 0], [1.0, 0.8], [4.0, -2.2], [8.2, -2.2], [10.6, 0.6], [12, 0]], 'head.pitch': [[0, 0], [1.0, -6], [4.2, 14], [8.2, 12], [10.8, -3], [12, 0]], light: [[0, 1], [3.6, 1], [4.2, 0.45], [8, 0.45], [8.6, 1.2], [12, 1]] } } } });
-  // 마루: a relic on eight legs — a relay station that never stopped walking its rounds
+  // Ridge: a relic on eight legs — a relay station that never stopped walking its rounds
   const TL = { kind: 'mammal', width: 3.6, drum: 3.0, bar: 0.5, ball: 1.6, toes: 4, toeLen: 5.0, act: [1, 1], hipDrop: 1.5, style: 'casing', actLat: 1.5 };
   const titanLegs = [[18, 2.5, 1, 'A'], [6, 1.5, 1, 'B'], [-6, -1.5, -1, 'C'], [-18, -2.5, -1, 'D']].map(([x, dx, knee, n]) => Object.assign({}, TL, { name: n + 'L', at: [x, -2, -9], segs: [17, 18.5], knee, home: [x + dx, -12.5] }));
-  M.define('ridge', { title: '마루', age: 1, tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 110, lookMax: 48, glance: [14, 10], lensGain: 22, build: (k) => V.parts.ridge(k),
+  M.define('ridge', { title: 'Ridge', age: 1, tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 110, lookMax: 48, glance: [14, 10], lensGain: 22, build: (k) => V.parts.ridge(k),
     palette: { frame: ['paintmetal', '#8f8c7e'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'], casing: ['paintmetal', '#cbc5b0'], paint: ['paintmetal', '#c99f2e'] },      /* grey works paint gone to rust, cream casings, the yellow of what moves or may be stepped off */
     limbs: [...titanLegs, ...titanLegs.map(M.mirror)], neck: { at: [24, -3.5, 0], links: [[3.2, -62]] }, head: { len: 6 },
     extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 },
@@ -9332,9 +9443,9 @@ V.machines = () => {
       // down its ropes to the ground, waits, and comes back up; the deck rises past rest as it takes the cage in, and settles
       lift: { dur: 58, main: 'body.dy', sound: [4.2, 64, 13, 1.3], keys: { 'body.dy': [[0, 0], [3.2, 0.35], [9, -1.3], [42, -1.3], [50, 0.3], [58, 0]], 'body.pitch': [[0, 0], [3.2, 0.2], [9, -0.5], [42, -0.5], [50, 0.15], [58, 0]],
         'extra.lift': [[0, 0], [4.5, 0], [17.5, 1], [39, 1], [51.5, 0], [58, 0]], 'head.pitch': [[0, 0], [4, -3], [12, 9], [40, 9], [50, -2], [58, 0]], light: [[0, 1], [4, 1], [6, 1.6], [50, 1.6], [53, 1], [58, 1]] } } } });
-  // 솔개: a kite — it has no legs to speak of.  Two-part wings on a keel, a fan of a tail, one eye that looks down into the mist.
+  // Kite: a kite — it has no legs to speak of.  Two-part wings on a keel, a fan of a tail, one eye that looks down into the mist.
   // 0.9 t on a 9 m span: 14 m/s, a beat every 1.15 s in bouts of nine seconds, banked by what each turn asks.
-  M.define('kite', { title: '솔개', age: 0.45, tonnes: 0.9, ride: 1.2, tall: 2, aware: 80, lensGain: 30, lodK: 5, cry: [47, 560, 0.8, 0.5], build: (k) => V.parts.kite(k),
+  M.define('kite', { title: 'Kite', age: 0.45, tonnes: 0.9, ride: 1.2, tall: 2, aware: 80, lensGain: 30, lodK: 5, cry: [47, 560, 0.8, 0.5], build: (k) => V.parts.kite(k),
     palette: { shell: ['ceramic', '#dcdedb'], dark: ['paintmetal', '#262a2d'], frame: ['paintmetal', '#4d565c'], accent: ['paintmetal', '#4f8f96'] },
     limbs: [], neck: { at: [1.25, 0.12, 0], links: [[0.5, 8]] }, head: { len: 0.9 },
     extras: [{ name: 'wing_L1', type: 'spin', parent: 'body', at: [0.25, 0.22, -0.42], dir: [0, 0, -1], axis: [1, 0, 0], xdir: [1, 0, 0], len: 2.1 }, { name: 'wing_L2', type: 'spin', parent: 'wing_L1', at: [0, 2.1, 0], dir: [0, 1, 0], axis: [1, 0, 0], xdir: [1, 0, 0], len: 2.3 },
@@ -9342,11 +9453,11 @@ V.machines = () => {
       { name: 'tail', type: 'spin', parent: 'body', at: [-1.5, 0.05, 0], dir: [-1, 0, 0], axis: [1, 0, 0], xdir: [0, 0, 1], len: 1.5 }, { name: 'streamer', type: 'lag', parent: 'body', at: [-1.6, -0.1, 0], dir: [-1, -0.15, 0], len: 1.8, lag: 0.18, gain: 0.5, maxDeg: 30 }],
     flight: { speed: 14, beat: 0.87, stroke: [30, 20], fold: 16, dihedral: 7, bout: 9, bob: 0.16, lead: 0.7, bankMax: 52, span: 9.4, gaze: 24, tail: 'tail', wings: [['wing_L1', 'wing_L2'], ['wing_R1', 'wing_R2']] } });
   // ── the shelled ones ────────────────────────────────────────────────────────────────────────────────────────────
-  // 자라: a soft-shelled turtle of a machine — a dome of plates as wide as a house on four sprawled legs, its belly a man's height
+  // Turtle: a soft-shelled turtle of a machine — a dome of plates as wide as a house on four sprawled legs, its belly a man's height
   // off the ground, a head on a short neck that looks about.  150 t: a step every seven seconds, three feet down at any moment.
   const JL = { kind: 'insect', width: 0.72, drum: 0.56, bar: 0.11, ball: 0.42, toes: 4, toeLen: 0.9, act: [1, 1], coxa: 1.4, style: 'casing' };
   const jaraLegs = [[3.4, 4.3, 'F'], [-3.4, -4.3, 'R']].map(([x, hx, n]) => Object.assign({}, JL, { name: n + 'L', at: [x, -0.4, -2.7], segs: [3.5, 4.3], knee: 1, home: [hx, -6.5] }));
-  M.define('jara', { title: '자라', age: 1, tonnes: 150, ride: 3.0, belly: [4.4, 1.7, 2.4], aware: 34, lensGain: 20, build: (k) => V.parts.jara(k),
+  M.define('jara', { title: 'Turtle', age: 1, tonnes: 150, ride: 3.0, belly: [4.4, 1.7, 2.4], aware: 34, lensGain: 20, build: (k) => V.parts.jara(k),
     palette: { shell: ['ceramic', '#b9bfae'], rust: ['rustplate', '#c4b8a2'], frame: ['paintmetal', '#5f6a58'], dark: ['paintmetal', '#2c302b'], casing: ['paintmetal', '#a9ae96'], paint: ['paintmetal', '#b58a30'] },
     limbs: [...jaraLegs, ...jaraLegs.map(M.mirror)], neck: { at: [5.3, -0.2, 0], links: [[1.5, 10], [1.3, 3]] }, head: { len: 2.2 },
     extras: [{ name: 'tail', type: 'lag', parent: 'body', at: [-5.5, -0.4, 0], dir: [-1, -0.2, 0], len: 2.2, lag: 0.5, gain: 1.2, maxDeg: 18 }],
@@ -9355,11 +9466,11 @@ V.machines = () => {
     moves: {
       // it settles: rises a hand first, lowers its shell until the belly is a step off the ground and looks down, waits, comes up past its height and settles
       tuck: { dur: 16, main: 'body.dy', sound: [4.6, 72, 5, 0.9], keys: { 'body.dy': [[0, 0], [1.4, 0.16], [5, -0.9], [11, -0.9], [14, 0.13], [16, 0]], 'body.pitch': [[0, 0], [1.4, 0.6], [5, -1.6], [11, -1.6], [14, 0.4], [16, 0]], 'neck.pitch': [[0, 0], [1.4, -6], [5.2, 16], [11, 16], [14, -4], [16, 0]], 'head.pitch': [[0, 0], [1.6, -5], [5.4, 12], [11, 10], [14.2, -3], [16, 0]], light: [[0, 1], [4.4, 1], [5.2, 0.35], [10.6, 0.35], [11.6, 1.3], [16, 1]] } } } });
-  // 가재: the one to keep clear of — a crayfish as long as two lorries on eight legs, a shell of overlapping plates the red of old
+  // Crayfish: the one to keep clear of — a crayfish as long as two lorries on eight legs, a shell of overlapping plates the red of old
   // oxide, two claws carried low, feelers, a jointed tail, eyes on stalks that burn red in the mist.  64 t; it walks the brook.
   const GL = { kind: 'insect', width: 0.5, drum: 0.42, ball: 0.26, toes: 2, toeLen: 0.9, act: [1, 1], coxa: 0.9, style: 'casing' };
   const gajaeLegs = [[3.3, 4.6, -4.6, 'A'], [1.4, 1.9, -5.0, 'B'], [-0.5, -0.9, -5.0, 'C'], [-2.4, -3.6, -4.6, 'D']].map(([x, hx, hz, n]) => Object.assign({}, GL, { name: n + 'L', at: [x, -0.35, -1.5], segs: [3.2, 4.0], knee: 1, home: [hx, hz] }));
-  M.define('gajae', { title: '가재', age: 0.9, tonnes: 64, ride: 3.4, belly: [3.6, 1.35, 1.2], aware: 46, lensGain: 30, build: (k) => V.parts.gajae(k),
+  M.define('gajae', { title: 'Crayfish', age: 0.9, tonnes: 64, ride: 3.4, belly: [3.6, 1.35, 1.2], aware: 46, lensGain: 30, build: (k) => V.parts.gajae(k),
     palette: { shell: ['paintmetal', '#8a4032'], rust: ['rustplate', '#b59f8c'], frame: ['paintmetal', '#4a4441'], dark: ['paintmetal', '#242223'], accent: ['paintmetal', '#b0452e'], casing: ['paintmetal', '#7b3a2e'], paint: ['paintmetal', '#b0452e'] },
     limbs: [...gajaeLegs, ...gajaeLegs.map(M.mirror)], neck: { at: [4.5, 0.5, 0], links: [[0.8, 24]] }, head: { len: 1.2 },
     extras: [{ name: 'claw_L', type: 'lag', parent: 'body', at: [4.0, -0.3, -1.8], dir: [1, -0.14, -0.4], len: 4.4, lag: 0.35, gain: 0.8, maxDeg: 12 }, { name: 'claw_R', type: 'lag', parent: 'body', at: [4.0, -0.3, 1.8], dir: [1, -0.14, 0.4], len: 4.4, lag: 0.4, gain: 0.8, maxDeg: 12 },
@@ -9370,11 +9481,11 @@ V.machines = () => {
     moves: {
       // it rears: sinks at the front first, throws its fore end up with every lamp burning and holds, comes down past level and settles
       rear: { dur: 11, main: 'body.pitch', sound: [3.0, 58, 3.8, 1.3], keys: { 'body.pitch': [[0, 0], [1.0, -2.6], [3.2, 12], [7.4, 12], [9.5, -2], [11, 0]], 'body.dy': [[0, 0], [1.0, -0.25], [3.2, 0.45], [7.4, 0.45], [9.5, -0.12], [11, 0]], 'head.pitch': [[0, 0], [1.0, 8], [3.4, -14], [7.4, -12], [9.6, 4], [11, 0]], 'head.yaw': [[0, 0], [3.4, 0], [4.8, 22], [6.4, -20], [7.6, 0], [11, 0]], light: [[0, 1], [2.8, 1], [3.4, 1.5], [7.2, 1.5], [8.4, 1], [11, 1]] } } } });
-  // 공벌레: woodlice the size of a small car, four of them in file — arches of plate from nose to tail over six quick legs.
+  // Woodlouse: woodlice the size of a small car, four of them in file — arches of plate from nose to tail over six quick legs.
   // 1.6 t: a step every 0.6 s.  They keep to the lower shelf and duck under their shells when they stop.
   const BL = { kind: 'insect', width: 0.1, drum: 0.11, bar: 0.014, ball: 0.07, toes: 2, toeLen: 0.2, act: [1, 1], coxa: 0.22, style: 'girder' };
   const gongLegs = [[0.85, 1.05, 'F'], [0, 0, 'M'], [-0.85, -1.05, 'R']].map(([x, hx, n]) => Object.assign({}, BL, { name: n + 'L', at: [x, -0.08, -0.42], segs: [0.7, 0.86], knee: 1, home: [hx, n === 'M' ? -1.12 : -1.02] }));
-  M.define('gong', { title: '공벌레', age: 0.85, tonnes: 1.6, ride: 0.95, belly: [0.9, 0.22, 0.3], aware: 12, lensGain: 16, lodK: 2.2, build: (k) => V.parts.gong(k),
+  M.define('gong', { title: 'Woodlouse', age: 0.85, tonnes: 1.6, ride: 0.95, belly: [0.9, 0.22, 0.3], aware: 12, lensGain: 16, lodK: 2.2, build: (k) => V.parts.gong(k),
     palette: { shell: ['ceramic', '#cfd1c8'], rust: ['rustplate', '#c9bca8'], frame: ['paintmetal', '#6b7468'], dark: ['paintmetal', '#2b2e2c'] },
     limbs: [...gongLegs, ...gongLegs.map(M.mirror)], neck: { at: [1.2, 0.06, 0], links: [[0.22, 6]] }, head: { len: 0.4 },
     extras: [{ name: 'feeler_L', type: 'lag', parent: 'head', at: [0.3, 0.05, -0.12], dir: [0.8, 0.4, -0.45], len: 0.8, lag: 0.16, gain: 1.4, maxDeg: 30 }, { name: 'feeler_R', type: 'lag', parent: 'head', at: [0.3, 0.05, 0.12], dir: [0.8, 0.4, 0.45], len: 0.8, lag: 0.19, gain: 1.4, maxDeg: 30 }],
@@ -9383,32 +9494,32 @@ V.machines = () => {
     moves: {
       // it ducks: lifts a finger's breadth, drops until its plates are near the ground, waits, pops up past its height and settles
       duck: { dur: 6, main: 'body.dy', keys: { 'body.dy': [[0, 0], [0.5, 0.025], [1.6, -0.1], [4, -0.1], [5.2, 0.02], [6, 0]], 'head.pitch': [[0, 0], [0.5, -8], [1.7, 22], [4, 20], [5.2, -5], [6, 0]], light: [[0, 1], [1.4, 1], [1.8, 0.3], [3.9, 0.3], [4.3, 1.3], [6, 1]] } } } });
-  // 물떼새: the walker's own body — a scout on two heron legs, as tall as a person and a head more.  A third of a tonne: it steps
+  // Plover: the walker's own body — a scout on two heron legs, as tall as a person and a head more.  A third of a tonne: it steps
   // five times in two seconds at a walk, leaves the ground between steps at a run, gathers before a hop and gives at the knees after.
   const PV = { kind: 'mammal', width: 0.09, drum: 0.09, ball: 0.07, toes: 3, toeLen: 0.22, act: [0, 1, 1], hipDrop: 0.06, style: 'shell', bar: 0.012 };      // (the hip turns on a drive inside its drum: it swings through a right angle, more than a cylinder follows)
   const ploverLeg = Object.assign({}, PV, { name: 'L', at: [0, -0.06, -0.25], segs: [0.5, 0.48, 0.3], knee: 1, gamma: 12, home: [0.05, -0.23] });
-  M.define('plover', { title: '물떼새', age: 0.5, tonnes: 0.3, ride: 1.3, belly: [0.36, 0.16, 0.2], aware: 0, lensGain: 22, lodK: 2.5, build: (k) => V.parts.plover(k),
+  M.define('plover', { title: 'Plover', age: 0.5, tonnes: 0.3, ride: 1.3, belly: [0.36, 0.16, 0.2], aware: 0, lensGain: 22, lodK: 2.5, build: (k) => V.parts.plover(k),
     palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#b8742a'] },
     limbs: [ploverLeg, M.mirror(ploverLeg)], neck: { at: [0.34, 0.24, 0], links: [[0.2, 62]] }, head: { len: 0.34 },
     extras: [{ name: 'whip', type: 'lag', parent: 'body', at: [-0.42, 0.3, 0.1], dir: [-0.3, 1, 0], len: 0.9, lag: 0.22, gain: 1.3, maxDeg: 24 }],
     avatar: { stepWalk: 0.8, stepRun: 1.45, reach: 0.32, lift: [0.09, 0.12], swingGamma: 12, lean: [4, 12], gather: 0.1, tuck: 0.1 } });
   for (const k in V.ways) M.route(k, V.ways[k], { width: { rim: 38, round: 15, bank: 13, brook: 13, east: 14, shelf: 3.4 }[k] || 13, grade: k === 'rim' ? 0.12 : 0.2 });
-  M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
-  M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
-  for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
+  M.spawn('crane', { name: 'Crane 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
+  M.spawn('crane', { name: 'Crane 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
+  for (let i = 0; i < 3; i++) M.spawn('porter', { name: 'Porter ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
   // five kites in a string: each two seconds behind the one before, a little to one side and above, each beating in its own time
   // (closer, or abreast, and their wings cross in the tight turn over the saddle: check.mjs measures every pair)
-  [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
-  M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }, { at: 0.72, hold: 66, move: 'lift' }] });
+  [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: 'Kite ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
+  M.spawn('ridge', { name: 'Ridge', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }, { at: 0.72, hold: 66, move: 'lift' }] });
   // the shelled ones: the crayfish in the brook west of the viaduct, a turtle on the eastern floor and one standing at the tarn, four woodlice in file on the lower shelf
-  M.spawn('gajae', { name: '가재', route: 'brook', offset: 40, halts: [{ at: 0.32, hold: 14, move: 'rear' }, { at: 0.78, hold: 9 }] });
-  M.spawn('jara', { name: '자라 1', route: 'east', offset: 0, halts: [{ at: 0.55, hold: 22, move: 'tuck' }] });
-  M.spawn('jara', { name: '자라 2', post: [97, 82], yaw: 60, moves: ['tuck'], rest: 4 });
+  M.spawn('gajae', { name: 'Crayfish', route: 'brook', offset: 40, halts: [{ at: 0.32, hold: 14, move: 'rear' }, { at: 0.78, hold: 9 }] });
+  M.spawn('jara', { name: 'Turtle 1', route: 'east', offset: 0, halts: [{ at: 0.55, hold: 22, move: 'tuck' }] });
+  M.spawn('jara', { name: 'Turtle 2', post: [97, 82], yaw: 60, moves: ['tuck'], rest: 4 });
   // four in file, five cycles (5.3 m, 6.25 s) apart, that stop together: each one's halts lie its own place in the file further along the way, and its clock
   // runs that much ahead (same halts on one clock would walk each into the one stopped in front of it)
-  for (let i = 0; i < 4; i++) { const d = (i * 5.295) / 177.9; M.spawn('gong', { name: '공벌레 ' + (i + 1), route: 'shelf', offset: i * 6.25, halts: [{ at: 0.4 + d, hold: 7, move: 'duck' }, { at: 0.8 + d, hold: 9 }] }); }
+  for (let i = 0; i < 4; i++) { const d = (i * 5.295) / 177.9; M.spawn('gong', { name: 'Woodlouse ' + (i + 1), route: 'shelf', offset: i * 6.25, halts: [{ at: 0.4 + d, hold: 7, move: 'duck' }, { at: 0.8 + d, hold: 9 }] }); }
   // the walker's body stands where the walk starts; the page hands it to whoever holds the keys
-  M.spawn('plover', { name: '물떼새', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
+  M.spawn('plover', { name: 'Plover', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else
 // (o.studio: the cast sheet wants the kinds only — no land)
@@ -9416,11 +9527,11 @@ LR.gym = (o = {}) => { if (!o.studio) V.land(); V.machines(); };
 
 
 // ── src/26_parts.js ──
-// 쇠울림 골짜기 · the machines' parts.  The legs are the kit's stock mechanisms (k.limbs); everything that makes a machine
+// Iron Valley · the machines' parts.  The legs are the kit's stock mechanisms (k.limbs); everything that makes a machine
 // this machine — hull, neck, head, load — is written here, each part in the frame of the one bone it rides.
 // A body, a head: x forward, y up, z right.  A neck link: X the pin, Y along it, Z its back.
 V.parts = {
-  // 두루미: a keel under a pale carapace, hip girders, a counterweight boom, a ladder neck and a head like a bird's — a
+  // Crane: a keel under a pale carapace, hip girders, a counterweight boom, a ladder neck and a head like a bird's — a
   // sensor block with one great lens and a long bill
   crane(k) {
     k.limbs({ style: 'shell' });
@@ -9488,7 +9599,7 @@ V.parts = {
     for (const e of k.S.extras) k.bone(e.name, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], e.name === 'mast' ? [0.07, 0.045, 0.02] : [0.045, 0.03, 0.012], { sides: k.n(6), caps: true }); });
     k.lamp('mast', { at: [0, 5.15, 0], dir: [0, 1, 0], color: [1, 0.18, 0.08], power: 0.7, range: 10, lens: 0.07, glow: 0.9 });
   },
-  // 솔개: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail (the blades weathered plate, only the leading one of each wing and the back still pale), an eye under a hooked brow.
+  // Kite: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail (the blades weathered plate, only the leading one of each wing and the back still pale), an eye under a hooked brow.
   // (a wing bone: X the leading edge's way (forward), Y out along the wing, Z up on the left wing and down on the right)
   kite(k) {
     k.bone('body', (g) => {
@@ -9522,7 +9633,7 @@ V.parts = {
     k.lamp('head', { name: 'eye', at: [0.3, -0.19, 0], dir: [0.62, -0.78, 0], color: [0.78, 0.92, 1.0], power: 30, cone: 7, range: 120, lens: 0.11, proud: 0.02 });
     k.lamp('wing_L2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [1, 0.08, 0.05], power: 0.9, range: 9, lens: 0.05, glow: 0.9 }); k.lamp('wing_R2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [0.1, 1, 0.3], power: 0.9, range: 9, lens: 0.05, glow: 0.9 });
   },
-  // 물떼새: the walker's own machine.  A pod between two hips, a counterweight boom behind, a short neck and a head that is mostly
+  // Plover: the walker's own machine.  A pod between two hips, a counterweight boom behind, a short neck and a head that is mostly
   // lamp; a bedroll, a canister and a whip aerial — somebody lives on it
   plover(k) {
     k.limbs({ style: 'shell' });
@@ -9551,7 +9662,7 @@ V.parts = {
     k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
     k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
   },
-  // 자라: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
+  // Turtle: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
   // three rows, forty years of moss on top; four sprawled girder legs come out from under the rim; a blunt head on a short neck
   jara(k) {
     k.limbs({ style: 'casing' });
@@ -9585,7 +9696,7 @@ V.parts = {
     for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.72, 0.05, s * 0.88], dir: [0.86, -0.28, s * 0.42], color: [1.0, 0.72, 0.3], power: 20, cone: 13, range: 80, lens: 0.24, proud: 0.03 });
     k.bone('tail', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 1.1, 0], [0, 2.2, 0]], [0.36, 0.22, 0.07], { sides: k.n(8), caps: true }); if (k.mid) { k.mat('rust'); for (const y of [0.3, 0.9, 1.5]) g.box(0, y, 0.2, 0.5 - y * 0.2, 0.3, 0.1, { soft: 0.3 }); } });
   },
-  // 가재: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
+  // Crayfish: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
   // it, two claws carried low in front, feelers, and two eyes on stalks that burn red
   gajae(k) {
     k.limbs({ style: 'casing' });
@@ -9621,7 +9732,7 @@ V.parts = {
       for (const s of [-1, 1]) { k.mat('joint'); g.tube([[0.3, 0.3, s * 0.4], [0.5, 0.75, s * 0.62], [0.72, 0.95, s * 0.7]], [0.07, 0.06, 0.09], { sides: k.n(7), caps: true }); } });
     for (const s of [-1, 1]) { k.lamp('head', { name: 'eye', at: [0.8, 0.96, s * 0.7], dir: [0.9, -0.3, s * 0.2], color: [1.0, 0.2, 0.08], power: 26, cone: 12, range: 90, lens: 0.11, proud: 0.03 }); k.lamp('head', { at: [1.22, -0.02, s * 0.2], dir: [1, -0.1, s * 0.2], color: [1, 0.3, 0.1], power: 1.2, range: 8, lens: 0.06, glow: 0.8 }); }
   },
-  // 공벌레: seven arches of plate from a closed nose to a closed tail, rust with two pale ones that were replaced, over a hull no bigger than a bath; six quick legs;
+  // Woodlouse: seven arches of plate from a closed nose to a closed tail, rust with two pale ones that were replaced, over a hull no bigger than a bath; six quick legs;
   // two feelers and two small lamps
   gong(k) {
     k.limbs({ style: 'girder' });
@@ -9639,7 +9750,7 @@ V.parts = {
     k.lamp('body', { at: [-1.36, 0.0, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.2, range: 3, lens: 0.03, glow: 0.7 });
     for (const n of ['feeler_L', 'feeler_R']) k.bone(n, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.4, 0], [0, 0.8, 0]], [0.014, 0.009, 0.003], { sides: k.n(5), caps: true }); });
   },
-  // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
+  // Porter: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
     k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
@@ -9685,7 +9796,7 @@ V.parts = {
     for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.3, -0.05, s * 0.48], dir: [0.96, -0.26, s * 0.08], color: [1.0, 0.62, 0.2], power: 22, cone: 14, range: 70, lens: 0.17, proud: 0.02 });
     k.lamp('body', { at: [-4.95, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.8, range: 9, lens: 0.1, glow: 0.8 });
   },
-  // 마루: a deck of girders as long as a street, a station on it gone to ruin and moss, a prow with two great eyes
+  // Ridge: a deck of girders as long as a street, a station on it gone to ruin and moss, a prow with two great eyes
   ridge(k) {
     k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
@@ -9770,13 +9881,13 @@ V.parts = {
 
 
 // ── src/27_lift.js ──
-// 쇠울림 골짜기 · the relic's lift.  Once a round 마루 stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
+// Iron Valley · the relic's lift.  Once a round Ridge stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
 // 25_machines).  Whoever is in the cage when it goes back up is carried up with it, comes out through the hatch onto the deck,
 // and can walk the bow while the relic walks on: the valley from fifty metres up.  R (a pad's X): into the cage while it is
 // down, and off the deck (down to the ground under the lift).  A film drives the same thing with its hand on KeyR.
 V.lift = () => {
-  const M = LR.mech, P = LR.player, say = { board: 'R · 승강기 타기', wait: '승강기가 올라갑니다', deck: 'R · 내려가기', near: '마루가 승강기를 내립니다' };
-  const relic = () => M.units.find((u) => u.name === '마루');
+  const M = LR.mech, P = LR.player, say = { board: 'Board the lift', boardSub: "Ridge's cage · it goes up to the deck", mark: 'Lift', wait: 'Going up', waitSub: 'hold on — out on the deck at the top', deck: 'Climb down', deckSub: "Ridge's deck · back to the ground", near: 'Lift coming down', nearSub: 'Ridge has stopped on the rim', inCage: 'In the cage', inCageSub: 'it goes up when Ridge is ready · step out the open side to stay' };
+  const relic = () => M.units.find((u) => u.name === 'Ridge');
   const W = (b) => { const u = relic(); return u && u.pose && u.pose.W ? u.pose.W[b] : null; };
   const lift = () => { const u = relic(), c = u && u.pose && u.pose.cmd; return c && c.extras && c.extras.lift !== undefined ? c.extras.lift : 0; };
   const toLocal = (F, x, y, z) => { const d = [x - F.p[0], y - F.p[1], z - F.p[2]]; return [d[0] * F.x[0] + d[1] * F.x[1] + d[2] * F.x[2], d[0] * F.y[0] + d[1] * F.y[1] + d[2] * F.y[2], d[0] * F.z[0] + d[1] * F.z[1] + d[2] * F.z[2]]; };
@@ -9785,23 +9896,28 @@ V.lift = () => {
   const DECK = [[11.6, 17.2, -8.7, 4.3], [11.6, 25.6, -8.7, -7.0]], DECKY = -0.1;
   const onDeck = (x, z) => { let best = null, bd = 1e9; for (const [x0, x1, z0, z1] of DECK) { const cx = LR.clamp(x, x0, x1), cz = LR.clamp(z, z0, z1), d = Math.hypot(cx - x, cz - z); if (d < bd) { bd = d; best = [cx, cz]; } } return best; };
   let veil = null; const fade = () => { if (LR.RENDER || typeof document === 'undefined') return; if (!veil) { veil = document.createElement('div'); veil.style.cssText = 'position:fixed;inset:0;background:#07090b;opacity:0;transition:opacity .35s;pointer-events:none;z-index:38'; document.body.appendChild(veil); } veil.style.opacity = 1; setTimeout(() => (veil.style.opacity = 0), 380); };
-  const hint = (t) => { if (!LR.RENDER && LR.hud && LR.hud.hint) LR.hud.hint(t, 1.2); };
   // on the deck: walk the bow; R takes the walker down to the ground under the lift
   const toDeck = (lx = 0, lz = 0) => { const u = relic(); fade(); P.ride = { unit: u, frame: () => W('body'), local: [14 + lz * 0.8, DECKY, -2.5 + lx * 0.8], clamp: onDeck, slow: 0.8,
-    update: (Pl) => { hint(say.deck); if (Pl.use) { const B = W('body'), c = W('lift_cage'); Pl.ride = null; fade(); const x = c ? c.p[0] : B.p[0], z = c ? c.p[2] : B.p[2]; Pl.place(x - B.z[0] * 5, z - B.z[2] * 5, (Math.atan2(B.x[0], -B.x[2]) * 180) / Math.PI); } } }; };
+    update: (Pl) => { if (Pl.use) { const B = W('body'), c = W('lift_cage'); Pl.ride = null; fade(); const x = c ? c.p[0] : B.p[0], z = c ? c.p[2] : B.p[2]; Pl.place(x - B.z[0] * 5, z - B.z[2] * 5, (Math.atan2(B.x[0], -B.x[2]) * 180) / Math.PI); } } }; };
   // in the cage: inside its rails; while it is down one can step back out of its open side; when it has gone up, out on the deck
   const board = (l) => { const u = relic(); let up = false; P.ride = { unit: u, frame: () => W('lift_cage'), local: [LR.clamp(l[0], -IN, IN), FLOOR, LR.clamp(l[2], -IN, IN)], slow: 0.5,
     clamp: (x, z) => [LR.clamp(x, lift() > 0.97 ? -2.4 : -IN, IN), LR.clamp(z, -IN, IN)],
-    update: (Pl) => { const fr = lift(); if (fr < 0.97) { up = true; hint(say.wait); }
+    update: (Pl) => { const fr = lift(); if (fr < 0.97) up = true;
       if (fr > 0.97 && Pl.ride.local[0] < -IN - 0.6) { Pl.ride = null; return; }      /* stepped out on to the ground */
       if (up && fr < 0.015) toDeck(Pl.ride.local[0], Pl.ride.local[2]); } }; };
   V.liftBoard = board; V.liftDeck = toDeck;
+  // what the HUD says (lib/88_hud: a marker over the cage from 70 m while it is down or coming down, the prompt with R
+  // within reach, on the deck the way down)
+  LR.interact.add({ poll: (Pl) => { const c = W('lift_cage'), u = relic(); if (!c || !u) return null; const fr = lift(), floor = M.apply(c, [0, FLOOR + 1.2, 0]);
+    if (Pl.ride && Pl.ride.unit === u) return Pl.ride.local[1] === FLOOR ? (fr < 0.97 ? { state: 'wait', label: say.wait, sub: say.waitSub, at: null } : { state: 'wait', label: say.inCage, sub: say.inCageSub, at: null }) : { state: 'ready', label: say.deck, sub: say.deckSub, at: null };
+    if (fr < 0.05) return null;
+    return fr < 0.97 ? { state: 'wait', label: say.near, sub: say.nearSub, at: floor, range: 6, see: 90, mark: say.mark } : { state: 'ready', label: say.board, sub: say.boardSub, at: floor, range: 3.4, see: 90, mark: say.mark }; } });
   P.hooks.push(() => {
     if (P.ride) return; const c = W('lift_cage'); if (!c) return; const fr = lift(); if (fr < 0.05) return;
     const l = toLocal(c, P.x, P.y, P.z), d = Math.hypot(l[0], l[2]); if (d > 26 || Math.abs(l[1] - FLOOR) > 6) return;
-    if (fr < 0.97) { if (d < 18) hint(say.near); return; }
+    if (fr < 0.97) return;
     const inside = Math.abs(l[0]) < IN + 0.5 && Math.abs(l[2]) < IN + 0.3 && Math.abs(l[1] - FLOOR) < 0.9;
-    if (d < 5.5) hint(say.board); if (P.use && (inside || d < 3.2)) board(l);
+    if (P.use && (inside || d < 3.2)) board(l);
   });
   // the cage meeting the ground and locking back into the belly: a hiss of the brakes' steam, sparks off the rail, the dust it
   // lands in (lib/62_vfx; the same ids each time, so a stop is one burst whatever the frame rate)
@@ -9817,7 +9933,7 @@ V.lift = () => {
 
 
 // ── src/30_details.js ──
-// 쇠울림 골짜기 · the small things, and the scans placed by name: what stands on the old road and on the viaduct, the
+// Iron Valley · the small things, and the scans placed by name: what stands on the old road and on the viaduct, the
 // camp in the hall, crags on the north bank, mossy rocks on the slopes, and what the machines have knocked down along
 // their ways.  Every placed scan has a generated stand-in or is simply absent without scans (?scan=0).
 V.details = () => {
@@ -9856,16 +9972,16 @@ V.details = () => {
     cmd.body = q.bodyFrame([x, gy + 2.4, z], h, -0.1, 0.42); for (const l of q.kin.limbs) { const k = l.side > 0 ? 0.55 : 1.5, px = x + fw[0] * l.home[0] * 1.25 + rt[0] * l.home[1] * k, pz = z + fw[1] * l.home[0] * 1.25 + rt[1] * l.home[1] * k; cmd.limbs[l.name] = { p: [px, L.h(px, pz) + l.ball * 0.6, pz], n: [0.3 * l.side, 0.9, 0.1], yaw: h + l.side * 0.6, gamma: 38, curl: 20 }; }
     cmd.neck = { pitch: 74, yaw: -16 }; cmd.head = { pitch: 18, yaw: -10, roll: 24, level: 0 }; } });
   // the names of things, the sounds placed in them
-  W.places.push({ x: V.spawn.x, z: V.spawn.z, r: 14, name: '들목', sub: '옛길이 숲으로 들어가는 곳' }, { x: V.lookout.x, z: V.lookout.z, r: 9, name: '망바위', sub: '골짜기 전망' }, { x: D.x, z: 50, r: 16, name: '끊어진 고가', sub: '높이 22 m, 끝이 끊긴 고가도로' },
-    { x: V.hall.x, z: V.hall.z, r: 15, name: '정비창 터', sub: '모닥불이 있는 폐정비창' }, { x: V.tarn.x - 30, z: V.tarn.z + 6, r: 14, name: '쇠늪', sub: '두루미가 물을 건너는 곳' }, { x: V.wreck.x, z: V.wreck.z + 14, r: 16, name: '누운 두루미', sub: '이끼 덮인 두루미 잔해' },
-    { x: V.yard.x, z: V.yard.z, r: 16, name: '짐터', sub: '등짐이 들르는 야적장' }, { x: V.ford.x, z: V.ford.z, r: 9, name: '여울', sub: '개울을 건너는 얕은 곳' });
+  W.places.push({ x: V.spawn.x, z: V.spawn.z, r: 14, name: 'Wood Gate', sub: 'where the old road goes into the forest' }, { x: V.lookout.x, z: V.lookout.z, r: 9, name: 'Lookout Rock', sub: 'the valley below' }, { x: D.x, z: 50, r: 16, name: 'Broken Viaduct', sub: '22 m up, and then nothing' },
+    { x: V.hall.x, z: V.hall.z, r: 15, name: 'Old Depot', sub: 'a dead workshop with a live fire' }, { x: V.tarn.x - 30, z: V.tarn.z + 6, r: 14, name: 'Iron Tarn', sub: 'where the cranes wade' }, { x: V.wreck.x, z: V.wreck.z + 14, r: 16, name: 'Fallen Crane', sub: 'a giant gone to moss' },
+    { x: V.yard.x, z: V.yard.z, r: 16, name: 'Freight Yard', sub: 'where the porters stop' }, { x: V.ford.x, z: V.ford.z, r: 9, name: 'The Ford', sub: 'shallow water across the brook' });
   for (let i = 4; i < V.brook.length - 3; i += 3) W.sounds.push({ x: V.brook[i][0], y: V.brook[i][2], z: V.brook[i][1], kind: 'stream', r: 26, gain: 0.8 });
   W.sounds.push({ x: V.tarn.x, y: V.tarn.level, z: V.tarn.z, kind: 'frogs', r: 46, gain: 0.8 }); W.fireflyAreas = [{ x: V.tarn.x, z: V.tarn.z, r: 40 }, { x: V.hall.x, z: V.hall.z + 14, r: 18 }];
 };
 
 
 // ── src/40_plants.js ──
-// 쇠울림 골짜기 · what grows.  A dark wood of spruce and pine that has had the valley to itself for a long time, birch and
+// Iron Valley · what grows.  A dark wood of spruce and pine that has had the valley to itself for a long time, birch and
 // brush by the water and wherever a machine has opened the canopy, young firs at every edge and in the cracks of what
 // people built.  Nothing grows on the machines' ways: they are walked too often.
 V.plants = () => {
@@ -9897,7 +10013,7 @@ V.plants = () => {
 
 
 // ── src/80_film.js ──
-// 쇠울림 골짜기 · the reel (scripts/film.mjs).  Seven shots; in each the camera and the machines' clock are functions of the shot's
+// Iron Valley · the reel (scripts/film.mjs).  Seven shots; in each the camera and the machines' clock are functions of the shot's
 // time, so a frame can be drawn alone.  `t` is the second of the valley's clock the shot starts at — found by asking the gym
 // where a machine is (the walk is a pure function of time).  A camera returns { at, up | y, look | yaw, pitch, fov }.
 {
@@ -9906,30 +10022,30 @@ V.plants = () => {
   const hold = (sec, k = 1) => [Math.sin(sec * 0.7) * 0.05 * k + Math.sin(sec * 1.9 + 1) * 0.02 * k, Math.sin(sec * 0.9 + 2) * 0.03 * k + Math.sin(sec * 2.3) * 0.012 * k];
   V.film = [
     // the relic passes the way in: lit windows over the wood, legs between the trunks, the ground carrying each step
-    { name: 'relic', dur: 5.5, tod: 20.4, weather: 'mist', t: 971, cam: (u, LR, s) => { const b = at('마루', 971 + s).W.body.p, h = hold(s); return { at: [-150 - 2.2 * ease(u) + h[0], 120 + 1.4 * ease(u)], up: 1.66 + h[1], look: [b[0], b[1] - 7, b[2]], fov: 56 }; } },
+    { name: 'relic', dur: 5.5, tod: 20.4, weather: 'mist', t: 971, cam: (u, LR, s) => { const b = at('Ridge', 971 + s).W.body.p, h = hold(s); return { at: [-150 - 2.2 * ease(u) + h[0], 120 + 1.4 * ease(u)], up: 1.66 + h[1], look: [b[0], b[1] - 7, b[2]], fov: 56 }; } },
     // out on the viaduct: a crane comes through the gap and slows
-    { name: 'approach', dur: 5.5, tod: 20.4, weather: 'mist', t: 141.5, cam: (u, LR, s) => { const b = at('두루미 1', 141.5 + s).W.body.p, h = hold(s); return { at: [-22.6 + h[0], 53 - 7.4 * ease(u)], up: 1.66 + h[1], look: [b[0] + 3, b[1] + 5.5, b[2]], fov: 58 }; } },
+    { name: 'approach', dur: 5.5, tod: 20.4, weather: 'mist', t: 141.5, cam: (u, LR, s) => { const b = at('Crane 1', 141.5 + s).W.body.p, h = hold(s); return { at: [-22.6 + h[0], 53 - 7.4 * ease(u)], up: 1.66 + h[1], look: [b[0] + 3, b[1] + 5.5, b[2]], fov: 58 }; } },
     // it stands, lifts its head over the mist and looks: the search light comes round across the eye
-    { name: 'survey', dur: 6.5, tod: 20.4, weather: 'mist', t: 155.2, cam: (u, LR, s) => { const r = at('두루미 1', 155.2 + s).W, hd = r.head.p, b = r.body.p, h = hold(s, 1.4); return { at: [-23.2 + h[0], 44.4], up: 1.62 + h[1], look: [mix(b[0], hd[0], 0.72), mix(b[1], hd[1], 0.72), mix(b[2], hd[2], 0.72)], fov: 54 }; } },
+    { name: 'survey', dur: 6.5, tod: 20.4, weather: 'mist', t: 155.2, cam: (u, LR, s) => { const r = at('Crane 1', 155.2 + s).W, hd = r.head.p, b = r.body.p, h = hold(s, 1.4); return { at: [-23.2 + h[0], 44.4], up: 1.62 + h[1], look: [mix(b[0], hd[0], 0.72), mix(b[1], hd[1], 0.72), mix(b[2], hd[2], 0.72)], fov: 54 }; } },
     // the kites come down out of the mist over the viaduct, five beams combing the deck, and bank away west over the one that fell
-    { name: 'kites', dur: 6.5, tod: 20.4, weather: 'mist', t: 44.2, cam: (u, LR, s) => { const P = ['솔개 1', '솔개 2', '솔개 3'].map((n) => at(n, 44.2 + s).W.body.p), h = hold(s, 1.3); return { at: [-22.4 + h[0], 47.5 + 0.8 * ease(u)], up: 1.66 + h[1], look: [0, 1, 2].map((i) => (P[0][i] * 2 + P[1][i] + P[2][i]) / 4), fov: 64 }; } },
+    { name: 'kites', dur: 6.5, tod: 20.4, weather: 'mist', t: 44.2, cam: (u, LR, s) => { const P = ['Kite 1', 'Kite 2', 'Kite 3'].map((n) => at(n, 44.2 + s).W.body.p), h = hold(s, 1.3); return { at: [-22.4 + h[0], 47.5 + 0.8 * ease(u)], up: 1.66 + h[1], look: [0, 1, 2].map((i) => (P[0][i] * 2 + P[1][i] + P[2][i]) / 4), fov: 64 }; } },
     // a carrier on the north bank, at the height of its knees: two amber eyes, feet finding the ground
-    { name: 'porter', dur: 6, tod: 20.4, weather: 'mist', t: 16.5, cam: (u, LR, s) => { const r = at('등짐 1', 16.5 + s).W, hd = r.head.p, h = hold(s); return { at: [-19.6 + 1.8 * ease(u) + h[0], -85.6 - 3.2 * ease(u)], up: 1.15 + h[1], look: [hd[0], hd[1] - 1.2, hd[2]], fov: 60 }; } },
+    { name: 'porter', dur: 6, tod: 20.4, weather: 'mist', t: 16.5, cam: (u, LR, s) => { const r = at('Porter 1', 16.5 + s).W, hd = r.head.p, h = hold(s); return { at: [-19.6 + 1.8 * ease(u) + h[0], -85.6 - 3.2 * ease(u)], up: 1.15 + h[1], look: [hd[0], hd[1] - 1.2, hd[2]], fov: 60 }; } },
     // dawn on the valley floor: a crane walks past the one that fell — every leg its own length on the worn ground
-    { name: 'floor', dur: 5.5, tod: 6.5, weather: 'mist', t: 85, cam: (u, LR, s) => { const b = at('두루미 1', 85 + s).W.body.p, h = hold(s), gy = LR.land.h(b[0], b[2]); return { at: [-64 + h[0], 35.5 - 1.2 * ease(u)], up: 1.2 + h[1], look: [b[0] + 2, gy + 6.5, b[2]], fov: 62 }; } },
+    { name: 'floor', dur: 5.5, tod: 6.5, weather: 'mist', t: 85, cam: (u, LR, s) => { const b = at('Crane 1', 85 + s).W.body.p, h = hold(s), gy = LR.land.h(b[0], b[2]); return { at: [-64 + h[0], 35.5 - 1.2 * ease(u)], up: 1.2 + h[1], look: [b[0] + 2, gy + 6.5, b[2]], fov: 62 }; } },
     // and at noon, in clear air: its back goes by level with the broken deck
-    { name: 'noon', dur: 5, tod: 13, weather: 'clear', t: 125.5, cam: (u, LR, s) => { const b = at('두루미 1', 125.5 + s).W.body.p, h = hold(s); return { at: [-23 + h[0], 43.9], up: 1.64 + h[1], look: [b[0] + 1, b[1] + 1.5, b[2]], fov: 58 }; } },
+    { name: 'noon', dur: 5, tod: 13, weather: 'clear', t: 125.5, cam: (u, LR, s) => { const b = at('Crane 1', 125.5 + s).W.body.p, h = hold(s); return { at: [-23 + h[0], 43.9], up: 1.64 + h[1], look: [b[0] + 1, b[1] + 1.5, b[2]], fov: 58 }; } },
   ];
 }
 
 
 // ── src/82_trailer.js ──
-// 쇠울림 골짜기 · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
+// Iron Valley · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
 // trailer.mjs to draw its frames.  The camera is free; the walker's body is driven by keys; every shot sets its own hour,
 // weather and machines' clock.  Every machine in the cut is walking, flying or doing its big move.
 {
   V.cine = (h) => { const { P, M, ease, lerp, damp, at, low, floor, goTo, U, pose, rel, yawOf } = h;
-    const relic = U('마루'), jara = U('자라 1'), gajae = U('가재'), crane1 = U('두루미 1'), porter = U('등짐 1'), kite = U('솔개 3'), kp = (t) => M.cmd(kite, t).body.p;
+    const relic = U('Ridge'), jara = U('Turtle 1'), gajae = U('Crayfish'), crane1 = U('Crane 1'), porter = U('Porter 1'), kite = U('Kite 3'), kp = (t) => M.cmd(kite, t).body.p;
     const q1 = pose(relic, 142.0), q2 = pose(relic, 145.4), q3 = pose(relic, 149.6), far = rel(q1, 220, 0), c3 = rel(q3, 78, 7), qh = pose(relic, 150);
     const qn = pose(relic, 1006), qw = pose(jara, 66), qc = pose(crane1, 108), qt = pose(jara, 106), sg = qt.rt[1] > 0 ? 1 : -1, tGoal = rel(qt, 30, sg * 9.5), camp = V.camp || { x: 30, z: 123 };
     // the relic's lift (27_lift): where the cage comes down, where the walker comes from (out of its open side), where the cameras stand
@@ -10078,7 +10194,7 @@ V.plants = () => {
     };
     // the machines near the walker turn their heads to it in every shot it is in (not in the ones it is not: dawn, the kite, the lookout)
     for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
-    return { fps: 24, shots, title: { big: '쇠울림 골짜기', small: 'MACHINE-WILDS', line: '브라우저에서 걷는 기계의 숲', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · 영상 무단 사용 · 재가공 금지', skip: 'Esc · 직접 걷기' },
+    return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
@@ -10087,14 +10203,14 @@ V.plants = () => {
 
 
 // ── src/83_glow.js ──
-// 쇠울림 골짜기 · strikes of lightning the film can count on (lib/63_glow): one inside the cut of each rain shot, on the film's
+// Iron Valley · strikes of lightning the film can count on (lib/63_glow): one inside the cut of each rain shot, on the film's
 // clock — E1 (the crane coming through the gap, against the flash), JUMP (on the run-up), DROP (after the landing).
 // The rest of the rain has its own strikes, one in eight seconds or so.
 if (LR.vfx) LR.vfx.bolts = [143.6, 167.0, 171.4];
 
 
 // ── src/90_main.js ──
-// 쇠울림 골짜기 · start.  The land, what people left on it, the machines and their ways (footfalls pressed into the land),
+// Iron Valley · start.  The land, what people left on it, the machines and their ways (footfalls pressed into the land),
 // the small things, then what grows around all of it.
 LR.start({
   // scans (assets.json → fetch-assets.mjs): each surface takes the place of the recipe of the same name at its real size

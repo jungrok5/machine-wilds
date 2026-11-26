@@ -204,8 +204,15 @@ snowfield less punch. Everything else follows from the state.
 `LR.start({ tour: [{ x, z, look: [x, z], pull: 0..1, pitch }] })` — a closed loop walked at 1.55 m/s; `look` is what
 that stretch is about (`pull` 0 looks down the way, 1 at `look`). The way is a smooth curve through the points, so it
 cuts corners: check it with `check.mjs --walk` (the walk map) and see it with `render.mjs --tour 12`. Pass a
-landmark at the distance where the whole of it is in frame; do not walk up to its door and turn round. `views` name the stills. `strings` replaces any of `LR.hud.t` (see `examples/village/src/15_words.js`
-for a full Korean set). `LR.player.walk / run / eye / radius` are the walker's numbers.
+landmark at the distance where the whole of it is in frame; do not walk up to its door and turn round. `views` name the stills. `strings` replaces any of `LR.hud.t` (the engine's English;
+`examples/iron-valley/src/15_words.js` sets only the title and the start). `LR.player.walk / run / eye / radius` are the walker's numbers.
+
+The HUD (`lib/88_hud.js`) is a console game's: the walker's machine and the hour top left, a compass with the giants
+(red while one looks at the walker), places and things to use, the buttons that matter bottom right (a pad's once a pad
+is used: `LR.player.input`), a menu on Tab, ☰ or a pad's Start. Something the walker can use is registered with
+`LR.interact.add({ poll(P) → null | { state: 'ready' | 'wait', label, sub, at, range, see, mark } })`: a marker over `at`
+from `see` metres, the prompt with R (a pad's X; on a phone the prompt is the button) within `range`; the realm acts on
+`P.use` itself (`examples/iron-valley/src/27_lift.js`).
 
 The walker is a first-person eye (no body is drawn) that stands on the land, on bridges, piers and the frozen pond,
 and cannot pass walls, trunks, fences, placed scans or deep water. Input, all at once and none required:
