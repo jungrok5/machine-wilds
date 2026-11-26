@@ -27,7 +27,7 @@ have negative z). A limb's segment, a neck link, a toe, a cylinder: X the hinge 
 | `idle: { period, breath, shift, scan }` | what moves while it stands: the body's rise (m), its sideways shift (m), the head's sweep (°) |
 | `moves: { name: { dur, main, sound: [t, Hz, seconds, gain], keys: { channel: [[t, v]…] } } }` | key poses. Channels: `body.dx dy dz roll pitch yaw` · `neck.pitch neck.yaw` · `head.pitch yaw roll` · `light` · `extra.<name>`. `main` is the channel the checks read: it must first go **against** its direction (≥ 4 %: the gather) and pass rest on the way back (≥ 3 %: the overshoot) |
 | `age` | 0…1 (0.55): how long it has stood in the weather. The kit lays patches in the machine's own space — more on what faces up — and the surface turns them into grime, rust run down from seams, and moss on tops and north sides. Rods, rubber and lenses stay as they are. A machine that still works is 0.4–0.6, one nobody tends 0.8–1; a wreck takes `moss` on top of that |
-| `aware`, `lensGain`, `palette`, `build(k)` | how near someone must come for the head to turn (m; 0 never) · how bright the lenses glow · role → `[material, '#tint']` · the parts |
+| `aware`, `lookMax`, `glance`, `lensGain`, `palette`, `build(k)` | how near the walker must come for the head to turn to it (m; 0 never) · how far the head may turn (° each way, default 110) · its glances `[look s, away s]` (default `[9, 6]`: it looks, looks back to its way, looks again; the first look flares its lenses and, live, it calls low) · how bright the lenses glow · role → `[material, '#tint']` · the parts |
 
 ### The gait, from the mass
 Heavier means a longer cycle, more of it on the ground, a lower lift, a slower sink into each step.

@@ -698,3 +698,17 @@ after ten seconds below its tier — and each reload stood at the start button a
 streaming grew long enough for the step down to fire inside the samples page's frame (on the CPU rasteriser every
 device is a slow one). *Fix:* a reload the page makes carries `go=1`, as the safe-mode retry already did. *Rule:* what
 the visitor agreed to once is carried through every reload the page makes itself.
+
+**What the giants do to the world was too quiet to see, then too loud in the wrong place** (`lib/62_vfx.js`,
+`lib/63_glow.js`, judged in key frames before and after, three rounds). Splashes on the machines' backs were drawn at
+half strength even where something stood in front (a floor of `max(f, 0.5)` copied from the rain's own splashes, which
+lie on what is drawn): white crowns showed through the barrier of the viaduct. *Fix:* a point on a machine is tested
+against the depth of the picture in the vertex shader and dropped when it is behind. A ring decal on the ground read as
+a hard grey arc across the frame at the walker's landing; chunks of earth read as black flakes (lit by the sky alone, in
+the giant's shadow); steam was a flat smudge; lamp halos in the mist were red balls that took the frame. *Fix:* a
+landing is a low skirt of soft puffs (out in a sixth of a second, gone in a second and a half), rings only on open
+water and broken by noise; chunks take the colour of the ground they came from, light from below as well as above, a
+dust trail each and a steep spread of sizes; steam is a dozen puffs lit as volumes (warm on the sun's side, the sky's
+cool in the shade); a glint is a hot point and a whisper of halo. *Rule:* an effect is judged at the distance the film
+looks at it, beside the same frame without it, and in motion; and what glows is drawn in HDR well above one — the
+bloom only takes what is brighter than about one.

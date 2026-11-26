@@ -4,7 +4,8 @@
 //   node trailer.mjs . --keys [--only B,D1]     three frames a shot → out/cine/key-<shot>-<n>.jpg (look before the long render)
 //   node trailer.mjs . --only K,D1,D2           frames → out/cine/<shot>/f_00000.jpg (kept: a stopped render goes on)
 //   node trailer.mjs . --sound                  out/cine/cine.wav from the machines' footfalls and calls, heard from the camera
-//   node trailer.mjs . --join                   out/cine.mp4 (shots in ORDER, each cut to RANGE, the sound, out/cine/title.png last)
+//   node trailer.mjs . --join [--nohead]        out/cine.mp4 (shots in ORDER, each cut to RANGE, the sound, out/cine/title.png last; --nohead: no card before)
+//   node trailer.mjs . --ranges cut.json --out social [--size 1440x810]   another cut: { shot: [from, to] } in order, then --join with the same --ranges
 // Needs the built page (scripts/build.mjs) and the scans (scripts/fetch-assets.mjs).  Nothing it writes is committed.
 // A camera inside a lamp's cone sees the cone's edge as a hard line across the picture: keep the camera outside the beams.
 import { createRequire } from 'node:module'; import { pathToFileURL } from 'node:url'; import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs'; import { spawnSync } from 'node:child_process';
@@ -18,13 +19,13 @@ const only0 = opt('only') ? opt('only').split(',') : null, cutFile = out + '/cut
 // repository's name small at the foot of every frame, the sound unless --mute.  --w 1920 (the picture is enlarged with a sharp
 // filter: a player's own enlarging is what makes a small film look soft)
 if (has('join')) { if (!existsSync(cutFile)) { console.error('no cut.json in ' + out + ' yet: run --dry, --sound or a render first'); process.exit(1); } const c = JSON.parse(readFileSync(cutFile, 'utf8')); ORDER = c.order; RANGE = c.range; TITLE = c.title || {};
-  const OW = +(opt('w') || 1920), OH = Math.round((OW * H) / W / 2) * 2, HEAD = 2.8, TAIL = 4.0, mute = has('mute'), ff = (a) => { const r = spawnSync('ffmpeg', ['-v', 'error', '-y', ...a], { stdio: 'inherit' }); if (r.status) { console.error('ffmpeg failed'); process.exit(1); } };
+  const OW = +(opt('w') || 1920), OH = Math.round((OW * H) / W / 2) * 2, HEAD = has('nohead') ? 0 : 2.8, TAIL = 4.0, mute = has('mute'), ff = (a) => { const r = spawnSync('ffmpeg', ['-v', 'error', '-y', ...a], { stdio: 'inherit' }); if (r.status) { console.error('ffmpeg failed'); process.exit(1); } };
   { const b = await chromium.launch(), pg = await b.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: OW / 960 });      // the cards, drawn by the browser (it has the letters)
     const card = (rows) => `<body style="margin:0;background:#07090b;color:#e9e4d6;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif">${rows}</body>`;
     const big = `<div style="font-size:64px;font-weight:700;letter-spacing:.14em">${TITLE.big || ''}</div><div style="width:120px;height:2px;background:#c8532e;margin:22px 0 18px"></div><div style="font-size:20px;letter-spacing:.42em;opacity:.78">${TITLE.small || ''}</div>`, repo = (TITLE.repo ? `<div style="font-size:14px;letter-spacing:.12em;opacity:.6;margin-top:26px;font-family:monospace">${TITLE.repo}</div>` : '') + (TITLE.rights ? `<div style="font-size:12px;letter-spacing:.08em;opacity:.42;margin-top:10px">${TITLE.rights}</div>` : '');
     await pg.setContent(card(big + repo)); await pg.screenshot({ path: out + '/card-head.png' }); await pg.setContent(card(big + `<div style="font-size:15px;letter-spacing:.2em;opacity:.5;margin-top:14px">${TITLE.line || ''}</div>` + repo)); await pg.screenshot({ path: out + '/card-tail.png' }); await b.close(); }
   const enc = ['-c:v', 'libx264', '-crf', '13', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-r', String(FPS)], big = `scale=${OW}:${OH}:flags=lanczos,unsharp=5:5:0.55:5:5:0.0`, parts = []; let Ts = 0;
-  ff(['-loop', '1', '-framerate', String(FPS), '-i', out + '/card-head.png', '-t', String(HEAD), '-vf', `scale=${OW}:${OH},fade=t=in:st=0:d=0.6,fade=t=out:st=${HEAD - 0.6}:d=0.6`, ...enc, out + '/head.mp4']); parts.push('head.mp4');
+  if (HEAD > 0) { ff(['-loop', '1', '-framerate', String(FPS), '-i', out + '/card-head.png', '-t', String(HEAD), '-vf', `scale=${OW}:${OH},fade=t=in:st=0:d=0.6,fade=t=out:st=${HEAD - 0.6}:d=0.6`, ...enc, out + '/head.mp4']); parts.push('head.mp4'); }
   for (const n of ORDER) { const len = (RANGE[n][1] - RANGE[n][0]) / FPS, vf = big + (n === ORDER[0] ? ',fade=t=in:st=0:d=0.8' : n === ORDER[ORDER.length - 1] ? `,fade=t=out:st=${(len - 1.3).toFixed(2)}:d=1.3` : '');
     ff(['-framerate', String(FPS), '-start_number', String(RANGE[n][0]), '-i', `${out}/${n}/f_%05d.jpg`, '-frames:v', String(RANGE[n][1] - RANGE[n][0]), '-vf', vf, ...enc, `${out}/${n}.mp4`]); parts.push(n + '.mp4'); Ts += len; }
   ff(['-loop', '1', '-framerate', String(FPS), '-i', out + '/card-tail.png', '-t', String(TAIL), '-vf', `scale=${OW}:${OH},fade=t=in:st=0:d=0.7,fade=t=out:st=${TAIL - 0.8}:d=0.8`, ...enc, out + '/tail.mp4']); parts.push('tail.mp4');
@@ -38,7 +39,8 @@ page.on('pageerror', (e) => console.log('ERR', e.message));
 await page.goto(pathToFileURL(dir + '/index.html').href + `?render=1&w=${W}&h=${H}&frames=2&hud=0&torch=1${QX}${sound ? '&sound=1' : ''}`, { waitUntil: 'commit', timeout: 0 });
 for (const t0 = Date.now(); ;) { const s = await page.evaluate(() => [window.READY === true, window.FAILED || null]); if (s[1]) throw new Error(s[1]); if (s[0]) break; if (Date.now() - t0 > 400000) throw new Error('never ready'); await new Promise((r) => setTimeout(r, 1000)); } console.log('ready');
 const INFO = await page.evaluate(() => window.realm.cine.info()); if (!INFO) throw new Error('the realm declares no film (LR.start({ cine }))');
-ORDER = INFO.order; RANGE = INFO.range; writeFileSync(cutFile, JSON.stringify(INFO)); const only = only0 || ORDER;
+ORDER = INFO.order; RANGE = INFO.range; if (opt('ranges')) { const R2 = JSON.parse(readFileSync(opt('ranges'), 'utf8')); ORDER = Object.keys(R2); RANGE = Object.assign({}, RANGE, R2); INFO.order = ORDER; INFO.range = RANGE; }      /* --ranges cut.json: { shot: [from, to] } in order — a shorter cut, only its frames drawn */
+ writeFileSync(cutFile, JSON.stringify(INFO)); const only = only0 || ORDER;
 await page.evaluate(() => { window.realm.filmStart(24); window.realm.LR.player.stopTour(); window.realm.LR.wx.set({ auto: false }); window.cine = window.realm.cine; });
 const save = async (f) => writeFileSync(f, Buffer.from((await page.evaluate(() => window.realm.canvas.toDataURL('image/jpeg', 0.95))).split(',')[1], 'base64'));
 if (sound) {
