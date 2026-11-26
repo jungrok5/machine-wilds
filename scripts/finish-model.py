@@ -1,7 +1,7 @@
 # machine-wilds · finish-model.py — a model made for a realm (Varco 3D's GLB) made ready for the page, in Blender (bpy):
 #   python3 scripts/finish-model.py <in.glb> <out-dir> <id> --size <metres> [--axis y|x|z] [--tris 20000] [--tex 1024]
 # One mesh (its parts joined), its transforms applied, scaled so its largest side along --axis is --size metres
-# (y: its height; x: its length), stood on the ground at its middle, cut down to --tris triangles (Blender's collapse
+# (y: its height; len: its longest side on the ground), stood on the ground at its middle, cut down to --tris triangles (Blender's collapse
 # decimation keeps the UV seams), its maps cut to --tex px, written as glTF with separate files the engine reads
 # (lib/47_models): <id>.gltf + .bin + <id>_diff_1k.jpg, <id>_nor_gl_1k.jpg, <id>_arm_1k.jpg (occlusion · roughness · metal:
 # the name tells the engine the map is packed).  Needs `pip install bpy`.  Name the result in the realm's assets.json as
@@ -12,7 +12,7 @@ from mathutils import Vector
 
 ap = argparse.ArgumentParser()
 ap.add_argument('src'); ap.add_argument('out'); ap.add_argument('id')
-ap.add_argument('--size', type=float, required=True); ap.add_argument('--axis', default='y')
+ap.add_argument('--size', type=float, required=True); ap.add_argument('--axis', default='y', help='y: height · x, z · len: the longest side on the ground')
 ap.add_argument('--tris', type=int, default=20000); ap.add_argument('--tex', type=int, default=1024)
 ap.add_argument('--yaw', type=float, default=0.0, help='turn about the vertical, degrees (so +x is its front)')
 a = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
@@ -37,6 +37,7 @@ if a.yaw: ob.rotation_euler[2] = math.radians(a.yaw); bpy.ops.object.transform_a
 bb = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
 mn = Vector((min(v.x for v in bb), min(v.y for v in bb), min(v.z for v in bb))); mx = Vector((max(v.x for v in bb), max(v.y for v in bb), max(v.z for v in bb)))
 ext = {'x': mx.x - mn.x, 'z': mx.y - mn.y, 'y': mx.z - mn.z}      # (glTF y = Blender z; glTF z = Blender -y)
+ext['len'] = max(ext['x'], ext['z'])      # --axis len: its longest side on the ground
 s = a.size / max(ext[a.axis], 1e-6)
 ob.location = (-(mn.x + mx.x) / 2 * s, -(mn.y + mx.y) / 2 * s, -mn.z * s); ob.scale = (s, s, s)
 bpy.ops.object.transform_apply(location=True, scale=True)

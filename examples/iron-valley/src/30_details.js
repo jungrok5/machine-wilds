@@ -30,6 +30,10 @@ V.details = () => {
       at('propane_tank', x0 + 9.6, z0 + 0.45); at('propane_tank', x0 + 10.0, z0 + 0.55, { yaw: 1 }); at('industrial_storage_cart', x0 + 11.0, z0 + 3.2, { yaw: 0.35, solid: 'box' });
       at('hand_truck', x0 + 1.2, z0 + 12.4, { yaw: 2.4 }); at('ladder_sectioned_01', x0 + 11.6, z0 + 0.4, { pitch: -0.18 }); at('power_box_01', x0 + 0.34, z0 + 9.2, { y: fl + 1.35, yaw: Math.PI / 2, solid: false });
       at('modular_electric_cables', x0 + 2.4, z0 + 5.2, { yaw: 1.2, solid: false });
+      // made for this place (models/, Varco 3D finished in Blender): an engine on the hoist by the bench, a forklift left where
+      // the roof came down, and a delivery van at the open side, the flood light on it
+      at('depot_engine_hoist', x0 + 2.6, z0 + 3.9, { yaw: 0.8, solid: 'box' }); at('depot_forklift', x0 + 18.5, z0 + 10.5, { yaw: 2.1, solid: 'box' });
+      at('depot_van', x0 + 13.5, z0 + 17.2, { y: LR.land.h(x0 + 13.5, z0 + 17.2), yaw: Math.PI / 2 + 0.22, sink: 0.04, solid: 'box' });
       // the light: cold tubes under the slab (the third flickers on its way out), warm over the bench, a caged lamp, a flood
       for (const [k, [x, z]] of [[3, 3.5], [9, 3.5], [3, 10.5], [9, 10.5]].entries()) { at('mounted_fluorescent_lights', x0 + x, z0 + z, { y: ceil - 0.05, yaw: Math.PI / 2, solid: false });
         if (k !== 1) W.light({ x: x0 + x, y: ceil - 0.25, z: z0 + z, r: 7.5, power: k === 2 ? 1.3 : 1.7, color: [0.74, 0.88, 1.0], kind: 'tube', flicker: k === 2 ? 0.95 : 0.03, glow: 0 }); }      /* (the second is dead: the far corner stays dark) */
