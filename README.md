@@ -144,7 +144,8 @@ realm; `references/` holds the notes behind each step.
 
 Controls: W A S D or the arrows to walk, the mouse to look, Shift to run, Space to hop, V to switch the camera
 (first person, behind, above), the wheel or + and − to zoom, B for the lamp. On a phone, two thumbs; a gamepad works
-too. You can hop onto the barriers, and jump off the viaduct, land and walk up to a machine. `1` to `4` set the hour,
+too. You can hop onto the barriers, and jump off the viaduct, land and walk up to a machine. When 마루, the biggest, stops on the rim and lets its cage down, R takes you
+up to its deck to walk the bow while it walks on, and R again takes you down. `1` to `4` set the hour,
 `5` to `8` the weather, `T` runs the automatic round, `M` toggles sound, `P` shows numbers.
 
 ## Limits
