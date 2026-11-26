@@ -18,7 +18,28 @@ V.details = () => {
     for (const [dx, dz] of [[5.5, 1], [5.9, 1.5], [6.4, 0.6]]) put('old_tyre', dx, dz, { lie: r() < 0.6 }); put('rusted_wheel_rim_01', 5.2, 2.2, { lie: true }); put('rusted_wheel_rim_01', 6.8, 1.8);
     MD.place('utility_box_01', H.x - 12 + 0.45, H.z - 2, { y: H.y + 1.1, yaw: Math.PI / 2, solid: false });
     // a work light on a pole by the door, lit when the lamps are
-    P.lampPost(C.x - 5.5, C.z + 4.8, { yaw: 0.6, h: 3.2 }); }
+    P.lampPost(C.x - 5.5, C.z + 4.8, { yaw: 0.6, h: 3.2 });
+    // the workshop along the north wall, under the floor that still holds: somebody kept a bench here after everyone left —
+    // shelves, a desk with a vice on it, a tool chest, a welding cart and gas, crates; tubes on the ceiling (one dying), a
+    // lamp over the bench, a caged lamp on the open side and a flood light outside throwing the hall's shape on the rain
+    { const x0 = H.x - 12, z0 = H.z - 7, fl = H.y + 0.24, ceil = H.y + 4.38, beam = H.y + 3.8, at = (id, x, z, o = {}) => MD.place(id, x, z, Object.assign({ y: fl, yaw: 0 }, o));
+      for (const [i, x] of [23.6, 24.25].entries()) at('steel_frame_shelves_02', x0 + x - 22, z0 + 0.45, { solid: 'box', yaw: i * 0.02 });
+      at('plastic_crate_01', x0 + 3.3, z0 + 0.6, { yaw: 0.2 }); at('plastic_crate_01', x0 + 3.32, z0 + 0.62, { y: fl + 0.26, yaw: -0.15 }); at('cardboard_box_01', x0 + 1.5, z0 + 2.1, { yaw: 0.5 }); at('cardboard_box_01', x0 + 1.9, z0 + 2.6, { yaw: -0.3, lie: true });
+      at('metal_office_desk', x0 + 5.1, z0 + 0.75, { solid: 'box' }); at('bench_vice_01', x0 + 4.5, z0 + 0.6, { y: fl + 0.79, yaw: Math.PI / 2, solid: false }); at('metal_toolbox', x0 + 5.6, z0 + 0.7, { y: fl + 0.79, yaw: 0.25, solid: false }); at('can_rusted', x0 + 6.0, z0 + 0.95, { y: fl + 0.79, solid: false });
+      at('metal_tool_chest', x0 + 7.0, z0 + 0.5, { solid: 'box' }); at('tool_cart', x0 + 6.2, z0 + 2.6, { yaw: 0.45 }); at('portable_welding_cart', x0 + 8.6, z0 + 0.7, { yaw: -0.2 });
+      at('propane_tank', x0 + 9.6, z0 + 0.45); at('propane_tank', x0 + 10.0, z0 + 0.55, { yaw: 1 }); at('industrial_storage_cart', x0 + 11.0, z0 + 3.2, { yaw: 0.35, solid: 'box' });
+      at('hand_truck', x0 + 1.2, z0 + 12.4, { yaw: 2.4 }); at('ladder_sectioned_01', x0 + 11.6, z0 + 0.4, { pitch: -0.18 }); at('power_box_01', x0 + 0.34, z0 + 9.2, { y: fl + 1.35, yaw: Math.PI / 2, solid: false });
+      at('modular_electric_cables', x0 + 2.4, z0 + 5.2, { yaw: 1.2, solid: false });
+      // made for this place (models/, Varco 3D finished in Blender): an engine on the hoist by the bench, a forklift left where
+      // the roof came down, and a delivery van at the open side, the flood light on it
+      at('depot_engine_hoist', x0 + 2.6, z0 + 3.9, { yaw: 0.8, solid: 'box' }); at('depot_forklift', x0 + 18.5, z0 + 10.5, { yaw: 2.1, solid: 'box' });
+      at('depot_van', x0 + 13.5, z0 + 17.2, { y: LR.land.h(x0 + 13.5, z0 + 17.2), yaw: Math.PI / 2 + 0.22, sink: 0.04, solid: 'box' });
+      // the light: cold tubes under the slab (the third flickers on its way out), warm over the bench, a caged lamp, a flood
+      for (const [k, [x, z]] of [[3, 3.5], [9, 3.5], [3, 10.5], [9, 10.5]].entries()) { at('mounted_fluorescent_lights', x0 + x, z0 + z, { y: ceil - 0.05, yaw: Math.PI / 2, solid: false });
+        if (k !== 1) W.light({ x: x0 + x, y: ceil - 0.25, z: z0 + z, r: 7.5, power: k === 2 ? 1.3 : 1.7, color: [0.74, 0.88, 1.0], kind: 'tube', flicker: k === 2 ? 0.95 : 0.03, glow: 0 }); }      /* (the second is dead: the far corner stays dark) */
+      at('hanging_industrial_lamp', x0 + 5.1, z0 + 1.2, { y: ceil - 1.36, solid: false }); W.light({ x: x0 + 5.1, y: ceil - 1.45, z: z0 + 1.2, r: 5, power: 2.0, color: [1, 0.66, 0.34], kind: 'lamp', flicker: 0.02, glow: 0.25 });
+      at('caged_hanging_light', x0 + 17, z0 + 13.8, { y: beam - 0.75, solid: false }); W.light({ x: x0 + 17, y: beam - 0.7, z: z0 + 13.8, r: 8, power: 1.8, color: [1, 0.72, 0.42], kind: 'lamp', flicker: 0.05, glow: 0.3 });
+      at('flood_lights', x0 + 22.5, z0 + 19.5, { y: LR.land.h(x0 + 22.5, z0 + 19.5), yaw: 2.4 }); W.light({ x: x0 + 21.5, y: LR.land.h(x0 + 21.5, z0 + 18.5) + 1.7, z: z0 + 18.5, r: 18, power: 4.0, color: [0.9, 0.95, 1.0], kind: 'lamp', flicker: 0.01, glow: 0.5 }); } }
   // crags: the north bank's rock comes through in faces (a scanned rock face, set large, wearing the engine's rock near the eye)
   { const tor = (x, z, s, yaw, o = {}) => MD.place('rock_face_02', x, z, Object.assign({ scale: s, yaw, sink: 0.6, solid: 0.72 }, o)) || P.rocks(x, z, 3, s * 1.2, { size: s * 0.8 });
     for (const [x, z, s, yaw] of [[-118, -66, 4.2, 0.3], [-108, -72, 3.0, 1.9], [-64, -54, 3.6, 4.0], [6, -52, 4.6, 2.4], [16, -56, 3.2, 0.9], [54, -34, 4.0, 5.1], [138, -40, 4.4, 1.2], [148, -36, 3.0, 3.3], [-192, -66, 3.8, 2.7], [-96, 108, 3.4, 0.5], [-90, 100, 2.6, 2.2], [-102, 99, 2.8, 4.4], [200, 34, 3.6, 0.2], [-6, 62, 2.8, 1.1], [72, 62, 3.0, 3.9]]) tor(x, z, s, yaw); }

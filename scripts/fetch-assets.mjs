@@ -8,7 +8,7 @@
 // Uses curl (it honours proxies and system certificates); Node 18+.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
-import { join, resolve, dirname, basename } from 'node:path';
+import { join, resolve, dirname, basename, relative } from 'node:path';
 const args = process.argv.slice(2), dir = resolve(args[0] && !args[0].startsWith('--') ? args[0] : '.');
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; }, force = args.includes('--force');
 if (!existsSync(join(dir, 'assets.json'))) { console.error('usage: fetch-assets.mjs <realm-dir>   (needs <realm-dir>/assets.json)'); process.exit(1); }
@@ -47,7 +47,22 @@ for (const entry of want.textures || []) {
 }
 // a model is named by its id, or as { "id": …, "res": "2k", "maps": "d" | "dn" | "dna" } — maps: which of colour, normal and
 // occlusion-roughness to fetch (small things do with colour alone)
-for (const entry of want.models || []) {
+// a model of the realm's own (made for it — Varco 3D, finished in Blender — and committed beside it):
+//   { "id": "depot_van", "local": "models/depot_van/depot_van.gltf", "name": "…", "by": "…" }
+// it is measured like a fetched one; the page reads it from the realm's folder, or with --cdn from jsDelivr's copy of the
+// repository (as it is on main, or at --ref <commit>: a commit already pushed, so the page works before it is merged)
+const REPO = 'https://cdn.jsdelivr.net/gh/jungrok5/machine-wilds@' + opt('ref', 'main') + '/' + relative(resolve(dirname(new URL(import.meta.url).pathname), '..'), dir).split('\\').join('/') + '/';
+for (const entry of (want.models || []).filter((m) => m && m.local)) {
+  const e = entry, id = e.id, main = join(dir, e.local); if (!existsSync(main)) { console.error(`model ${id}: ${e.local} is not there`); continue; }
+  const gj = JSON.parse(readFileSync(main, 'utf8')), base = e.local.slice(0, e.local.lastIndexOf('/') + 1), inc = {};
+  for (const u of [...(gj.buffers || []), ...(gj.images || [])].map((x) => x.uri).filter(Boolean)) inc[u] = REPO + base + u;
+  let tris = 0; for (const me of gj.meshes || []) for (const pr of me.primitives || []) tris += Math.floor((gj.accessors[pr.indices !== undefined ? pr.indices : pr.attributes.POSITION].count) / 3);
+  let roots = null; try { roots = boxes(main); } catch (err) { console.error(`model ${id}: could not measure it (${err.message})`); }
+  manifest.models[id] = { file: e.local, url: REPO + e.local, inc, maps: e.maps || 'dna', alpha: null, alphaBy: null, name: e.name || id, authors: [e.by || 'this realm'], tris, roots, local: true };
+  credits.push(`- model **${e.name || id}** (\`${id}\`) — made for this realm (${e.by || 'Varco 3D, finished in Blender'}), in \`${e.local}\``);
+  console.log(`model ${id}  ${e.local} (the realm's own)  ${tris} triangles`);
+}
+for (const entry of (want.models || []).filter((m) => !(m && m.local))) {
   const e = typeof entry === 'string' ? { id: entry } : entry, id = e.id, mres = e.res || res, maps = e.maps || 'dna', b0 = bytes;
   const files = json(`${API}/files/${id}`), info = json(`${API}/info/${id}`), g = files.gltf && files.gltf[mres] && files.gltf[mres].gltf;
   if (!g) { console.error(`model ${id}: no glTF at ${mres}`); continue; }

@@ -143,7 +143,8 @@ and walks with `?scan=0`, on surfaces baked from code. `SKILL.md` has the whole 
 realm; `references/` holds the notes behind each step.
 
 Controls: W A S D or the arrows to walk, the mouse to look, Shift to run, Space to hop, V to switch the camera
-(first person, behind, above), the wheel or + and − to zoom, B for the lamp, Tab for the menu (the hour, the weather,
+(first person, behind, above), the wheel or + and − to zoom, B for the lamp, N for the scout camera (the walker's own
+wide lens: carried, grainy, torn when its fault crackles), Tab for the menu (the hour, the weather,
 quality, sound and every key). On a phone, two thumbs and the ☰ button; a gamepad works too, and the HUD then shows its
 buttons. The HUD is laid out like a console game's: the walker's machine and the hour top left, a compass with the giants
 (red while one is watching you), the named places and anything you can use, and the buttons that matter bottom right.

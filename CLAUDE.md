@@ -19,7 +19,15 @@ walkable, ruined, overgrown world in the browser where giant walking machines ke
   `node scripts/build.mjs examples/iron-valley --cdn --out docs/index.html` (the page reads the scans from Poly Haven;
   `docs/demo/iron-valley/` only forwards old links to the root). No samples page: the README carries the words
   and the pictures (stills and sheets in `media/`, 640 px JPEGs, each linking to the live page or to its source).
-- Generated video / image / voice is a reference, never a committed asset. **ElevenLabs (any tool) only after the
+- Props, set dressing and surface textures may be made with **Varco 3D** (an image → a mesh; images for textures) and
+  finished in **Blender** (`pip install bpy`: decimate, bake, export GLB) — the owner's call (2026-11-26). Prefer a Poly
+  Haven CC0 model where one fits; use Varco for what Poly Haven does not have. A generated model or texture the page uses
+  is committed under `examples/<realm>/models/` (GLB ≤ 2 MB, textures ≤ 1k) with its line in `references/SOURCE.md`
+  (Varco, the date, the prompt). The machines' skeletons, numbers and ways stay code (gym and check read them).
+  Finish with `scripts/finish-model.py`; name it in `assets.json` as `{ "id", "local": "models/<id>/<id>.gltf" }`. Before
+  building the site, push the commit that adds it and run `fetch-assets.mjs <realm> --ref <that commit>`: the `--cdn`
+  page then reads it from jsDelivr's copy of that commit (it works before the PR is merged, and after).
+- Generated video and voice are a reference, never a committed asset. **ElevenLabs (any tool) only after the
   owner says yes for that request** — say what, which model, how many takes, rough cost, then wait. Films are drawn by
   the engine (`examples/iron-valley/trailer.mjs`); their frames, sound and MP4s are never committed.
 - Never put MP4s (or other large media) in `docs/`. The share image (`docs/og.jpg`: the README's picture, the link

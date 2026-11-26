@@ -7,6 +7,11 @@ LR.start({
     P('cobble', 'asphalt_02', { pom: 0.006, moss: 0.6 }); P('asphalt', 'asphalt_02'); P('concrete', 'dirty_concrete', { gain: 0.92 }); P('slab', 'cracked_concrete', { like: 'concrete', gain: 0.85, pom: 0.008 });
     P('paintmetal', 'rusty_metal_02', { gain: 0.9 }); P('rustplate', 'rust_coarse_01'); P('corrugated', 'corrugated_iron_02', { like: 'rustplate', moss: 0.5 });
     await MD.load(['covered_car', 'concrete_road_barrier_02', 'old_tyre', 'rusted_wheel_rim_01', { id: 'barrel_03', metal: 0.5 }, 'old_military_crate', { id: 'metal_jerrycan', metal: 0.5 }, 'portable_generator', 'utility_box_01',
+      // the workshop in the hall (30_details)
+      'mounted_fluorescent_lights', { id: 'hanging_industrial_lamp', metal: 0.6 }, { id: 'caged_hanging_light', metal: 0.6 }, { id: 'steel_frame_shelves_02', metal: 0.7 }, { id: 'metal_tool_chest', metal: 0.6 }, { id: 'bench_vice_01', metal: 0.7 }, { id: 'tool_cart', metal: 0.6 },
+      { id: 'industrial_storage_cart', metal: 0.6 }, { id: 'metal_office_desk', metal: 0.5 }, { id: 'propane_tank', metal: 0.5 }, { id: 'portable_welding_cart', metal: 0.5 }, { id: 'flood_lights', metal: 0.5 }, { id: 'power_box_01', metal: 0.5 }, { id: 'ladder_sectioned_01', metal: 0.7 },
+      { id: 'depot_van', metal: 0.5 }, { id: 'depot_forklift', metal: 0.5 }, { id: 'depot_engine_hoist', metal: 0.6 },      // made for this realm (models/: Varco 3D, Blender)
+      'plastic_crate_01', 'cardboard_box_01', { id: 'can_rusted', metal: 0.5 }, { id: 'metal_toolbox', metal: 0.6 }, { id: 'hand_truck', metal: 0.6 }, 'modular_electric_cables',
       { id: 'rock_moss_set_01', moss: 0.6 }, { id: 'rock_moss_set_02', moss: 0.6 }, { id: 'boulder_01', detail: 'rock', moss: 0.95, tint: [0.78, 0.82, 0.8] }, { id: 'rock_face_02', detail: 'rock', moss: 0.95, tint: [0.8, 0.84, 0.82], detailTile: 3, detailReach: 26 },
       { id: 'dead_tree_trunk', moss: 0.8 }, { id: 'tree_stump_02', moss: 0.7 }, { id: 'dry_branches_medium_01', far: 40 }, { id: 'fern_02', plant: true }, { id: 'shrub_02', plant: true },
       { id: 'fir_sapling', tree: true, turn: 0 }]);
