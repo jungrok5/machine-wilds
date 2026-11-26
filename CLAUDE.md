@@ -24,6 +24,9 @@ walkable, ruined, overgrown world in the browser where giant walking machines ke
   Haven CC0 model where one fits; use Varco for what Poly Haven does not have. A generated model or texture the page uses
   is committed under `examples/<realm>/models/` (GLB ≤ 2 MB, textures ≤ 1k) with its line in `references/SOURCE.md`
   (Varco, the date, the prompt). The machines' skeletons, numbers and ways stay code (gym and check read them).
+  Finish with `scripts/finish-model.py`; name it in `assets.json` as `{ "id", "local": "models/<id>/<id>.gltf" }`. Before
+  building the site, push the commit that adds it and run `fetch-assets.mjs <realm> --ref <that commit>`: the `--cdn`
+  page then reads it from jsDelivr's copy of that commit (it works before the PR is merged, and after).
 - Generated video and voice are a reference, never a committed asset. **ElevenLabs (any tool) only after the
   owner says yes for that request** — say what, which model, how many takes, rough cost, then wait. Films are drawn by
   the engine (`examples/iron-valley/trailer.mjs`); their frames, sound and MP4s are never committed.
