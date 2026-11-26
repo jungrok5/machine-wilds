@@ -100,7 +100,7 @@ const LEG = { kind: 'mammal', name: 'L', at: [0, -0.06, -0.25], segs: [0.5, 0.48
               width: 0.09, drum: 0.09, bar: 0.012, ball: 0.07, toes: 3, toeLen: 0.22, act: [0, 1, 1], hipDrop: 0.06, style: 'shell' };
 M.define('plover', { tonnes: 0.3, ride: 1.3, limbs: [LEG, M.mirror(LEG)], neck: …, head: …, build: (k) => V.parts.plover(k),
   avatar: { stepWalk: 0.8, stepRun: 1.45, reach: 0.32, lift: [0.09, 0.12], lean: [4, 12], gather: 0.1, tuck: 0.1 } });
-M.spawn('plover', { name: '물떼새', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
+M.spawn('plover', { name: 'Plover', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
 ```
 It cannot be planned — it follows a hand on the keys — so it steps as it goes (`lib/48_mech_avatar.js`), by the same
 rules: a foot is set down on the ground's real height and tilt and then does not move; the other swings to where the

@@ -1,4 +1,4 @@
-// 쇠울림 골짜기 · what people left.  A viaduct that carried a road over the valley (the machines' way goes through where
+// Iron Valley · what people left.  A viaduct that carried a road over the valley (the machines' way goes through where
 // one span is gone; the southern half can still be walked, out to the broken edge), a maintenance hall with a camp in it,
 // a line of pylons on the north ridge, a yard of containers the carriers still call at.  Concrete, asphalt and plate are
 // the engine's recipes with scans laid over them (90_main.js); moss, rain and grime come from the engine.

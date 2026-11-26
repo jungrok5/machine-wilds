@@ -1,4 +1,4 @@
-// 쇠울림 골짜기 (Soeullim, "the valley where iron rings") · the land.  A valley running west to east with a brook in it:
+// Iron Valley ("the valley where iron rings") · the land.  A valley running west to east with a brook in it:
 // the north side climbs steeply to a ridge of crags, the south side rises in two shelves — the first holds a tarn in a
 // bog, the second ends at a lookout rock.  Nothing is level: 36 m of height inside the walk.  V is this realm's shared
 // sheet (places, the ways the machines walk, what other sources build on).
