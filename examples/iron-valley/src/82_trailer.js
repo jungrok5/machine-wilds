@@ -92,6 +92,21 @@
       SNOW: { dur: 6.4, tod: 15.8, weather: 'snow', T0: 150, start: [camp.x + 2.2, camp.z + 10.5, -4],
         act(s, K, st) { if (s > 0.3 && !st.there) st.there = goTo(camp.x + 0.9, camp.z + 2.0, K) ? s : 0; if (st.there) P.pitch = damp(P.pitch, -0.42, 1.4); },
         cam(s) { const fy = floor(camp.x, camp.z, 60); return [[camp.x + 1.3 - 0.06 * s, fy + 1.45, camp.z - 4.2 + 0.1 * s], look(me(1.25), [camp.x, fy + 0.4, camp.z], 0.3), 50]; } },
+      // ── night, rain, the old depot (30_details: the workshop, its tubes and lamps, the van, the forklift, the hoist) ──
+      // out in the rain by the van, the depot's lights inside; the walker comes past the van and goes in
+      DV: { dur: 7, tod: 22.6, weather: 'rain', T0: 260, start: [40.5, 141, 175],
+        act(s, K, st) { if (s < 0.4) return; if (!st.a) st.a = goTo(39.2, 134.9, K); else if (!st.b) st.b = goTo(39.0, 129.4, K); else goTo(33.5, 127.5, K); },
+        cam(s) { const x = 44.2 - s * 0.18, z = 131.6 + s * 0.1, y = floor(x, z, 60); return [[x, y + 1.25, z], look([31.5, V.hall.y + 1.7, 128.5], me(1.1), 0.3), 52]; } },
+      // inside: the bench under its lamp, the engine on the hoist; it comes to the bench and looks down at what was left on it
+      DW: { dur: 7, tod: 22.65, weather: 'rain', T0: 268, start: [31.5, 121.5, -60],
+        act(s, K, st) { if (!st.there) st.there = goTo(27.4, 117.6, K) ? s : 0; else P.pitch = damp(P.pitch, -0.5, 1.3); },
+        cam(s) { const y = V.hall.y + 0.24; return [[23.4 + s * 0.28, y + 1.05 + s * 0.04, 121.6 - s * 0.12], look([27.2, y + 0.9, 116.2], me(1.0), 0.45), 46]; } },
+      // the forklift where the roof came down, a tube dying over the bay, the rain coming in through the gap
+      DF: { dur: 5, tod: 22.7, weather: 'rain', T0: 276, start: [33.5, 125, 90], act() {},
+        cam(s) { const y = V.hall.y + 0.24; return [[35.2 + s * 0.3, y + 1.3, 129.4 - s * 0.35], [40.6, y + 1.0, 125.2], 48]; } },
+      // and out again, seen through its own camera: past the van into the dark, the fault crackling in the picture
+      DS: { dur: 8, tod: 22.75, weather: 'rain', T0: 282, start: [39.6, 129.2, 174], view: 'first', scout: true,
+        act(s, K) { goTo(41.6, 150, K); P.pitch = damp(P.pitch, -0.04, 1.2); } },
       // ── evening ──
       // golden hour at the tarn: it walks up to the turtle that stands there, and looks up
       B: { dur: 8.2, tod: 17.9, weather: 'clear', T0: 20, start: [99, 102.5, 14],
@@ -153,7 +168,7 @@
     // the machines near the walker turn their heads to it in every shot it is in (not in the ones it is not: dawn, the kite, the lookout)
     for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
     return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
-      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
+      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'DV', 'DW', 'DF', 'DS', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
   };
