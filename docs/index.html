@@ -6618,13 +6618,24 @@ void main(){
   vA = al; vOp = op; vQ = position.xy; vAge = t;
   gl_Position = al > 0.002 ? projectionMatrix * viewMatrix * vec4(wp, 1.0) : OFF;
 }`, `in vec2 vQ; in vec3 vC; in vec3 vAmb; in vec3 vSunW; in vec3 vSunS; in vec3 vFogC; in float vA; in float vOp; in float vId; in float vAge; out vec4 o;
-void main(){ float f = softDepth(0.9); vec2 q = vQ; float n = texture(uNoise, q * 0.22 + vId * 0.37 + vec2(0.0, -vAge * 0.12)).r, n2 = texture(uNoise, q * 0.5 + vId).g;
+// a puff as a lit sprite: a billow drawn in its plane by warped noise that rolls as it ages, its relief taken from the
+// billow itself and lit by the sun (bright where it faces it, light coming through the thin edges when the sun is behind),
+// fraying into wisps as it thins
+float billow(vec2 u){ return texture(uNoise, u).r * 0.55 + texture(uNoise, u * 2.17 + 0.31).a * 0.3 + texture(uNoise, u * 4.9 + 0.71).g * 0.15; }
+float puff(vec2 q, vec2 off, float fray){ float r = length(q); vec2 u = q * 0.2 + off, w = vec2(texture(uNoise, u * 0.6 + off * 0.5).g, texture(uNoise, u * 0.6 + 0.47 - off * 0.3).b) - 0.5;
+  float n = billow(u + w * 0.32); float m = (n - 0.5) * 2.8 + (1.0 - r) * 1.9 - 0.62 - fray * 2.2; return sat(m * 1.7) * smoothstep(1.0, 0.6, r); }
+void main(){ float f = softDepth(0.9); vec2 q = vQ;
   if (vOp < 0.5) { float m = pow(max(1.0 - length(q), 0.0), 3.0) * vA; o = vec4(vC * m, 0.0); return; }
-  float r = length(q), dens = smoothstep(1.0, 0.1, r + (n - 0.5) * 0.95) * (0.4 + 0.8 * n2 * n2);
-  // a ball of it: its surface faces the sun on one side; light comes through the thin edge
-  vec3 nn = normalize(vec3(q + (vec2(n, n2) - 0.5) * 0.6, sqrt(max(1.0 - r * r, 0.0)) + 0.15)); float ndl = dot(nn, vSunS) * 0.5 + 0.5;
-  vec3 c = vC * (vAmb * (0.75 + 0.25 * nn.y) + vSunW * (ndl * ndl * 1.6 + 0.25 * (1.0 - dens)));
-  float a = (1.0 - exp(-dens * vA * 2.6)) * f; if (a < 0.002) discard; o = vec4((c + vFogC) * a, a); }`, { order: 2, uniforms: U }); }
+  float r2 = dot(q, q); if (r2 >= 1.0) discard;
+  float sp = (fract(vId * 0.37) - 0.5) * 1.2, ca = cos(vAge * sp), sa = sin(vAge * sp), fray = 0.32 * (1.0 - sat(vA * 2.2));
+  vec2 qr = mat2(ca, sa, -sa, ca) * q, off = vec2(vId * 0.137, vId * 0.071) + vec2(0.0, -vAge * 0.06);
+  float d = puff(qr, off, fray); if (d < 0.004) discard;
+  float e = 0.045, dx = puff(qr + vec2(e, 0.0), off, fray) - puff(qr - vec2(e, 0.0), off, fray), dy = puff(qr + vec2(0.0, e), off, fray) - puff(qr - vec2(0.0, e), off, fray);
+  vec2 g = mat2(ca, -sa, sa, ca) * vec2(dx, dy);                                    // (back into the picture's axes)
+  vec3 N = normalize(vec3(-g * 1.3 + q * 0.6, 0.6 + 0.4 * sqrt(1.0 - r2))), Ls = normalize(vSunS + vec3(0.0, 0.0, 1e-3));
+  float ndl = max(dot(N, Ls), 0.0), wrap = dot(N, Ls) * 0.5 + 0.5, thin = 1.0 - d, through = pow(sat(-Ls.z), 2.0) * thin * 1.6;
+  vec3 c = vC * (vAmb * (0.7 + 0.2 * N.y) + vSunW * (ndl * 1.25 + wrap * 0.45 + through));
+  float a = (1.0 - exp(-d * vA * 2.8)) * f; if (a < 0.002) discard; o = vec4((c + vFogC) * a, a); }`, { order: 2, uniforms: U }); }
 
     // ── rings: flat on the ground or the water — a dust shock ring, rings on a brook, rings in the puddles ──
     { const U = (VX.ringU = slots(NS));
@@ -6897,18 +6908,18 @@ vec3 jag(vec3 A, vec3 B, float i, float n, float seed, float amp, bool pinned, v
     if (LR.off.has('fx') || LR.off.has('vfx') || !VX.NS) return;
     const q = VX.q, mk = VX.mk;
     // ── the walker's arcs: up to 3, each a trunk of 8 segments and two branches of 3 ──
-    { const NA = 3, SEG = 8, BR = 3, per = SEG + 2 * BR, U = (GL.arcU = { uArcA: { value: Array.from({ length: NA }, () => new T.Vector4()) }, uArcB: { value: Array.from({ length: NA }, () => new T.Vector4()) }, uJag: { value: 0 } });
+    { const NA = 6, SEG = 8, BR = 3, per = SEG + 2 * BR, U = (GL.arcU = { uArcA: { value: Array.from({ length: NA }, () => new T.Vector4()) }, uArcB: { value: Array.from({ length: NA }, () => new T.Vector4()) }, uJag: { value: 0 } });
       const g = VX.quad(); VX.inst(g, 'seg', NA * per, 4, (a, i) => { const s = Math.floor(i / per), r = i % per; if (r < SEG) { a[i * 4] = s; a[i * 4 + 1] = r; a[i * 4 + 2] = SEG; a[i * 4 + 3] = 0; } else { const b = Math.floor((r - SEG) / BR); a[i * 4] = s; a[i * 4 + 1] = (r - SEG) % BR; a[i * 4 + 2] = BR; a[i * 4 + 3] = 1 + b; } });
       mk('arcs', g, RIBBON + `
 in vec3 position; in vec4 seg; uniform vec4 uArcA[${NA}], uArcB[${NA}]; uniform float uJag; out vec2 vQ; out float vI; out float vCore;
 void main(){
   int k = int(seg.x + 0.5); vec4 A = uArcA[k], B = uArcB[k]; float I = A.w; if (I <= 0.0) { gl_Position = OFF; return; }
   float i = seg.y, n = seg.z, br = seg.w, sd = B.w * 13.1 + uJag * 0.917 + seg.x * 5.3; vec3 d = B.xyz - A.xyz; float L = length(d); vec3 dn = d / max(L, 1e-4);
-  vec3 toE = normalize(uCamPos - mix(A.xyz, B.xyz, 0.5)), s1 = normalize(cross(dn, toE)), s2 = normalize(cross(dn, s1)); float amp = L * 0.34;
+  vec3 toE = normalize(uCamPos - mix(A.xyz, B.xyz, 0.5)), s1 = normalize(cross(dn, toE)), s2 = normalize(cross(dn, s1)); float amp = L * 0.2;      // (short and flat: it crawls on the skin)
   vec3 P0, P1;
   if (br < 0.5) { P0 = jag(A.xyz, B.xyz, i, n, sd, amp, true, s1, s2); P1 = jag(A.xyz, B.xyz, i + 1.0, n, sd, amp, true, s1, s2); }
   else { float at = 2.0 + floor(hash11(sd + br * 3.1) * 5.0); vec3 o = jag(A.xyz, B.xyz, at, 8.0, sd, amp, true, s1, s2), dir = normalize(dn * 0.5 + s1 * (br < 1.5 ? 1.0 : -1.0) + s2 * (hash11(sd * 1.7 + br) - 0.5));
-    vec3 E = o + dir * L * 0.32; P0 = jag(o, E, i, n, sd + br * 17.0, amp * 0.5, false, s1, s2); P1 = jag(o, E, i + 1.0, n, sd + br * 17.0, amp * 0.5, false, s1, s2); I *= (1.0 - i / n) * 0.7; }
+    vec3 E = o + dir * L * 0.22; P0 = jag(o, E, i, n, sd + br * 17.0, amp * 0.5, false, s1, s2); P1 = jag(o, E, i + 1.0, n, sd + br * 17.0, amp * 0.5, false, s1, s2); I *= (1.0 - i / n) * 0.5; }
   vec3 sdir = P1 - P0; float sl = length(sdir); sdir /= max(sl, 1e-4); vec3 side = normalize(cross(sdir, normalize(uCamPos - P0)));
   float dist = length(P0 - uCamPos), px = dist * 2.2 / uRes.y, core = max(0.0025, px * 0.55), w = core * 9.0 + 0.012;
   vec3 wp = mix(P0, P1, position.y * 0.5 + 0.5) + sdir * position.y * w * 0.5 + side * position.x * w;
@@ -6972,23 +6983,31 @@ void main(){ const vec3 B = vec3(36.0, 8.0, 36.0); float t = uTime * 0.18 + seed
         `in vec2 vQ; in vec3 vC; out vec4 o; void main(){ float f = softDepth(0.3); float r = length(vQ), k = max(1.0 - r, 0.0); o = vec4(vC * (k * k * k * 1.6 + k * 0.08) * f, 0.0); }`, { order: 6 }); }
 
     // the arcs' sparks: thrown off the ends as each burst starts (a function of the clock, through 62's sources)
-    VX.sources.push((out, time, expand) => { const b = VX.arcAt(time - 0.0) || VX.arcAt(time - 0.4) || VX.arcAt(time - 0.8); if (!b || !GL.arcEnds || GL.arcT0 !== b.t0) return; const age = time - b.t0; if (age > 1.3) return; for (let i = 0; i < Math.min(b.n, GL.arcEnds.length); i++) { const e = GL.arcEnds[i]; expand(out, 'sparks', e, age - 0.02 * i, { size: 0.12, n: 0.35 * b.power, seed: (b.seed + i * 7) % 97, dir: [0, 0.3, 0], floor: false, w: 3 }); } });
+    VX.sources.push((out, time, expand) => { const b = VX.arcAt(time - 0.0) || VX.arcAt(time - 0.4) || VX.arcAt(time - 0.8); if (!b || !GL.arcEnds || GL.arcT0 !== b.t0) return; const age = time - b.t0; if (age > 1.3) return; for (let i = 0; i < Math.min(b.n, GL.arcEnds.length); i++) { const e = GL.arcEnds[i]; expand(out, 'sparks', e, age - 0.02 * i, { size: 0.04, n: 0.05 * b.power, seed: (b.seed + i * 7) % 97, dir: [0, 0.1, 0], floor: false, w: 3 }); }      /* (a few small ones, off the skin) */ });
     LR.on('frame', GL.update, 28);
   };
 
-  // the walker's points the arcs crawl between
-  const arcPairs = (u) => { const W = u.pose && u.pose.W, S = u.pose && u.pose.sols; if (!W || !S) return null; const B = W.body, out = [], up = M3(B, [0, 0.12, 0]), head = W.head ? W.head.p : M3(B, [0.2, 0.3, 0]);
-    for (const l of u.kin.limbs) { const J = S[l.name] && S[l.name].J; if (!J) continue; out.push([J[1], J[0]], [J[2] || J[1], J[1]], [J[0], up]); }
-    out.push([up, head]); return out; };
+  // the walker's skin as tubes the arcs crawl on: each leg's segments, the pod, the neck — [from, to, radius]
+  const arcTubes = (u) => { const W = u.pose && u.pose.W, S = u.pose && u.pose.sols; if (!W || !S) return null; const B = W.body, out = [], head = W.head ? W.head.p : M3(B, [0.2, 0.3, 0]);
+    for (const l of u.kin.limbs) { const J = S[l.name] && S[l.name].J; if (!J) continue; for (let k = 0; k + 1 < J.length; k++) out.push([J[k], J[k + 1], 0.055]); }
+    out.push([M3(B, [-0.26, 0.06, 0]), M3(B, [0.26, 0.06, 0]), 0.17], [M3(B, [-0.2, 0.0, 0]), M3(B, [0.22, 0.12, 0]), 0.15], [M3(B, [0.1, 0.16, 0]), head, 0.06]); return out; };
+  // one short arc on that skin: a spot on a tube (on the side the eye can see), crawling a hand's breadth along it and part way round
+  const arcOn = (T, rnd, cp) => { const [A, Bp, r] = T, d = [Bp[0] - A[0], Bp[1] - A[1], Bp[2] - A[2]], L = Math.hypot(...d) || 1, dn = d.map((v) => v / L), up = Math.abs(dn[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
+    const n1 = norm(cross(dn, up)), n2 = cross(dn, n1), t = 0.12 + 0.76 * rnd(1), c = [A[0] + d[0] * t, A[1] + d[1] * t, A[2] + d[2] * t], e = [cp.x - c[0], cp.y - c[1], cp.z - c[2]];
+    const th0 = Math.atan2(e[0] * n2[0] + e[1] * n2[1] + e[2] * n2[2], e[0] * n1[0] + e[1] * n1[1] + e[2] * n1[2]) + (rnd(2) - 0.5) * 2.2, len = (0.07 + 0.14 * rnd(3)) * (r > 0.1 ? 1.6 : 1), turn = (rnd(4) - 0.5) * 1.6, rr = r * 1.04;
+    const at = (dt, th) => { const ct = Math.cos(th), st = Math.sin(th); return [c[0] + dn[0] * dt + (n1[0] * ct + n2[0] * st) * rr, c[1] + dn[1] * dt + (n1[1] * ct + n2[1] * st) * rr, c[2] + dn[2] * dt + (n1[2] * ct + n2[2] * st) * rr]; };
+    const s0 = (rnd(5) - 0.5) * len; return [at(s0, th0), at(s0 + len * (rnd(6) < 0.5 ? 1 : -1), th0 + turn)]; };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], norm = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
   const M3 = (f, v) => LR.mech.apply(f, v);
   let lastBolt = null, boltPlace = null;
   GL.update = (time, dt, cam) => {
     const M = LR.mech, R = LR.render, av = M && M.units.find((u) => u.avatar), P = GL.parts;
     // ── the walker's fault ──
-    { const U = GL.arcU, b = av && av.lod >= 0 && av.dist < 60 ? VX.arcAt(time) : null; for (let i = 0; i < 3; i++) U.uArcA.value[i].w = 0; VX.parts.arcs.visible = !!b;
-      if (b) { const pairs = arcPairs(av); if (pairs) { const fr = Math.floor(time * 24), on = h1(fr, b.seed) > 0.22, jag = Math.floor(time * 12), ends = [], mid = [0, 0, 0]; let lit = 0; const cp = cam.position;
-          for (let i = 0; i < b.n; i++) { const pr = pairs[Math.floor(h1(b.seed * 3 + i, 5) * pairs.length)], toE = (p) => { const d = [cp.x - p[0], cp.y - p[1], cp.z - p[2]], l = Math.hypot(...d) || 1; return [p[0] + (d[0] / l) * 0.06, p[1] + (d[1] / l) * 0.06, p[2] + (d[2] / l) * 0.06]; }, a = toE(pr[0]), c = toE(pr[1]);
-            const flick = on && h1(fr, b.seed + i * 13) > 0.18 ? 1 : 0.12, I = b.power * flick * (0.7 + 0.3 * h1(fr, i + 3)); U.uArcA.value[i].set(a[0], a[1], a[2], I); U.uArcB.value[i].set(c[0], c[1], c[2], (b.seed + i * 17) % 997); ends.push(h1(b.seed, i) < 0.5 ? a : c); for (let k = 0; k < 3; k++) mid[k] += (a[k] + c[k]) / 2 / b.n; lit += I / b.n; }
+    { const U = GL.arcU, NA = U.uArcA.value.length, b = av && av.lod >= 0 && av.dist < 60 ? VX.arcAt(time) : null; for (let i = 0; i < NA; i++) U.uArcA.value[i].w = 0; VX.parts.arcs.visible = !!b;
+      if (b) { const tubes = arcTubes(av); if (tubes) { const fr = Math.floor(time * 24), hop = Math.floor(time * 16), on = h1(fr, b.seed) > 0.2, jag = Math.floor(time * 18), ends = [], mid = [0, 0, 0]; let lit = 0; const cp = cam.position, n = Math.min(NA, b.n * 2);
+          // each arc sits somewhere on the skin and jumps somewhere else every few frames: it crackles over the body, it does not leap off it
+          for (let i = 0; i < n; i++) { const key = b.seed * 7 + i * 131 + hop * 17, rnd = (q) => h1(key, q * 11 + 3), T = tubes[Math.floor(rnd(0) * tubes.length)], [a, c] = arcOn(T, rnd, cp);
+            const flick = on && h1(fr, b.seed + i * 13) > 0.3 ? 1 : 0.1, I = b.power * flick * (0.55 + 0.45 * h1(fr, i + 3)) * (T[2] > 0.1 ? 0.8 : 1); U.uArcA.value[i].set(a[0], a[1], a[2], I); U.uArcB.value[i].set(c[0], c[1], c[2], (key + i * 17) % 997); if (i < b.n) ends.push(h1(key, 9) < 0.5 ? a : c); for (let k = 0; k < 3; k++) mid[k] += (a[k] + c[k]) / 2 / n; lit += I / n; }
           U.uJag.value = jag; GL.arcEnds = ends; GL.arcT0 = b.t0;
           // a small blue light on what is near, and the walker's own lamp stutters
           R.lamps = R.lamps || []; R.lamps.push({ p: mid, d: [0, 1, 0], color: [0.45, 0.65, 1.0], power: 1.6 * lit, cone: 0, range: 3.2, beam: false, unit: av, arc: true, spill: 1 });
@@ -8276,7 +8295,7 @@ void main(){
       const arc = LR.vfx && LR.vfx.arcAt ? LR.vfx.arcAt(t) : null, live = arc && t - arc.t0 < arc.dur ? 1 : 0, fault = live * (0.5 + 0.5 * Math.sin(t * 61) * Math.sin(t * 23));
       if (k > 0.001) { const a = (0.0028 + (P.moving ? (P.running ? 0.011 : 0.0055) : 0)) * k, n = (f, ph) => Math.sin(t * f + ph) + 0.5 * Math.sin(t * f * 2.31 + ph * 1.7) + 0.25 * Math.sin(t * f * 5.13 + ph * 2.9);
         cam.rotation.x += n(1.7, 0.3) * a + (P.moving ? Math.sin(P.bob * LR.TAU) * a * 0.8 : 0); cam.rotation.y += n(1.25, 2.1) * a; cam.rotation.z += n(0.9, 4.2) * a * 0.9;
-        if (fault > 0) { cam.rotation.x += (Math.random() - 0.5) * 0.012 * fault * k; cam.rotation.y += (Math.random() - 0.5) * 0.012 * fault * k; } }
+        if (fault > 0) { const j = (q) => (Math.sin(Math.floor(t * 30) * 12.9898 + q) * 43758.5453) % 1; cam.rotation.x += j(1.3) * 0.012 * fault * k; cam.rotation.y += j(7.1) * 0.012 * fault * k; }      /* (a jolt from the clock: a film's frame is the same every time) */ }
       if (S) S.value.set(k, fault * k, 0, 0); }
   };
   P.surfaceAt = (x, z, g) => { const L = LR.land; if (LR.wx.snow > 0.55) return 'snow'; if (L.coverAt('paved', x, z) > 0.5) return 'stone'; if (L.coverAt('shore', x, z) > 0.5) return 'gravel'; if (L.coverAt('dirt', x, z) > 0.45) return 'dirt'; return 'grass'; };
@@ -9046,6 +9065,7 @@ void main(){
 // machine-wilds · 89_cine — a film played in the page.  Shots with a free camera (not the walker's eye) and the walker's body
 // driven by keys, frame by frame; each shot sets its own hour, weather and machines' clock.  The same shots play live
 // (?film=1, or realm.cine.play()) and are stepped offline to draw a film's frames (a realm's trailer.mjs).
+//   a shot may say scout: true — it is seen through the walker's own camera (80_player · 75_post: bowed, grainy, torn by its fault)
 //   LR.start({ cine: (h) => ({ fps: 24, order: ['A', 'B'], range: { A: [0, 144] }, title: { big, small, line, repo (shown on the cards and, small, at the foot of the film), rights (a line on the cards), skip }, shots: {
 //     A: { dur, tod, weather, T0, start: [x, z, yaw°], pitch, tod1 (the hour at the shot's end: time passes), view: 'first' | 'top' (the
 //          walker's own camera instead of cam), zoom, rate (how fast the machines' clock runs: 3 for time passing), aware (true: machines near the walker turn their heads to it), act(s, keys, state),
@@ -9072,7 +9092,7 @@ void main(){
   // a shot with aware: true has the machines near the walker turn their heads to it (not to the camera)
   const eyes = () => { const P = LR.player; LR.mech.awareAt = cur && cur.aware ? [P.x, P.y + 1.4, P.z] : null; };
   const hour = (s) => { if (cur.tod1 !== undefined) LR.wx.snap({ tod: cur.tod + (cur.tod1 - cur.tod) * Math.max(0, Math.min(1, s / cur.dur)) }); };
-  const start = (n) => { const P = LR.player; cur = def.shots[n]; name = n; cur.st = {}; LR.mech.awareAt = null; P.ride = null; for (const u of LR.mech.units) if (u.aware) Object.assign(u.aware, { w: 0, yaw: 0, pitch: 0, n: 0, t: 0, seen: false }); LR.wx.set({ auto: false }); LR.wx.snap({ tod: cur.tod, weather: cur.weather }); P.stopTour(); P.place(cur.start[0], cur.start[1], cur.start[2]); P.pitch = cur.pitch || 0; P.setView(cur.view || 'third'); if (cur.zoom) P.zoom[P.view] = cur.zoom; if (cur.view && LR.fit) { LR.fit(); P.fovSet = false; } P.keys = {}; clock = cur.T0 - 1.0; f = 0; };
+  const start = (n) => { const P = LR.player; cur = def.shots[n]; name = n; cur.st = {}; LR.mech.awareAt = null; P.ride = null; P.scout = !!cur.scout; P.scoutK = P.scout ? 1 : 0; for (const u of LR.mech.units) if (u.aware) Object.assign(u.aware, { w: 0, yaw: 0, pitch: 0, n: 0, t: 0, seen: false }); LR.wx.set({ auto: false }); LR.wx.snap({ tod: cur.tod, weather: cur.weather }); P.stopTour(); P.place(cur.start[0], cur.start[1], cur.start[2]); P.pitch = cur.pitch || 0; P.setView(cur.view || 'third'); if (cur.zoom) P.zoom[P.view] = cur.zoom; if (cur.view && LR.fit) { LR.fit(); P.fovSet = false; } P.keys = {}; clock = cur.T0 - 1.0; f = 0; };
   // one frame of the shot at the film's own rate: the hand, the body, the camera, the world — drawn or not
   const step = (draw) => { const P = LR.player, s = f / C.fps, K = {}; cur.act(s, K, cur.st); P.keys = K; P.update(dt, cam); hour(s); eyes(); if (!cur.view) aim(cur.cam(s), Math.sin(s * 0.9) * 0.003);
     clock += dt * (cur.rate || 1); LR.wx.update(dt, clock); LR.emit('frame', clock, dt, cam); if (draw) LR.render.draw(cam, clock, dt); f++; return s; };
@@ -9096,7 +9116,7 @@ void main(){
     hint.addEventListener('click', () => C.stop()); window.addEventListener('keydown', (e) => { if (C.on && e.code === 'Escape') C.stop(); }); };
   const cut = (i) => { live.i = i; const n = C.order[i]; dt = 1 / C.fps; start(n); settle(); for (let k = 0; k < C.range[n][0]; k++) step(false); live.s = f / C.fps; live.end = C.range[n][1] / C.fps; LR.render.histValid = false; };
   C.play = () => { if (!ensure() || !C.order.length) return false; dom(); const hud = document.getElementById('hud'); if (hud) { C.hudWas = hud.style.display; hud.style.display = 'none'; } hint.style.display = ''; mark.style.display = ''; veil.style.opacity = 1; card.style.opacity = 1; C.on = true; live = { i: 0, s: 0, end: 0, tail: -1, head: 2.8 }; C.auto = LR.wx.auto; cut(0); return true; };      /* the card first: the work's name and where it lives */
-  C.stop = () => { if (!C.on) return; C.on = false; LR.mech.awareAt = null; const P = LR.player, sp = LR.world.spawn, hud = document.getElementById('hud'); if (hud) hud.style.display = C.hudWas || ''; if (hint) hint.style.display = 'none'; if (mark) mark.style.display = 'none'; if (card) card.style.opacity = 0; if (veil) veil.style.opacity = 0;
+  C.stop = () => { if (!C.on) return; C.on = false; LR.mech.awareAt = null; LR.player.scout = false; const P = LR.player, sp = LR.world.spawn, hud = document.getElementById('hud'); if (hud) hud.style.display = C.hudWas || ''; if (hint) hint.style.display = 'none'; if (mark) mark.style.display = 'none'; if (card) card.style.opacity = 0; if (veil) veil.style.opacity = 0;
     P.keys = {}; P.place(sp.x, sp.z, sp.yaw || 0); P.setView('third'); if (LR.fit) LR.fit(); const w = (LR.cfg && LR.cfg.weather) || {}; LR.wx.snap({ weather: w.weather || 'clear', tod: w.tod === undefined ? 16.6 : w.tod }); if (C.auto) LR.wx.set({ auto: true }); LR.render.histValid = false; LR.emit('cine', false); };
   // called by the page's loop once a frame while the film is on: returns the machines' clock for this frame
   C.live = (rdt, time) => { if (!C.on || !cur) return time; const P = LR.player; dt = Math.min(rdt, 1 / 12);
@@ -10191,6 +10211,21 @@ V.plants = () => {
       SNOW: { dur: 6.4, tod: 15.8, weather: 'snow', T0: 150, start: [camp.x + 2.2, camp.z + 10.5, -4],
         act(s, K, st) { if (s > 0.3 && !st.there) st.there = goTo(camp.x + 0.9, camp.z + 2.0, K) ? s : 0; if (st.there) P.pitch = damp(P.pitch, -0.42, 1.4); },
         cam(s) { const fy = floor(camp.x, camp.z, 60); return [[camp.x + 1.3 - 0.06 * s, fy + 1.45, camp.z - 4.2 + 0.1 * s], look(me(1.25), [camp.x, fy + 0.4, camp.z], 0.3), 50]; } },
+      // ── night, rain, the old depot (30_details: the workshop, its tubes and lamps, the van, the forklift, the hoist) ──
+      // out in the rain by the van, the depot's lights inside; the walker comes past the van and goes in
+      DV: { dur: 7, tod: 22.6, weather: 'rain', T0: 260, start: [40.5, 141, 175],
+        act(s, K, st) { if (s < 0.4) return; if (!st.a) st.a = goTo(39.2, 134.9, K); else if (!st.b) st.b = goTo(39.0, 129.4, K); else goTo(33.5, 127.5, K); },
+        cam(s) { const x = 44.2 - s * 0.18, z = 131.6 + s * 0.1, y = floor(x, z, 60); return [[x, y + 1.25, z], look([31.5, V.hall.y + 1.7, 128.5], me(1.1), 0.3), 52]; } },
+      // inside: the bench under its lamp, the engine on the hoist; it comes to the bench and looks down at what was left on it
+      DW: { dur: 7, tod: 22.65, weather: 'rain', T0: 268, start: [31.5, 121.5, -60],
+        act(s, K, st) { if (!st.there) st.there = goTo(27.4, 117.6, K) ? s : 0; else P.pitch = damp(P.pitch, -0.5, 1.3); },
+        cam(s) { const y = V.hall.y + 0.24; return [[23.4 + s * 0.28, y + 1.05 + s * 0.04, 121.6 - s * 0.12], look([27.2, y + 0.9, 116.2], me(1.0), 0.45), 46]; } },
+      // the forklift where the roof came down, a tube dying over the bay, the rain coming in through the gap
+      DF: { dur: 5, tod: 22.7, weather: 'rain', T0: 276, start: [33.5, 125, 90], act() {},
+        cam(s) { const y = V.hall.y + 0.24; return [[35.2 + s * 0.3, y + 1.3, 129.4 - s * 0.35], [40.6, y + 1.0, 125.2], 48]; } },
+      // and out again, seen through its own camera: past the van into the dark, the fault crackling in the picture
+      DS: { dur: 8, tod: 22.75, weather: 'rain', T0: 282, start: [39.6, 129.2, 174], view: 'first', scout: true,
+        act(s, K) { goTo(41.6, 150, K); P.pitch = damp(P.pitch, -0.04, 1.2); } },
       // ── evening ──
       // golden hour at the tarn: it walks up to the turtle that stands there, and looks up
       B: { dur: 8.2, tod: 17.9, weather: 'clear', T0: 20, start: [99, 102.5, 14],
@@ -10252,7 +10287,7 @@ V.plants = () => {
     // the machines near the walker turn their heads to it in every shot it is in (not in the ones it is not: dawn, the kite, the lookout)
     for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
     return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
-      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
+      order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'DV', 'DW', 'DF', 'DS', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
   };
