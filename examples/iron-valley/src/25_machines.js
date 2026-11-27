@@ -44,9 +44,10 @@ V.machines = () => {
     palette: { frame: ['paintmetal', '#8f8c7e'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'], casing: ['paintmetal', '#cbc5b0'], paint: ['paintmetal', '#c99f2e'] },      /* grey works paint gone to rust, cream casings, the yellow of what moves or may be stepped off */
     limbs: [...titanLegs, ...titanLegs.map(M.mirror)], neck: { at: [24, -3.5, 0], links: [[3.2, -62]] }, head: { len: 6 },
     extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 },
-      // the lift: a cage under the bow quarter on four ropes, let down to the ground from a winch in the deck when it stops for it
-      { name: 'lift_cage', type: 'slide', channel: 'lift', parent: 'body', at: [14, -4.6, -2.5], dir: [0, 1, 0], toGround: 3.0 },
-      ...Array.from({ length: 10 }, (_, i) => ({ name: 'lift_' + i, type: 'slide', channel: 'lift', parent: 'body', at: [14, -4.6, -2.5], dir: [0, -1, 0], toGround: 3.0, k: i / 10 }))],
+      // the lift: a cage on four ropes from a headframe over a hatch in the bow deck; put away, it stands in the hatch with its
+      // floor flush with the deck; when the relic stops for it, it goes down through the hatch and the open truss to the ground
+      { name: 'lift_cage', type: 'slide', channel: 'lift', parent: 'body', at: [14, 2.82, -2.5], dir: [0, 1, 0], toGround: 3.0 },
+      ...Array.from({ length: 10 }, (_, i) => ({ name: 'lift_' + i, type: 'slide', channel: 'lift', parent: 'body', at: [14, 2.82, -2.5], dir: [0, -1, 0], toGround: 3.0, k: i / 10 }))],
     gait: { cycle: 15, duty: 0.68, stride: 15, lift: 3.4, offsets: { AL: 0, BL: 0.535, CL: 0.07, DL: 0.605, AR: 0.5, BR: 0.035, CR: 0.57, DR: 0.105 }, crouch: 0.6, dip: 0.9, dipTime: 1.7, sway: 1.1, roll: 0.9, nod: 0.5, yaw: 0.3, footPitch: 8, toeCurl: 10, neckSway: 2, follow: [0.5, 0.25], smooth: 0.5, footTilt: 30, settle: 0.9, settleTime: 3.2, gather: 6, gatherDip: 0.9, gatherBack: 0.8, ease: 16, clear: 1.6 },
     idle: { period: 26, breath: 0.3, shift: 0.5, scan: 18 },
     moves: {

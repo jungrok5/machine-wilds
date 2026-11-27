@@ -712,3 +712,28 @@ dust trail each and a steep spread of sizes; steam is a dozen puffs lit as volum
 cool in the shade); a glint is a hot point and a whisper of halo. *Rule:* an effect is judged at the distance the film
 looks at it, beside the same frame without it, and in motion; and what glows is drawn in HDR well above one — the
 bloom only takes what is brighter than about one.
+
+**The feet snapped, the dust blinked, every fault looked the same, the cage came through the deck** (the owner, from
+stills of the X cut; `lib/48_mech_gait.js`, `lib/48_mech_run.js`, `lib/62_vfx.js`, `lib/63_glow.js`, `src/26_parts.js`).
+Measured at 24 frames a second, a swinging foot turned its sole 25° in one frame halfway through (its pitch was
+`s < 0.55 ? 1 : -0.6`), left the ground already rising at several metres a second and darted across in the middle 84 %
+of its swing (peak acceleration 10–15 g on a fifty-tonne machine). *Fix:* the pitch rolls over in one eased turn; the
+lift and the extra lift for rough ground start and end at rest (a short ramp at each end that leaves the rest of the arc
+— and so its clearance — as it was); the carry is eased over the whole swing. Worst sole turn 7° a frame, peak
+acceleration down by a third to a half; gym unchanged (a ramp twice as long sent the feet up so high the cylinders ran
+out, and a lower duty for the crane left it no moment with all four feet down: neither kept). A footfall's dust lived
+only while its foot was down: the impact list was built from the planted feet, so a porter's dust vanished after two
+seconds, mid-billow, when the foot lifted, and everything a machine had thrown up vanished when it halted; knee steam
+vanished when the foot landed. The slots were handed out by score every frame, so a puff losing its place to a nearer
+one blinked out. And every footfall of every machine raised a full skirt, on grass as on dirt. *Fix:* footfalls and
+lift-offs are found by the clock time they happened (`M.phaseTime`, by halving the phase) and live out their lives; what
+had a slot keeps it while it lives; dust is as loose as the ground (dirt and shore throw it, grass and moss hold it,
+stone has little), skirts and columns thinner, every puff gone softly before its footfall is forgotten. Every arc was
+the same shape (a trunk, two branches, one length rule), re-jagged at the same 30 a second, with the same flicker, on
+every machine. *Fix:* five kinds (crawl, run, ring, leap, snap) on curves, each arc with its own moment, life, rate,
+jaggedness, branches and width; each machine a character (hue from cyan-blue to violet-blue, its favourite kind, its
+rhythm: pops, stutter or surge). The lift's cage stopped under the deck in a winch box it went through. *Fix:* a hatch cut
+right through the deck plate, a headframe over it, the cage put away flush with the deck: the walker steps out of it.
+*Rule:* measure motion per frame at the film's rate (a jump in one frame is a snap whatever the curve says); an effect
+lives by the clock time of what made it, never by the state of what made it now; a held resource is not taken back
+mid-life; variety is designed per instance and per owner, not added as noise.

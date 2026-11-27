@@ -53,8 +53,9 @@ better ground), `wade`, `clear`, `steepSlow`, `reachMax`, `settle` / `settleTime
 2. **Footfalls**: step k of a leg is where its home is when the body is at the middle of that stance. Each is moved
    (within `adjust`) off a face steeper than the sole turns, off anything solid, out of water deeper than `wade`.
    The sole takes the ground's tilt (up to `footTilt`); each toe droops until its tip meets the ground under it.
-3. **A swing** runs between two footfalls: late off, fast across, slow down; lifted `lift`, and higher where the
-   ground between asks.
+3. **A swing** runs between two footfalls: across over the whole swing, eased at both ends (peak speed under twice its
+   mean); up quickly and down slowly, but off the ground and onto it at rest; lifted `lift`, and higher where the
+   ground between asks. The sole turns toe-down as it leaves and rolls over to heel-first as it reaches, in one turn.
 4. **The body**: its height is `ride` over the mean of its feet — but never so high that the lowest foot's leg runs
    out nor so low that the highest folds (a soft limit, each hip counted where the tilted body has it); its pitch and
    roll are the land's under it times `follow`; all three eased through a raised-cosine window `smooth` cycles wide.
