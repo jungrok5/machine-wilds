@@ -173,6 +173,8 @@
     };
     // the machines near the walker turn their heads to it in every shot it is in (not in the ones it is not: dawn, the kite, the lookout)
     for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
+    // the giants' faults, to look at them (not in the cut): the turtle at the brook and the relic over the walker, crackling often
+    shots.FXG = Object.assign({}, shots.TW, { fault: 4 }); shots.FXR = Object.assign({}, shots.H1, { fault: 4 });
     return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'DV', 'DW', 'DF', 'DS', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
