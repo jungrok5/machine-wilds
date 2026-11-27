@@ -4173,6 +4173,12 @@ void main(){
   const M = LR.mech, V = M.v, D2R = M.D2R, TAU = Math.PI * 2;
   const fract = (x) => x - Math.floor(x), sat = LR.sat;
   const smooth5 = (x) => { x = sat(x); return x * x * x * (x * (6 * x - 15) + 10); };
+  // how far along from one print to the next a swinging foot is at s (0…1 of its swing): eased at both ends, over all of it
+  // (a foot that waits, darts and stops reads as a snap; a peak speed under twice its mean does not)
+  const swingE = (s) => smooth5(s);
+  // how high: up quickly and down slowly, but off the ground and onto it at rest (no pop as it leaves, no slam as it lands)
+  const ramp = (s) => smooth5(s / 0.12) * smooth5((1 - s) / 0.12);
+  const liftK = (s) => Math.sin(Math.PI * sat(s) ** 0.75) ** 1.4 * smooth5(s / 0.18), extraK = (s) => Math.sin(Math.PI * sat(s)) * ramp(sat(s));
   // key poses → a value: [[t, v], …], eased between keys (the method of machine-build-reel: key poses, numbers, interpolation)
   const track = (keys, t) => { if (!keys || !keys.length) return 0; if (t <= keys[0][0]) return keys[0][1]; for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const a = keys[i - 1], b = keys[i]; return a[1] + (b[1] - a[1]) * smooth5((t - a[0]) / Math.max(1e-9, b[0] - a[0])); } return keys[keys.length - 1][1]; };
   M.track = track;
@@ -4276,7 +4282,7 @@ void main(){
   // how much higher than its plain arc a swinging foot must go to clear the ground between two footfalls
   M.swings = (u) => { const L = land(), g = u.K.spec.gait; for (const l of u.kin.limbs) { const list = u.plants[l.name], N = list.length;
     for (let k = 0; k < N; k++) { const A = list[k], B = list[(k + 1) % N]; let extra = 0; const clear = g.clear === undefined ? 0.35 * l.ball + 0.25 : g.clear;
-      for (const s of [0.16, 0.3, 0.45, 0.6, 0.75, 0.88]) { const e = smooth5((s - 0.08) / 0.84), x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, base = A.y + (B.y - A.y) * e + g.lift * Math.sin(Math.PI * s ** 0.75) ** 1.4, need = L.h(x, z) + clear - base; if (need > 0) extra = Math.max(extra, need / Math.sin(Math.PI * s)); }
+      for (const s of [0.16, 0.3, 0.45, 0.6, 0.75, 0.88]) { const e = swingE(s), x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, base = A.y + (B.y - A.y) * e + g.lift * liftK(s), need = L.h(x, z) + clear - base; if (need > 0) extra = Math.max(extra, need / extraK(s)); }
       A.extra = extra; } } };
   // after the land changes under the feet (footprints pressed in): heights, tilts and toes again
   M.reseat = (u) => { if (u.avatar) return M.planAvatar(u);      /* the land has just been pressed: its exercise is walked again on it */ if (u.fly) return; for (const l of u.kin.limbs) for (const P of u.plants[l.name]) setFoot(u, l, P); if (!u.post) M.swings(u); };
@@ -4298,12 +4304,12 @@ void main(){
     const g = u.K.spec.gait, x = uu - u.off[l.name], k = Math.floor(x), p = x - k, list = u.plants[l.name], N = list.length, A = list[((k % N) + N) % N];
     out.k = k; out.p = p; out.A = A;
     if (p < g.duty) { out.s = 0; out.sw = false; out.c = A.c; out.n = A.n; out.yaw = A.yaw; out.toes = A.toes; out.pitch = 0; out.curl = 0; out.gamma = l.gamma; out.hy = A.y; return out; }
-    const B = list[(((k + 1) % N) + N) % N], s = (p - g.duty) / (1 - g.duty), e = smooth5((s - 0.08) / 0.84), sp = s ** 0.75;      // leaves late, travels fast, eases into the set-down
-    const up = g.lift * Math.sin(Math.PI * sp) ** 1.4 + A.extra * Math.sin(Math.PI * s);                                              // quick lift, slow set-down; higher where the ground asks
-    const cl = sat(up / Math.max(1e-6, 1.1 * l.toeLen * 0.5, 0.45 * g.lift)) ** 1.5;                                                  // tipped and curled only once it is clear
+    const B = list[(((k + 1) % N) + N) % N], s = (p - g.duty) / (1 - g.duty), e = swingE(s);      // out of its print and into the next over the whole swing: no dart
+    const up = g.lift * liftK(s) + A.extra * extraK(s);                                                                         // quick lift, slow set-down, from rest and to rest; higher where the ground asks
+    const cl = smooth5(up / Math.max(1e-6, 0.8 * l.toeLen, 0.85 * g.lift));                                                     // tipped and curled once it is clear, and as gently as it rose
     let dy = B.yaw - A.yaw; dy = LR.wrapPi(dy);
     out.s = s; out.sw = true; out.B = B; out.c = [A.c[0] + (B.c[0] - A.c[0]) * e, A.c[1] + (B.c[1] - A.c[1]) * e + up, A.c[2] + (B.c[2] - A.c[2]) * e];
-    out.n = V.norm(V.lerp(A.n, B.n, e)); out.yaw = A.yaw + dy * e; out.pitch = cl * (g.footPitch || 16) * (s < 0.55 ? 1 : -0.6); out.curl = cl * (g.toeCurl || 22);
+    out.n = V.norm(V.lerp(A.n, B.n, e)); out.yaw = A.yaw + dy * e; out.pitch = cl * (g.footPitch || 16) * (1 - 1.6 * smooth5((s - 0.3) / 0.45));      /* toe down as it leaves, rolled over to heel-first as it reaches: one turn, never a flip */ out.curl = cl * (g.toeCurl || 22);
     out.toes = A.toes.map((a, i) => a + (B.toes[i] - a) * e); out.gamma = l.gamma + (g.swingGamma || 0) * Math.sin(Math.PI * s) ** 1.2; out.hy = A.y + (B.y - A.y) * smooth5(s);
     return out;
   };
@@ -4767,6 +4773,13 @@ void main(){
   };
   const frustum = new T.Frustum(), pm = new T.Matrix4(), sph = new T.Sphere(); let lastShake = [0, 0, 0], shaken = [NaN, NaN, NaN];
   M.impacts = []; M.lamps = [];
+  // the clock time foot `name`'s footfall k came down (its phase reached k + its offset): found once, by halving, and kept
+  // (and the time it reached any phase: M.phaseTime(u, key, phase, time) — a foot's lift-off is its footfall's phase + the duty)
+  const phaseTime = (u, key, want, time) => { const ff = u.ff || (u.ff = new Map()); if (ff.has(key)) return ff.get(key); if (ff.size > 400) ff.clear();
+    const at = (t) => M.phase(u, t + (u.offset || 0)).u; let lo = time - 40, hi = time + 1e-6; if (at(lo) > want || at(hi) < want) return null;
+    for (let i = 0; i < 34; i++) { const m = (lo + hi) / 2; if (at(m) < want) lo = m; else hi = m; } ff.set(key, hi); return hi; };
+  const footfallTime = (u, name, k, time) => phaseTime(u, name + ':' + k, k + u.off[name], time);
+  M.footfallTime = footfallTime; M.phaseTime = phaseTime;
   M.update = (time, dt, cam) => {
     if (!M.boneTex) return; const data = M.boneData, R = LR.render, lamps = (M.lamps = []), imp = (M.impacts = []), q = LR.gpu.tier.name === 'low' ? 0.6 : LR.gpu.tier.name === 'medium' ? 0.8 : 1, live = !LR.RENDER || LR.q('aware') === '1' || !!M.awareAt;
     cam.updateMatrixWorld(); pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); frustum.setFromProjectionMatrix(pm); let tris = 0;
@@ -4798,7 +4811,11 @@ void main(){
       // feet: what the walker bumps into while a foot is down or low, and the footfalls of the last seconds
       if (u.avatar) continue;      // (it does not bump into its own feet, and its steps are the walker's own)
       kin.limbs.forEach((l, i) => { const F = Wd['foot_' + l.name].p, s = u.solids[i], lq = c.limbs[l.name], low = F[1] - l.ball - LR.land.h(F[0], F[2]) < 2.3; s.x = F[0]; s.z = F[2]; s.r = low ? l.ball * 1.15 + l.toeLen * 0.3 : 0;
-        if (!u.post && !lq.sw && c.rate > 0.02) { const age = (c.u - (lq.k + u.off[l.name])) * u.T; if (age >= 0 && age < 5) imp.push({ x: lq.p[0], y: lq.p[1] - l.ball, z: lq.p[2], age, size: l.ball * 1.1 + l.toeLen * 0.6, tonnes: K.spec.tonnes || 50, unit: u, leg: l.name, k: lq.k }); } });
+        // (this foot's last two footfalls, by the clock time each came down: what they threw up lives out its life after the foot
+        // lifts again and while the machine stands — a footfall's dust does not vanish with the foot)
+        if (!u.post && u.plants) { const x = c.u - u.off[l.name], k0 = Math.floor(x), list = u.plants[l.name], N = list.length;
+          for (const k of [k0, k0 - 1]) { const tk = footfallTime(u, l.name, k, time); if (tk === null) continue; const age = time - tk; if (age < 0 || age >= 5) continue; const P = list[((k % N) + N) % N];
+            imp.push({ x: P.x, y: P.y, z: P.z, age, size: l.ball * 1.1 + l.toeLen * 0.6, tonnes: K.spec.tonnes || 50, unit: u, leg: l.name, k }); } } });
     }
     M.boneTex.needsUpdate = true; R.lamps = lamps; R.info.mechTris = tris; R.info.mechs = M.units.filter((u) => u.lod >= 0).length;
     // the ground carries every footfall to the eye: a short ring, weaker with distance
@@ -6586,7 +6603,7 @@ void main(){
   vec3 dust = vec3(0.50, 0.44, 0.36), Ls = skyLight(); vId = h.y * 31.0 + s1.z * 7.0;
   if (kind < 0.5) {                     // skirt: runs out low and fast over the ground from under the foot, then hangs and settles
     float r = sz * (0.35 + (2.2 + 1.2 * h.y) * (1.0 - exp(-t * 3.2))); p = s0.xyz + out1 * r + vec3(0.0, sz * (0.12 + 0.35 * (1.0 - exp(-t * 0.9)) * (0.5 + h.z)), 0.0) + wind * t * 0.6;
-    s = sz * (0.34 + 0.85 * (1.0 - exp(-t * 2.0)) + 0.08 * t) * (0.75 + 0.5 * h.z); al = smoothstep(0.0, 0.05, t) * exp(-t * 0.62) * 0.5; col = dust;
+    s = sz * (0.34 + 0.85 * (1.0 - exp(-t * 2.0)) + 0.08 * t) * (0.75 + 0.5 * h.z); al = smoothstep(0.0, 0.05, t) * exp(-t * 0.62) * 0.36; col = dust;
   } else if (kind < 1.5) {              // steam: a jet that slows, swells, rises and goes with the wind
     if (j > 0.62) { gl_Position = OFF; return; } vec3 dir = length(s2.xyz) > 0.01 ? normalize(s2.xyz) : vec3(0.0, 1.0, 0.0); float tb = j * 0.55, tt = t - tb; if (tt < 0.0) { gl_Position = OFF; return; }
     vec3 side = normalize(cross(dir, vec3(0.0, 1.0, 0.0)) + 1e-4); float v0 = 7.0 * sqrt(sz);
@@ -6606,9 +6623,10 @@ void main(){
     s = sz * (0.38 + 0.5 * (1.0 - exp(-t * 8.0)) + 0.1 * t) * (0.7 + 0.6 * h.z); al = smoothstep(0.0, 0.025, t) * (1.0 - smoothstep(0.15, 1.6, t)) * (kind > 6.5 ? 0.32 : 0.6); col = kind > 6.5 ? vec3(0.78, 0.82, 0.86) : dust;
   } else {                              // column: what a giant's foot sends up and leaves standing in the air
     float r = sz * (0.2 + 0.9 * (1.0 - exp(-t * 0.9)) * h.y); p = s0.xyz + out1 * r + vec3(0.0, sz * (0.3 + 1.6 * (1.0 - exp(-t * 0.45)) * (0.3 + 0.9 * j)), 0.0) + wind * t * 1.2;
-    s = sz * (0.55 + 0.9 * (1.0 - exp(-t * 0.7))) * (0.7 + 0.5 * h.z); al = smoothstep(0.0, 0.25, t) * exp(-t * 0.45) * 0.24; col = dust * 0.92;
+    s = sz * (0.55 + 0.9 * (1.0 - exp(-t * 0.7))) * (0.7 + 0.5 * h.z); al = smoothstep(0.0, 0.25, t) * exp(-t * 0.45) * 0.17; col = dust * 0.92;
   }
   al *= s2.w > 0.0 ? s2.w : 1.0;        // (a slot may thin its puffs: wet earth does not dust)
+  al *= 1.0 - smoothstep(3.3, 4.5, age);  // (and every puff is gone, softly, before its footfall is forgotten)
   float d = length(p - uCamPos); vec3 wp = p + (camR() * position.x + camU() * position.y) * s;
   al *= smoothstep(0.6, 3.5, d);         // (not across the lens)
   float Tf = fogT(p); vFogC = fogC(p) * (1.0 - Tf);
@@ -6790,23 +6808,26 @@ void main(){ float sz = floor(seed.w) * 0.1, r = fract(seed.w), life = 1.6 + 1.8
     const paved = LR.land.coverAt ? LR.land.coverAt('paved', f.x, f.z) : 0; o = Object.assign({}, o, { seed: Math.floor(o.seed) + LR.sat(paved) * 0.98 });      /* (the seed's fraction: how much of the ground there is stone — the chunks take its colour) */
     if (wx.snow > 0.35) { expand(out, 'snow', at, f.age, Object.assign({}, o, { n: o.n * wx.snow })); expand(out, 'debris', at, f.age, Object.assign({}, o, { n: 0.25 * o.n, seed: o.seed + 1 })); return; }
     if (wx.wet > 0.4) { expand(out, 'mud', at, f.age, o); return; }
-    expand(out, 'dust', at, f.age, Object.assign({}, o, { n: o.n * (1 - 0.6 * paved) })); expand(out, 'debris', at, f.age, Object.assign({}, o, { n: o.n * (0.55 + 0.45 * (1 - paved)), seed: o.seed + 1 }));
-    if (o.heavy) expand(out, 'column', at, f.age, Object.assign({}, o, { size: sz * 1.3, n: 1 })); };
+    // (loose earth throws dust; grass and moss hold it down, stone has little to give: a skirt only where there is dirt)
+    const L = LR.land, loose = LR.sat(Math.max(L.coverAt ? L.coverAt('dirt', f.x, f.z) : 0.5, L.coverAt ? L.coverAt('shore', f.x, f.z) * 0.7 : 0) * (1 - 0.8 * paved)), dn = o.n * (0.2 + 0.8 * loose);
+    if (dn > 0.12) expand(out, 'dust', at, f.age, Object.assign({}, o, { n: dn })); expand(out, 'debris', at, f.age, Object.assign({}, o, { n: o.n * (0.35 + 0.45 * loose), seed: o.seed + 1 }));
+    if (o.heavy && loose > 0.35) expand(out, 'column', at, f.age, Object.assign({}, o, { size: sz * 1.3, n: 0.6 + 0.4 * loose })); };
 
   VX.events = (time, cam) => {
     const out = [], M = LR.mech, cp = cam ? cam.position : { x: 0, y: 0, z: 0 };
     // the giants' footfalls (their places and ages are what the walk says at this clock)
     if (M && M.impacts) for (const f of M.impacts) { const tn = f.tonnes || 0; if (tn < 20 || f.age > 4.5 || f.unit.fly) continue; const sc = Math.cbrt(tn / 86), sz = f.size * (0.7 + 0.3 * sc), row = f.unit.row || 0, seed = (H(row, f.k | 0, f.leg.charCodeAt(0) + f.leg.length * 7) * 97) % 97;
-      footfall(out, f, { size: sz, n: LR.sat(0.45 + 0.4 * sc), seed, w: sz, heavy: tn > 1000 });
+      footfall(out, f, { size: sz, n: LR.sat(0.3 + 0.32 * sc), seed, w: sz, heavy: tn > 1000 });
       // a joint that grinds as the weight comes on it: sparks from the knee, now and then
       if (tn >= 80 && f.age < 1.5 && f.unit.pose && H(row, f.k | 0, 5) < (tn > 1000 ? 0.45 : 0.22)) { const l = f.unit.kin.limbs.find((x) => x.name === f.leg), sol = f.unit.pose.sols && f.unit.pose.sols[f.leg]; if (l && sol) { const J = sol.J[1], B = f.unit.pose.W.body, side = [B.z[0] * l.side, 0.6, B.z[2] * l.side];
           expand(out, 'sparks', J, f.age - 0.05, { size: Math.min(2.5, 0.5 + 0.3 * sc), n: 0.8, seed: seed + 11, dir: side, floor: false, w: sz * 1.2 }); } } }
     // lifts: steam from the knee of a heavy leg as it comes up, earth dropping off the foot
     // (the five nearest machines in view: each lifting leg costs a command and a leg solve)
-    if (M) for (const u of M.units.filter((u) => !u.avatar && !u.fly && !u.post && (u.K.spec.tonnes || 0) >= 30 && u.pose && u.T && u.lod >= 0 && u.dist < 220).sort((a, b) => a.dist - b.dist).slice(0, 5)) { const tn = u.K.spec.tonnes || 0, c = u.pose.cmd; if (!c || c.rate < 0.05) continue;
-      for (const l of u.kin.limbs) { const lq = c.limbs[l.name]; if (!lq || !lq.sw) continue; const la = lq.s * (1 - (u.duty || 0.6)) * u.T; if (la > 3) continue; const k = lq.k | 0, sc = Math.cbrt(tn / 86), seed = (H(u.row, k, 31 + l.name.length) * 97) % 97;
+    if (M) for (const u of M.units.filter((u) => !u.avatar && !u.fly && !u.post && (u.K.spec.tonnes || 0) >= 30 && u.pose && u.T && u.lod >= 0 && u.dist < 220).sort((a, b) => a.dist - b.dist).slice(0, 7)) { const tn = u.K.spec.tonnes || 0, c = u.pose.cmd; if (!c) continue;
+      for (const l of u.kin.limbs) { const lq = c.limbs[l.name]; if (!lq) continue; const du = u.duty || 0.6, k = Math.floor(c.u - u.off[l.name] - du), tl = M.phaseTime(u, l.name + '^' + k, k + du + u.off[l.name], time); if (tl === null) continue;      /* (the last lift-off, by its clock time: its steam and clods live out their lives after the foot is down again) */
+        const la = time - tl; if (la < 0 || la > 3) continue; const sc = Math.cbrt(tn / 86), seed = (H(u.row, k, 31 + l.name.length) * 97) % 97;
         const c0 = M.cmd(u, time - la + 0.05), q0 = c0.limbs[l.name]; let knee = null, foot0 = q0 ? q0.p : null; if (q0) { const sol = l.solve(c0.body, q0.p, q0.gamma); knee = sol.J[1]; }
-        if (knee && tn >= 60 && H(u.row, k, 3) < 0.7) { const B = c0.body, out1 = [B.z[0] * l.side * 0.8 - B.x[0] * 0.3, 0.55, B.z[2] * l.side * 0.8 - B.x[2] * 0.3]; expand(out, 'steam', knee, la - 0.04, { size: Math.min(3.6, 0.8 * sc + 0.25), n: 0.8, seed, dir: out1, w: sc * 1.5 }); }
+        if (knee && tn >= 150 && H(u.row, k, 3) < 0.35) { const B = c0.body, out1 = [B.z[0] * l.side * 0.8 - B.x[0] * 0.3, 0.55, B.z[2] * l.side * 0.8 - B.x[2] * 0.3]; expand(out, 'steam', knee, la - 0.04, { size: Math.min(3.6, 0.8 * sc + 0.25), n: 0.8, seed, dir: out1, w: sc * 1.5 }); }
         if (foot0 && la < 2.5 && u.dist < 140 && LR.wx.snow < 0.35 && wetAt(foot0[0], foot0[1], foot0[2]) === null) { const c1 = M.cmd(u, time - la + 0.6).limbs[l.name]; if (c1) { const sz = l.ball * 1.1 + l.toeLen * 0.6; out.push({ prog: 'bits', kind: KIND.bits.clods, p: [foot0[0], foot0[1] - l.ball * 0.4, foot0[2]], age: la - 0.1, size: sz * 0.7, n: LR.wx.wet > 0.4 ? 0.7 : 0.4, seed, dir: [c1.p[0], c1.p[1] - l.ball * 0.4, c1.p[2]], floor: 0, thin: 1, w: sz * 0.6 }); } } } }
     // what other files add (a function of the clock: 63_glow's arcs), the one-shot bursts and the walker's own
     for (const f of VX.sources) f(out, time, expand);
@@ -6825,7 +6846,10 @@ void main(){ float sz = floor(seed.w) * 0.1, r = fract(seed.w), life = 1.6 + 1.8
     if (VX.pending.length) { for (const b of VX.pending) b.t = time; VX.bursts.push(...VX.pending); VX.pending.length = 0; }
     VX.bursts = VX.bursts.filter((b) => time - b.t <= LIFE.puff && b.t - time < 600); if (VX.bursts.length > 160) VX.bursts.splice(0, VX.bursts.length - 160);
     const ev = VX.events(time, cam), by = { bits: [], puff: [], ring: [] }; for (const e of ev) if (e.score > 0) by[e.prog].push(e);
-    for (const k in by) by[k].sort((a, b) => b.score - a.score);
+    // (what had a slot last frame keeps it while it lives: a puff swapped out for a nearer one would blink out mid-life)
+    const keep = VX.held || (VX.held = { bits: new Set(), puff: new Set(), ring: new Set() });
+    for (const k in by) { for (const e of by[k]) { e.key = e.kind + '|' + Math.round((time - e.age) * 50) + '|' + Math.round(e.p[0] * 4) + ',' + Math.round(e.p[2] * 4) + '|' + e.seed.toFixed(1); if (keep[k].has(e.key)) e.score *= 6; }
+      by[k].sort((a, b) => b.score - a.score); keep[k] = new Set(by[k].slice(0, VX.NS).map((e) => e.key)); }
     fill(VX.bitsU, by.bits, VX.NS); fill(VX.puffU, by.puff, VX.NS); fill(VX.ringU, by.ring, VX.NS);
     VX.info.slots = { bits: Math.min(VX.NS, by.bits.length), puff: Math.min(VX.NS, by.puff.length), ring: Math.min(VX.NS, by.ring.length), wanted: ev.length };
     const P = VX.parts; P.bits.visible = by.bits.length > 0; P.puffs.visible = by.puff.length > 0; P.rings.visible = by.ring.length > 0;
@@ -6862,10 +6886,13 @@ void main(){ float sz = floor(seed.w) * 0.1, r = fract(seed.w), life = 1.6 + 1.8
 // ── lib/63_glow.js ──
 // machine-wilds · 63_glow — light that glows: things hot or charged enough to bloom (lib/75_post blooms what is brighter than
 // about 1 before exposure, so everything here is drawn in HDR, tens of times that at its core).
-//   · the walker's fault: now and then thin blue-white arcs crackle over its own body — knee to hip, hip to body, up the neck —
-//     a few jagged segments re-jagged every other frame, a branch or two, flickering; a small blue light on what is near, a
-//     few hot sparks off the ends, and its lamp stutters with it.  Every 3–7 s, a burst of 0.15–0.5 s; more often and
-//     stronger for a while after a hard landing and while it runs; calm when it stands, never quite gone.
+//   · faults: now and then thin blue-white arcs crackle over a machine's body — the walker's and every other's.  No two alike:
+//     a crawl over the skin that slides as it lives, a run down a limb, a ring round it, a leap across the gap to the next
+//     part, a snap of a frame or two; each arc with its own moment in the burst, its own curve, jaggedness, branches, width
+//     and the rate it re-jags at.  Each machine has a character (the colour it burns, cyan-blue to violet-blue; the kinds it
+//     throws; how wild, branched and thick), and each burst a rhythm (a few hard pops, a stutter, a surge that holds and
+//     dies).  A small blue light on what is near, its lamps stutter, its skin glows with it.  The walker: every 3–7 s, more
+//     often and stronger for a while after a hard landing and while it runs; calm when it stands, never quite gone.
 //   · lightning in rain: a far branching bolt in the sky (2–4 frames, a double flicker) and the whole scene lit by it for
 //     those frames (the flash every pass already reads: uWx2.w — sky, air and a cool fill on every surface)
 //   · dust that shows in a lamp's beam; a few warm motes drifting in the mist after dark
@@ -6884,12 +6911,12 @@ void main(){ float sz = floor(seed.w) * 0.1, r = fract(seed.w), life = 1.6 + 1.8
   GL.shaken = (time) => { let s = 0; for (const b of VX.bursts) if ((b.kind === 'land' || b.kind === 'landwet') && time >= b.t && time - b.t < 3.5 && b.o && b.o.walker) s = Math.max(s, 1 - (time - b.t) / 3.5); const av = LR.mech && LR.mech.units.find((u) => u.avatar); const sp = av && av.av ? av.av.sp : 0; return Math.max(s, LR.sat((sp - 3.5) / 2.5) * 0.55); };
   GL.landedAt = (time) => { let t = null; for (const b of VX.bursts) if (b.o && b.o.walker && (b.kind === 'land' || b.kind === 'landwet') && time >= b.t && time - b.t < 0.6) t = b.t; return t; };
   VX.arcAt = (time) => { const tl = GL.landedAt(time); if (tl !== null && time - tl < 0.5) return { t0: tl, dur: 0.5, seed: Math.round(tl * 24) % 9973, k: Math.round(tl * 24), power: 1.25, n: 3 };      // (a hard landing shakes it at once)
-    const sh = GL.shaken(time), fk = (LR.cine && LR.cine.fault) || 0, a = burstIn(time, 5 / (1 + fk), 11, 1, [0.15, 0.45 + 0.15 * Math.min(fk, 2)]), b = sh > 0.02 ? burstIn(time, 1.4, 23, sh, [0.15, 0.5]) : null, r = b || a; if (!r) return null; r.power = b ? 0.7 + 0.5 * sh : 0.75; r.n = 1 + Math.floor(h1(r.k, 41 + (b ? 1 : 0)) * (b ? 3 : 2)); return r; };
+    const sh = GL.shaken(time), fk = (LR.cine && LR.cine.fault) || 0, a = burstIn(time, 5 / (1 + fk), 11, 1, [0.1, 0.7 + 0.15 * Math.min(fk, 2)]), b = sh > 0.02 ? burstIn(time, 1.4, 23, sh, [0.15, 0.5]) : null, r = b || a; if (!r) return null; r.power = b ? 0.7 + 0.5 * sh : 0.75; r.n = 1 + Math.floor(h1(r.k, 41 + (b ? 1 : 0)) * (b ? 3 : 2)); return r; };
   // every other machine has its faults too, on a beat of its own: K.spec.fault seconds between them (the old and the
   // big crackle more often; 0: never), a film's fault: k makes them all come 1 + k times as often
   const nameSalt = (u) => { let h = 7; for (let i = 0; i < u.name.length; i++) h = (h * 31 + u.name.charCodeAt(i)) % 9973; return h; };
   VX.faultAt = (u, time) => { if (u.avatar) return VX.arcAt(time); const K = u.K.spec, S0 = K.fault !== undefined ? K.fault : (K.tonnes || 50) > 1000 ? 6 : 11; if (!S0) return null;
-    const fk = (LR.cine && LR.cine.fault) || 0, salt = u.salt || (u.salt = nameSalt(u)), r = burstIn(time, S0 / (1 + fk), salt, 0.8, [0.2, 0.55]); if (!r) return null; r.power = 1; r.n = 2 + Math.floor(h1(r.k, salt + 5) * 2); return r; };
+    const fk = (LR.cine && LR.cine.fault) || 0, salt = u.salt || (u.salt = nameSalt(u)), r = burstIn(time, S0 / (1 + fk), salt, 0.8, [0.12, 0.95]); if (!r) return null; r.power = 0.85 + 0.3 * h1(r.k, salt + 6); r.n = 1 + Math.floor(h1(r.k, salt + 5) * 3); return r; };
   // lightning: one strike somewhere in each 8 s of heavy rain, and the realm's own (VX.bolts)
   VX.boltAt = (time) => { if (LR.wx.rain < 0.55) return null; const k = Math.floor(time / 8); for (const kk of [k, k - 1]) { if (h1(kk, 71) > 0.8) continue; const t0 = kk * 8 + 1 + 5.5 * h1(kk, 72); if (time >= t0 && time < t0 + 0.3) return { t0, seed: kk % 977 }; }
     for (const t0 of VX.bolts) if (time >= t0 && time < t0 + 0.3) return { t0, seed: Math.round(t0 * 10) % 977 }; return null; };
@@ -6912,37 +6939,44 @@ vec3 jag(vec3 A, vec3 B, float i, float n, float seed, float amp, bool pinned, v
   GL.init = () => {
     if (LR.off.has('fx') || LR.off.has('vfx') || !VX.NS) return;
     const q = VX.q, mk = VX.mk;
-    // ── the walker's arcs, as a game draws them (S.T.A.L.K.E.R. 2's bolts, Niagara's electrocution): up to 6, each a
-    // trunk of 10 segments with two short branches that taper — shapes that read at a glance, not hair; a white-hot core with
-    // a saturated cyan-blue glow round it; a bright point where each one meets the skin; a new path every frame ──
-    { const NA = 12, SEG = 10, BR = 4, NBR = 2, per = SEG + NBR * BR + 2, U = (GL.arcU = { uArcA: { value: Array.from({ length: NA }, () => new T.Vector4()) }, uArcB: { value: Array.from({ length: NA }, () => new T.Vector4()) }, uJag: { value: 0 } });
+    // ── the arcs, as a game draws them (S.T.A.L.K.E.R. 2's bolts, Niagara's electrocution): up to 12 at once, each a trunk of 10
+    // segments along a curve (a crawl over the skin, a run down a limb, a ring round it, a leap across a gap, a snap), up to two
+    // short branches that taper, a white-hot core with a saturated blue glow round it, a bright point where it meets the skin.
+    // Every arc has its own curve, jaggedness, branches, width, colour and the rate it re-jags at (GL.update) ──
+    { const NA = 12, SEG = 10, BR = 4, NBR = 2, per = SEG + NBR * BR + 2, V4 = () => Array.from({ length: NA }, () => new T.Vector4()), U = (GL.arcU = { uArcA: { value: V4() }, uArcB: { value: V4() }, uArcM: { value: V4() }, uArcC: { value: V4() }, uJag: { value: 0 } });
       const g = VX.quad(); VX.inst(g, 'seg', NA * per, 4, (a, i) => { const s = Math.floor(i / per), r = i % per; a[i * 4] = s;
         if (r < SEG) { a[i * 4 + 1] = r; a[i * 4 + 2] = SEG; a[i * 4 + 3] = 0; } else if (r < SEG + NBR * BR) { const b = Math.floor((r - SEG) / BR); a[i * 4 + 1] = (r - SEG) % BR; a[i * 4 + 2] = BR; a[i * 4 + 3] = 1 + b; } else { a[i * 4 + 1] = 0; a[i * 4 + 2] = 1; a[i * 4 + 3] = 9 + (r - SEG - NBR * BR); } });
       mk('arcs', g, RIBBON + `
-in vec3 position; in vec4 seg; uniform vec4 uArcA[${NA}], uArcB[${NA}]; uniform float uJag; out vec2 vQ; out float vI; out float vCore;
-vec3 fine(float i, float n, float sd, vec3 s1, vec3 s2, float L, bool pinned){ if (pinned && (i < 0.5 || i > n - 0.5)) return vec3(0.0); vec2 h = hash22(vec2(i * 3.71 + sd, sd * 0.37 + 9.1)) - 0.5; return (s1 * h.x + s2 * h.y) * L * 0.02; }
+in vec3 position; in vec4 seg; uniform vec4 uArcA[${NA}], uArcB[${NA}], uArcM[${NA}], uArcC[${NA}]; uniform float uJag; out vec2 vQ; out float vI; out float vCore; out float vH;
+vec3 bez(vec3 A, vec3 M, vec3 B, float t){ float s = 1.0 - t; return A * s * s + M * 2.0 * s * t + B * t * t; }
+// the trunk's points: a random walk across a curve from A through M to B, pulled back so it ends where it should
+vec3 jagC(vec3 A, vec3 M, vec3 B, float i, float n, float seed, float amp, vec3 s1, vec3 s2){ return jag(A, B, i, n, seed, amp, true, s1, s2) - mix(A, B, i / n) + bez(A, M, B, i / n); }
+vec3 fine(float i, float n, float sd, vec3 s1, vec3 s2, float L, float k){ if (i < 0.5 || i > n - 0.5) return vec3(0.0); vec2 h = hash22(vec2(i * 3.71 + sd, sd * 0.37 + 9.1)) - 0.5; return (s1 * h.x + s2 * h.y) * L * k; }
 void main(){
-  int k = int(seg.x + 0.5); vec4 A = uArcA[k], B = uArcB[k]; float I = A.w; if (I <= 0.0) { gl_Position = OFF; return; }
-  float i = seg.y, n = seg.z, br = seg.w, sd = B.w * 13.1 + uJag * 0.917 + seg.x * 5.3; vec3 d = B.xyz - A.xyz; float L = length(d); vec3 dn = d / max(L, 1e-4);
+  int k = int(seg.x + 0.5); vec4 A = uArcA[k], B = uArcB[k], Mc = uArcM[k], C = uArcC[k]; float I = A.w; if (I <= 0.0) { gl_Position = OFF; return; }
+  float i = seg.y, n = seg.z, br = seg.w; if (br > 0.5 && br < 8.5 && br > C.x + 0.5) { gl_Position = OFF; return; }
+  float sd = B.w * 13.1 + seg.x * 5.3, fk = C.w * (0.5 + 0.5 * hash11(uJag * 0.917 + sd)); vec3 d = B.xyz - A.xyz; float L = max(length(d), 1e-3); vec3 dn = d / L; vH = C.z;
   // where it meets the skin: a bright point
-  if (br > 8.5) { vec3 C = br < 9.5 ? A.xyz : B.xyz; C += normalize(uCamPos - C) * 0.02; float dist = length(C - uCamPos), px = dist * 2.2 / uRes.y, s = 0.012 + px * 2.0;
-    vQ = position.xy; vCore = -1.0; vI = I * fogT(C) * (0.7 + 0.3 * hash11(sd + br)); gl_Position = projectionMatrix * viewMatrix * vec4(C + (camR() * position.x + camU() * position.y) * s, 1.0); return; }
-  vec3 toE = normalize(uCamPos - mix(A.xyz, B.xyz, 0.5)), s1 = normalize(cross(dn, toE)), s2 = normalize(cross(dn, s1)); float amp = L * 0.16, taper = 1.0;      // (short and flat: it crawls on the skin)
+  if (br > 8.5) { vec3 P = br < 9.5 ? A.xyz : B.xyz; P += normalize(uCamPos - P) * 0.02; float dist = length(P - uCamPos), px = dist * 2.2 / uRes.y, s = (0.012 + px * 2.0) * C.y;
+    vQ = position.xy; vCore = -1.0; vI = I * fogT(P) * (0.7 + 0.3 * hash11(sd + br)); gl_Position = projectionMatrix * viewMatrix * vec4(P + (camR() * position.x + camU() * position.y) * s, 1.0); return; }
+  vec3 toE = normalize(uCamPos - Mc.xyz), s1 = normalize(cross(dn, toE)), s2 = normalize(cross(dn, s1)); float amp = L * Mc.w, taper = 1.0;
   vec3 P0, P1;
-  if (br < 0.5) { P0 = jag(A.xyz, B.xyz, i, n, sd, amp, true, s1, s2) + fine(i, n, sd, s1, s2, L, true); P1 = jag(A.xyz, B.xyz, i + 1.0, n, sd, amp, true, s1, s2) + fine(i + 1.0, n, sd, s1, s2, L, true); }
-  else { float at = 2.0 + floor(hash11(sd + br * 3.1) * 6.0); vec3 o = jag(A.xyz, B.xyz, at, 10.0, sd, amp, true, s1, s2) + fine(at, 10.0, sd, s1, s2, L, true), dir = normalize(dn * 0.6 + s1 * (br < 1.5 ? 1.0 : -1.0) * (0.6 + hash11(sd + br * 5.0)) + s2 * (hash11(sd * 1.7 + br) - 0.5));
-    vec3 E = o + dir * L * (0.16 + 0.18 * hash11(sd * 0.7 + br * 3.3)); float sb = sd + br * 17.0; P0 = jag(o, E, i, n, sb, amp * 0.6, false, s1, s2); P1 = jag(o, E, i + 1.0, n, sb, amp * 0.6, false, s1, s2);
+  if (br < 0.5) { P0 = jagC(A.xyz, Mc.xyz, B.xyz, i, n, sd, amp, s1, s2) + fine(i, n, sd, s1, s2, L, fk); P1 = jagC(A.xyz, Mc.xyz, B.xyz, i + 1.0, n, sd, amp, s1, s2) + fine(i + 1.0, n, sd, s1, s2, L, fk); }
+  else { float at = 2.0 + floor(hash11(sd + br * 3.1) * 6.0); vec3 o = jagC(A.xyz, Mc.xyz, B.xyz, at, 10.0, sd, amp, s1, s2) + fine(at, 10.0, sd, s1, s2, L, fk), tg = normalize(bez(A.xyz, Mc.xyz, B.xyz, (at + 1.0) / 10.0) - bez(A.xyz, Mc.xyz, B.xyz, at / 10.0) + dn * 1e-3);
+    vec3 dir = normalize(tg * 0.6 + s1 * (br < 1.5 ? 1.0 : -1.0) * (0.6 + hash11(sd + br * 5.0)) + s2 * (hash11(sd * 1.7 + br) - 0.5));
+    vec3 E = o + dir * L * (0.12 + 0.24 * hash11(sd * 0.7 + br * 3.3)); float sb = sd + br * 17.0; P0 = jag(o, E, i, n, sb, amp * 0.7, false, s1, s2); P1 = jag(o, E, i + 1.0, n, sb, amp * 0.7, false, s1, s2);
     taper = 1.0 - (i + 0.5) / n * 0.7; I *= 0.6 * taper; }
   vec3 sdir = P1 - P0; float sl = length(sdir); sdir /= max(sl, 1e-4); vec3 side = normalize(cross(sdir, normalize(uCamPos - P0)));
-  float dist = length(P0 - uCamPos), px = dist * 2.2 / uRes.y, core = max(0.0009, px * 0.42) * (0.6 + 0.4 * taper), w = core * 4.5 + 0.0018;      // (hair-thin: a pixel and a half of core, a tight glow)
+  float dist = length(P0 - uCamPos), px = dist * 2.2 / uRes.y, core = max(0.0009, px * 0.42) * (0.6 + 0.4 * taper) * C.y, w = core * 4.5 + 0.0018 * C.y;      // (hair-thin: a pixel and a half of core, a tight glow)
   vec3 wp = mix(P0, P1, position.y * 0.5 + 0.5) + sdir * position.y * w * 0.5 + side * position.x * w;
-  vQ = position.xy; vCore = w / core; vI = I * fogT(P0);
+  vQ = position.xy; vCore = w / core; vI = I * fogT(P0) * smoothstep(0.5, 1.4, dist);      // (never across the lens)
   gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
-        `in vec2 vQ; in float vI; in float vCore; out vec4 o;
+        `in vec2 vQ; in float vI; in float vCore; in float vH; out vec4 o;
 void main(){ float zs = viewZ(textureLod(tDepth, gl_FragCoord.xy * uRes.zw, 0.0).r), zp = viewZ(gl_FragCoord.z); float tol = 0.35 + zp * 0.008, f = sat((zs - zp + tol) / (tol * 0.85));      // (it crawls on the body: a little behind its surface still shows, more so far off)
-  if (vCore < 0.0) { float r = length(vQ); if (r > 1.0) discard; o = vec4((vec3(0.7, 0.9, 1.0) * exp(-r * r * 14.0) * 26.0 + vec3(0.15, 0.55, 1.0) * exp(-r * 3.5) * 2.6) * vI * f, 0.0); return; }
+  vec3 gc = mix(vec3(0.08, 0.6, 1.0), vec3(0.34, 0.4, 1.0), vH), cc = mix(vec3(0.8, 0.96, 1.0), vec3(0.9, 0.9, 1.0), vH);      // (cyan-blue to violet-blue: each machine its own)
+  if (vCore < 0.0) { float r = length(vQ); if (r > 1.0) discard; o = vec4((cc * exp(-r * r * 14.0) * 26.0 + gc * exp(-r * 3.5) * 2.6) * vI * f, 0.0); return; }
   float x = abs(vQ.x) * vCore, c = exp(-x * x * 2.2), g = exp(-abs(vQ.x) * 4.0) * (1.0 - vQ.y * vQ.y * 0.3);
-  o = vec4((vec3(0.85, 0.95, 1.0) * c * 80.0 + vec3(0.15, 0.55, 1.0) * (g * g * 12.0 + g * 1.8)) * vI * f, 0.0); }`, { order: 8, uniforms: U }); }
+  o = vec4((cc * c * 80.0 + gc * (g * g * 12.0 + g * 1.8)) * vI * f, 0.0); }`, { order: 8, uniforms: U }); }
 
     // ── lightning: one bolt, a trunk of 28 segments and three branches of 10, far off in the rain ──
     { const SEG = 28, BR = 10, NB = 3, n = SEG + NB * BR, U = (GL.boltU = { uBoltA: { value: new T.Vector4() }, uBoltB: { value: new T.Vector4() } });
@@ -7010,29 +7044,70 @@ void main(){ const vec3 B = vec3(36.0, 8.0, 36.0); float t = uTime * 0.18 + seed
     for (const l of u.kin.limbs) { const J = S[l.name] && S[l.name].J; if (!J) continue; for (let k = 0; k + 1 < J.length; k++) { const sl = Math.hypot(J[k + 1][0] - J[k][0], J[k + 1][1] - J[k][1], J[k + 1][2] - J[k][2]); out.push([J[k], J[k + 1], LR.clamp(sl * 0.085, 0.06, 2.2)]); } }      /* (outside the casing) */
     const R0 = u.K.radius || 4, Lb = Math.max(u.wb || R0, 1) * 0.7, rb = R0 * 0.08; out.push([M3(B, [-Lb / 2, 0, 0]), M3(B, [Lb / 2, 0, 0]), rb], [M3(B, [-Lb / 2, rb * 0.5, 0]), M3(B, [Lb / 2, rb * 0.5, 0]), rb * 0.9]);
     if (W.head) out.push([M3(B, [Lb * 0.4, 0, 0]), W.head.p, rb * 0.35]); return out; };
-  // one short arc on that skin: a spot on a tube (on the side the eye can see), crawling a hand's breadth along it and part way round
-  const arcOn = (T, rnd, cp, sc = 1) => { const [A, Bp, r] = T, d = [Bp[0] - A[0], Bp[1] - A[1], Bp[2] - A[2]], L = Math.hypot(...d) || 1, dn = d.map((v) => v / L), up = Math.abs(dn[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
-    const n1 = norm(cross(dn, up)), n2 = cross(dn, n1), t = 0.12 + 0.76 * rnd(1), c = [A[0] + d[0] * t, A[1] + d[1] * t, A[2] + d[2] * t], e = [cp.x - c[0], cp.y - c[1], cp.z - c[2]];
-    const th0 = Math.atan2(e[0] * n2[0] + e[1] * n2[1] + e[2] * n2[2], e[0] * n1[0] + e[1] * n1[1] + e[2] * n1[2]) + (rnd(2) - 0.5) * 2.2, len = Math.min(r * (1.3 + 2.2 * rnd(3)), (0.4 + 1.2 * rnd(3)) * sc),      /* (a giant's arcs are longer — as far as it is big — but they stay on its skin) */ turn = (rnd(4) - 0.5) * 1.6, rr = r * 1.04;
-    const at = (dt, th) => { const ct = Math.cos(th), st = Math.sin(th); return [c[0] + dn[0] * dt + (n1[0] * ct + n2[0] * st) * rr, c[1] + dn[1] * dt + (n1[1] * ct + n2[1] * st) * rr, c[2] + dn[2] * dt + (n1[2] * ct + n2[2] * st) * rr]; };
-    const s0 = (rnd(5) - 0.5) * len; return [at(s0, th0), at(s0 + len * (rnd(6) < 0.5 ? 1 : -1), th0 + turn)]; };
-  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], norm = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
+  // ── arcs on that skin, of five kinds.  Each returns [A, B, M (the curve's pull), amp (jaggedness, of its length)] ──
+  // a point on a tube: t along it, at angle th round it (0: the side facing the eye), r out from its axis
+  const tubeFrame = (T, cp) => { const [A, Bp, r] = T, d = [Bp[0] - A[0], Bp[1] - A[1], Bp[2] - A[2]], L = Math.hypot(...d) || 1, dn = d.map((v) => v / L), up = Math.abs(dn[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
+    const n1 = norm(cross(dn, up)), n2 = cross(dn, n1), mid = [A[0] + d[0] * 0.5, A[1] + d[1] * 0.5, A[2] + d[2] * 0.5], e = [cp.x - mid[0], cp.y - mid[1], cp.z - mid[2]], th0 = Math.atan2(dot(e, n2), dot(e, n1));
+    return { A, d, L, dn, n1, n2, r, th0, at: (t, th, rr = r * 1.04) => { const ct = Math.cos(th0 + th), st = Math.sin(th0 + th); return [A[0] + d[0] * t + (n1[0] * ct + n2[0] * st) * rr, A[1] + d[1] * t + (n1[1] * ct + n2[1] * st) * rr, A[2] + d[2] * t + (n1[2] * ct + n2[2] * st) * rr]; } }; };
+  const midOf = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+  const KINDS = ['crawl', 'run', 'ring', 'leap', 'snap'];
+  // crawl: a hand's breadth (a giant's: as far as it is big) over the skin, sliding along as it lives
+  // snap: the same, tiny and very bright, for a frame or two
+  const arcOn = (F, rnd, sc, slide, small) => { const len = Math.min(F.r * (1.3 + 2.2 * rnd(3)), (0.4 + 1.2 * rnd(3)) * sc) * (small ? 0.35 : 1), t = 0.12 + 0.76 * rnd(1), th = (rnd(2) - 0.5) * 2.2, turn = (rnd(4) - 0.5) * 1.6 * (small ? 0.4 : 1);
+    const s0 = (rnd(5) - 0.5) * len + slide, dir = rnd(6) < 0.5 ? 1 : -1, ta = t + s0 / F.L, tb = t + (s0 + len * dir) / F.L, a = F.at(LR.clamp(ta, 0.02, 0.98), th), b = F.at(LR.clamp(tb, 0.02, 0.98), th + turn);
+    return [a, b, midOf(a, b), small ? 0.28 : 0.12 + 0.08 * rnd(7)]; };
+  // run: most of the way down a limb, bowed a little off the skin
+  const arcRun = (F, rnd) => { const t0 = 0.06 + 0.3 * rnd(1), t1 = 0.62 + 0.32 * rnd(2), th = (rnd(3) - 0.5) * 1.6, a = F.at(t0, th), b = F.at(t1, th + (rnd(4) - 0.5) * 0.9), m = F.at((t0 + t1) / 2, th + (rnd(5) - 0.5) * 0.6, F.r * (1.25 + 0.4 * rnd(6)));
+    return [a, b, m, 0.05 + 0.06 * rnd(7)]; };
+  // ring: part way round a limb, hugging it
+  const arcRing = (F, rnd) => { const t = 0.1 + 0.8 * rnd(1), ph = 1.3 + 1.4 * rnd(2), c = (rnd(3) - 0.5) * 1.2, a = F.at(t, c - ph / 2), b = F.at(t + (rnd(4) - 0.5) * 0.06, c + ph / 2), m = F.at(t, c, F.r * 1.04 / Math.cos(ph / 2));
+    return [a, b, m, 0.07 + 0.05 * rnd(5)]; };
+  // leap: across the gap from one part to the next, arched away from the body
+  const arcLeap = (F, G, rnd, ctr) => { const a = F.at(0.15 + 0.7 * rnd(1), (rnd(2) - 0.5) * 1.4), ax = G.A, d = G.d, w = LR.clamp(dot([a[0] - ax[0], a[1] - ax[1], a[2] - ax[2]], d) / (G.L * G.L), 0.05, 0.95), q = [ax[0] + d[0] * w, ax[1] + d[1] * w, ax[2] + d[2] * w];
+    const to = norm([a[0] - q[0], a[1] - q[1], a[2] - q[2]]), b = [q[0] + to[0] * G.r * 1.04, q[1] + to[1] * G.r * 1.04, q[2] + to[2] * G.r * 1.04], gap = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    if (gap > Math.max(0.5, 7 * Math.max(F.r, G.r)) || gap < 0.05) return null; const mm = midOf(a, b), out = norm([mm[0] - ctr[0], mm[1] - ctr[1], mm[2] - ctr[2]]);
+    return [a, b, [mm[0] + out[0] * gap * (0.2 + 0.3 * rnd(3)), mm[1] + out[1] * gap * (0.2 + 0.3 * rnd(3)), mm[2] + out[2] * gap * (0.2 + 0.3 * rnd(3))], 0.16 + 0.1 * rnd(4)]; };
+  // each machine's faults have a character of their own (from its name): the colour they burn, which kinds they throw, how
+  // fast they re-jag, how wild and branched and thick they are, the rhythm of a burst; the walker's are its own
+  const charOf = (u) => { if (u.arcCh) return u.arcCh; const r = LR.rng('arcs ' + u.name), wt = KINDS.map(() => 0.25 + r()), fav = Math.floor(r() * KINDS.length); wt[fav] *= 2.4;
+    if (u.avatar) { wt[0] = 1.6; wt[1] = 1.0; wt[2] = 0.8; wt[3] = 1.1; wt[4] = 1.2; }
+    const sum = wt.reduce((a, b) => a + b, 0); return (u.arcCh = { hue: u.avatar ? 0.22 : r() * 0.95, wt: wt.map((w) => w / sum), rate: 7 + r() * 23, jag: 0.7 + r() * 0.8, branchy: r(), thick: 0.8 + r() * 0.5, fine: 0.012 + r() * 0.02, rhythm: ['pop', 'stutter', 'surge'][Math.floor(r() * 3)] }); };
+  const pick = (wt, x) => { for (let i = 0; i < wt.length; i++) { if (x < wt[i]) return KINDS[i]; x -= wt[i]; } return KINDS[0]; };
+  // a burst's envelope over its life (0…1, a function of the clock): a few hard pops, a stutter, or a surge that holds and dies
+  const envOf = (rh, tb, dur, key, time) => { if (tb < 0 || tb > dur) return 0;
+    if (rh === 'pop') { const np = 2 + Math.floor(h1(key, 61) * 3); let v = 0; for (let i = 0; i < np; i++) { const ti = (dur * i) / np + h1(key, 62 + i) * dur * 0.2, a = tb - ti; if (a >= 0 && a < 0.3) v = Math.max(v, Math.exp(-a * 8)); } return v; }
+    if (rh === 'stutter') { const hz = 10 + 14 * h1(key, 63), f = Math.floor(time * hz); return h1(f, key + 64) > 0.35 ? 0.55 + 0.45 * h1(f, key + 65) : 0.18; }
+    return LR.sat(tb / 0.07) * (1 - LR.sat((tb - dur * 0.7) / (dur * 0.3))) * (0.78 + 0.22 * h1(Math.floor(time * 24), key + 66)); };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], norm = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); }, dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const M3 = (f, v) => LR.mech.apply(f, v);
   let lastBolt = null, boltPlace = null;
   GL.update = (time, dt, cam) => {
     const M = LR.mech, R = LR.render, av = M && M.units.find((u) => u.avatar), P = GL.parts;
-    // ── the faults: the walker's, and any other machine's near enough to see — a pool of arcs shared out, nearest first ──
-    { const U = GL.arcU, NA = U.uArcA.value.length; for (let i = 0; i < NA; i++) U.uArcA.value[i].w = 0; let used = 0; const cp = cam.position, fr = Math.floor(time * 24), hop = Math.floor(time * 16), ends = [];
-      const live = []; for (const u of (M && M.units) || []) { if (u.uBone) u.uBone.value.z = 0; if (u.fly || u.lod < 0 || !u.uBone) continue; const R0 = u.K.radius || 1; if (u.dist > (u.avatar ? 60 : Math.max(60, R0 * 14))) continue; const b = VX.faultAt(u, time); if (b) live.push({ u, b }); }
+    // ── the faults: the walker's, and any other machine's near enough to see — a pool of arcs shared out, nearest first.  In a
+    // burst each arc has its own moment and life, its own kind, curve and rate; the burst's rhythm (its machine's, mostly) beats
+    // under them all ──
+    { const U = GL.arcU, NA = U.uArcA.value.length; for (let i = 0; i < NA; i++) U.uArcA.value[i].w = 0; let used = 0; const cp = cam.position, fr = Math.floor(time * 24), ends = [];
+      const live = []; for (const u of (M && M.units) || []) { if (u.uBone) u.uBone.value.z = 0; if (u.fly || u.lod < 0 || !u.uBone || (u.avatar && u.live && LR.player && LR.player.view === 'first')) continue; const R0 = u.K.radius || 1; if (u.dist > (u.avatar ? 60 : Math.max(60, R0 * 14))) continue; const b = VX.faultAt(u, time); if (b) live.push({ u, b }); }
       live.sort((a, c) => (a.u.avatar ? -1 : c.u.avatar ? 1 : a.u.dist - c.u.dist));
-      for (const { u, b } of live) { if (used >= NA) break; const tubes = arcTubes(u); if (!tubes) continue; const on = h1(fr, b.seed) > 0.2, n = Math.min(NA - used, u.avatar ? b.n * 2 : b.n + 1), mid = [0, 0, 0]; let lit = 0, big = 0;
-        // each arc sits somewhere on the skin and jumps somewhere else every few frames: it crackles over the body, it does not leap off it
-        for (let i = 0; i < n; i++) { const key = b.seed * 7 + i * 131 + hop * 17 + (u.salt || 0), rnd = (q) => h1(key, q * 11 + 3), T = tubes[Math.floor(rnd(0) * tubes.length)], [a, c] = arcOn(T, rnd, cp, Math.max(1, (u.K.radius || 1) / 12)), k = used + i;
-          const flick = on && h1(fr, b.seed + i * 13) > 0.3 ? 1 : 0.1, I = b.power * flick * (0.55 + 0.45 * h1(fr, i + 3)); U.uArcA.value[k].set(a[0], a[1], a[2], I); U.uArcB.value[k].set(c[0], c[1], c[2], (key + i * 17) % 997); if (u.avatar && i < b.n) ends.push(h1(key, 9) < 0.5 ? a : c); for (let q = 0; q < 3; q++) mid[q] += (a[q] + c[q]) / 2 / n; lit += I / n; big = Math.max(big, T[2]); }
-        used += n; if (u.avatar) { GL.arcEnds = ends; GL.arcT0 = b.t0; }
+      for (const { u, b } of live) { if (used >= NA) break; const tubes = arcTubes(u); if (!tubes || !tubes.length) continue; const ch = charOf(u), salt = u.salt || 0, tb = time - b.t0;
+        const rh = h1(b.k, salt + 67) < 0.6 ? ch.rhythm : ['pop', 'stutter', 'surge'][Math.floor(h1(b.k, salt + 68) * 3)], env = envOf(rh, tb, b.dur, b.seed + salt, time), want = u.avatar ? b.n * 2 : b.n + 1, ctr = u.pose.W.body.p, mid = [0, 0, 0], sc = Math.max(1, (u.K.radius || 1) / 12); let lit = 0, big = 0, drawn = 0;
+        for (let i = 0; i < want + 2 && used < NA; i++) { const key = b.seed * 7 + i * 131 + salt, st = h1(key, 1) * b.dur * 0.55, life = 0.06 + h1(key, 2) * Math.max(0.05, b.dur - st), age = tb - st; let kind = pick(ch.wt, h1(key, 3));
+          const lf = kind === 'snap' ? Math.min(life, 0.04 + 0.05 * h1(key, 4)) : life; if (age < 0 || age > lf || (i >= want && h1(key, 5) > 0.35)) continue;
+          const rate = ch.rate * (0.6 + 0.8 * h1(key, 6)), ep = Math.floor(age * rate), hop = kind === 'snap' || kind === 'leap' ? ep : Math.floor(age * rate * 0.25), rnd = (q) => h1(key + hop * 17, q * 11 + 3);
+          const ti = Math.floor(rnd(0) * tubes.length), F = tubeFrame(tubes[ti], cp); let g = null;
+          if (kind === 'leap' && tubes.length > 1) { const G = tubeFrame(tubes[(ti + 1 + Math.floor(rnd(8) * (tubes.length - 1))) % tubes.length], cp); g = arcLeap(F, G, rnd, ctr); }
+          if (!g && kind === 'leap') kind = 'crawl';
+          if (!g) g = kind === 'run' ? arcRun(F, rnd) : kind === 'ring' ? arcRing(F, rnd) : arcOn(F, rnd, sc, (h1(key, 9) - 0.5) * 2 * F.r * (0.6 + 2 * h1(key, 10)) * age * 3, kind === 'snap');
+          const [a, c, m, amp] = g, k = used, edge = Math.min(1, age * 48, (lf - age) * 48 + 0.2), gain = { crawl: 0.9, run: 1.0, ring: 0.8, leap: 1.25, snap: 1.5 }[kind];
+          const I = b.power * Math.max(env, 0) * gain * edge * (0.6 + 0.4 * h1(fr, key)); if (I < 0.02) continue;
+          const nbr = kind === 'snap' ? 0 : kind === 'ring' ? (h1(key, 11) < ch.branchy * 0.5 ? 1 : 0) : Math.min(2, Math.floor(ch.branchy * 2.6 * h1(key, 12) + (kind === 'run' ? 0.8 : 0.2)));
+          U.uArcA.value[k].set(a[0], a[1], a[2], I); U.uArcB.value[k].set(c[0], c[1], c[2], (key + ep * 29) % 997); U.uArcM.value[k].set(m[0], m[1], m[2], amp * ch.jag);
+          U.uArcC.value[k].set(nbr, ch.thick * (kind === 'snap' ? 1.35 : kind === 'leap' ? 1.15 : 1) * (0.85 + 0.3 * h1(key, 13)), LR.clamp(ch.hue + (h1(key, 14) - 0.5) * 0.25, 0, 1), ch.fine * (kind === 'snap' ? 1.6 : 1));
+          used++; drawn++; if (u.avatar) ends.push(h1(key, 9) < 0.5 ? a : c); for (let q = 0; q < 3; q++) mid[q] += (a[q] + c[q]) / 2; lit += I; big = Math.max(big, F.r); }
+        if (!drawn) continue; for (let q = 0; q < 3; q++) mid[q] /= drawn; lit /= Math.max(1, want * 0.6); if (u.avatar) { GL.arcEnds = ends; GL.arcT0 = b.t0; }
         // a blue light on what is near (as far as the machine is big), its lamps stutter, its skin glows with it (70_render: uBone.z)
-        R.lamps = R.lamps || []; R.lamps.push({ p: mid, d: [0, 1, 0], color: [0.35, 0.55, 1.0], power: 1.9 * lit * Math.max(1, big * 6), cone: 0, range: 3.2 * Math.max(1, big * 8), beam: false, unit: u, arc: true, spill: 1 });
-        const st = 0.12 + 0.88 * (h1(fr, b.seed + 99) > 0.5 ? 1 : 0.2); for (const l of R.lamps) if (l.unit === u && !l.arc) l.power *= st; u.uBone.value.y *= st; u.uBone.value.z = Math.min(u.avatar ? 1 : 0.45, lit * (u.avatar ? 1.1 : 0.6)) * (on ? 1 : 0.25); }
+        const hc = ch.hue; R.lamps = R.lamps || []; R.lamps.push({ p: mid, d: [0, 1, 0], color: [0.3 + 0.15 * hc, 0.6 - 0.15 * hc, 1.0], power: 1.9 * lit * Math.max(1, big * 6), cone: 0, range: 3.2 * Math.max(1, big * 8), beam: false, unit: u, arc: true, spill: 1 });
+        const st = 0.12 + 0.88 * LR.sat(1 - env * 0.85); for (const l of R.lamps) if (l.unit === u && !l.arc) l.power *= st; u.uBone.value.y *= st; u.uBone.value.z = Math.min(u.avatar ? 1 : 0.45, lit * (u.avatar ? 1.1 : 0.6)); }
       VX.parts.arcs.visible = used > 0; U.uJag.value = Math.floor(time * 30); }
     // ── lightning ──
     { const b = VX.boltAt(time), fl = GL.flashOf(b, time), U = GL.boltU;
@@ -8860,7 +8935,7 @@ void main(){
 #lr-comp canvas{width:100%;height:100%;display:block}
 #lr-watch{position:absolute;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 42px);transform:translateX(-50%);display:flex;align-items:center;gap:6px;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--red);text-shadow:var(--sh);opacity:0;transition:opacity .35s;pointer-events:none;white-space:nowrap}
 #lr-watch.on{opacity:1} #lr-watch.seen{animation:lrpulse .5s ease-out 3}
-@keyframes lrpulse{0%{transform:translateX(-50%) scale(1.25)}100%{transform:translateX(-50%) scale(1)}}
+@keyframes lrpulse{0%{scale:1.25}100%{scale:1}}
 #lr-chip{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;gap:6px;pointer-events:auto}
 #lr-chip button,#lr-chip a{appearance:none;display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid rgba(241,237,228,.28);border-radius:6px;background:rgba(8,9,11,.42);color:inherit;font:600 11px/1 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #lr-chip button:hover,#lr-chip a:hover{border-color:var(--acc)} #lr-chip button:focus-visible,#lr-chip a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -9516,9 +9591,10 @@ V.machines = () => {
     palette: { frame: ['paintmetal', '#8f8c7e'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'], casing: ['paintmetal', '#cbc5b0'], paint: ['paintmetal', '#c99f2e'] },      /* grey works paint gone to rust, cream casings, the yellow of what moves or may be stepped off */
     limbs: [...titanLegs, ...titanLegs.map(M.mirror)], neck: { at: [24, -3.5, 0], links: [[3.2, -62]] }, head: { len: 6 },
     extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 },
-      // the lift: a cage under the bow quarter on four ropes, let down to the ground from a winch in the deck when it stops for it
-      { name: 'lift_cage', type: 'slide', channel: 'lift', parent: 'body', at: [14, -4.6, -2.5], dir: [0, 1, 0], toGround: 3.0 },
-      ...Array.from({ length: 10 }, (_, i) => ({ name: 'lift_' + i, type: 'slide', channel: 'lift', parent: 'body', at: [14, -4.6, -2.5], dir: [0, -1, 0], toGround: 3.0, k: i / 10 }))],
+      // the lift: a cage on four ropes from a headframe over a hatch in the bow deck; put away, it stands in the hatch with its
+      // floor flush with the deck; when the relic stops for it, it goes down through the hatch and the open truss to the ground
+      { name: 'lift_cage', type: 'slide', channel: 'lift', parent: 'body', at: [14, 2.82, -2.5], dir: [0, 1, 0], toGround: 3.0 },
+      ...Array.from({ length: 10 }, (_, i) => ({ name: 'lift_' + i, type: 'slide', channel: 'lift', parent: 'body', at: [14, 2.82, -2.5], dir: [0, -1, 0], toGround: 3.0, k: i / 10 }))],
     gait: { cycle: 15, duty: 0.68, stride: 15, lift: 3.4, offsets: { AL: 0, BL: 0.535, CL: 0.07, DL: 0.605, AR: 0.5, BR: 0.035, CR: 0.57, DR: 0.105 }, crouch: 0.6, dip: 0.9, dipTime: 1.7, sway: 1.1, roll: 0.9, nod: 0.5, yaw: 0.3, footPitch: 8, toeCurl: 10, neckSway: 2, follow: [0.5, 0.25], smooth: 0.5, footTilt: 30, settle: 0.9, settleTime: 3.2, gather: 6, gatherDip: 0.9, gatherBack: 0.8, ease: 16, clear: 1.6 },
     idle: { period: 26, breath: 0.3, shift: 0.5, scan: 18 },
     moves: {
@@ -9888,7 +9964,7 @@ V.parts = {
       // the deck truss: two box girders, cross frames at every hip, a plated deck
       k.mat('frame'); for (const s of [-1, 1]) g.box(0, -2.2, s * 8.2, 52, 3.4, 2.2, { soft: 0.05, grain: 'x' }); for (const x of [18, 6, -6, -18]) { g.box(x, -2.2, 0, 3.4, 3.0, 18.4, { soft: 0.05 }); for (const s of [-1, 1]) g.box(x, -1.6, s * 9.6, 4.6, 4.6, 1.6, { soft: 0.1 }); }
       if (k.mid) { k.mat('rust'); for (let x = -23; x <= 23; x += 5.8) for (const s of [-1, 1]) { g.beam([x, -3.8, s * 7.2], [x + 2.9, -0.6, s * 7.2], 0.4, 0.4, { caps: false }); g.beam([x + 2.9, -0.6, s * 7.2], [x + 5.8, -3.8, s * 7.2], 0.4, 0.4, { caps: false }); } }
-      k.mat('rust'); g.box(0, -0.35, 0, 54, 0.5, 19.6, { soft: 0.03 });
+      k.mat('rust'); for (const [x0, x1, z0, z1] of [[-27, 12.14, -9.8, 9.8], [15.86, 27, -9.8, 9.8], [12.14, 15.86, -9.8, -4.36], [12.14, 15.86, -0.64, 9.8]]) g.box((x0 + x1) / 2, -0.35, (z0 + z1) / 2, x1 - x0, 0.5, z1 - z0, { soft: 0.03 });      /* (the plated deck, round the lift's hatch: an opening right through it) */
       // the girders' fascia: painted panels bay by bay, yellow and cream by turns, what is left of them
       for (const s of [-1, 1]) { for (let i = 0; i < 8; i++) { const x = -21 + i * 6; k.mat(i % 2 ? 'casing' : 'paint'); g.box(x, -2.2, s * 9.37, 5.2, 2.7, 0.14, { soft: 0.1 }); } k.digits('07', [9, -2.2, s * 9.45], [0, 0, s], 1.7, { up: [0, 1, 0] }); }      /* its number, on a cream bay of each side */
       // the station: a long house in three steps, panelled in concrete, with rows of windows (some still lit after dark)
@@ -9950,9 +10026,17 @@ V.parts = {
     k.bone('mast', (g) => { k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([sx * 0.9, 0, sz * 0.9], [sx * 0.25, 22, sz * 0.25], 0.22, 0.22, { caps: false }); if (k.mid) for (let y = 0; y < 22; y += 2.75) { const w0 = 0.9 - (0.65 * y) / 22, w1 = 0.9 - (0.65 * (y + 2.75)) / 22; for (const [a, b] of [[[-1, -1], [1, -1]], [[1, -1], [1, 1]], [[1, 1], [-1, 1]], [[-1, 1], [-1, -1]]]) g.beam([a[0] * w0, y, a[1] * w0], [b[0] * w1, y + 2.75, b[1] * w1], 0.1, 0.1, { caps: false }); } k.mat('rust'); g.box(0, 18.5, 0, 4.6, 0.3, 0.5); g.box(0, 14.5, 0, 0.5, 0.3, 3.8); k.dish([2.1, 18.65, 0], [0.4, 0.3, 1], 0.8); k.dish([-2.1, 18.65, 0], [-0.3, 0.3, -1], 0.7); k.ladder([0.98, 0, 0], [0.32, 21.5, 0], 0.45, [1, 0.03, 0], { off: 0.14, r: 0.035, step: 0.35 }); k.hose([[0.3, 0, 0.5], [0.22, 10, 0.4], [0.1, 21, 0.2]], 0.05); });
     k.lamp('mast', { at: [0, 22.2, 0], dir: [0, 1, 0], color: [1, 0.1, 0.05], power: 8, range: 40, lens: 0.3, glow: 1 });
     for (const e of k.S.extras) if (e.name.startsWith('cable')) k.bone(e.name, (g) => { g.mat('iron', { tint: '#3e3a36' }); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], 0.09, { sides: k.n(5) }); k.mat('rust'); g.box(0, e.len, 0, 0.7, 1.0, 0.5, { soft: 0.3 }); });
-    // the lift: a winch box under the deck with a hatch over it, a cage on four ropes paid out in sections, its own lamp to the
-    // ground; the cage is open on the side away from the hull, railed on the other three, its floor edged in the yellow of a step
-    k.bone('body', (g) => { k.mat('dark'); g.box(14, -4.25, -2.5, 3.9, 0.6, 3.9, { soft: 0.1 }); k.mat('paint'); for (const s2 of [-1, 1]) g.box(14, -4.6, -2.5 + s2 * 1.95, 3.9, 0.12, 0.1); k.hatch([14, -0.08, -2.5], [0, 1, 0], 2.6, 2.6, { up: [1, 0, 0], t: 0.12, role: 'rust' }); });
+    // the lift: a hatch right through the bow deck (open, a yellow coaming round it above and below), a
+    // headframe over it with the winch on top and the four ropes down to the cage, paid out in sections; the cage is open on
+    // the side away from the hull, railed on the other three, its floor edged in the yellow of a step, its own lamp to the ground
+    k.bone('body', (g) => { const X = 14, Z = -2.5, o = 1.86, q = 2.12, top = 4.7;
+      k.mat('paint'); for (const s2 of [-1, 1]) { g.box(X, 0.0, Z + s2 * (o + 0.09), o * 2 + 0.36, 0.2, 0.18, { soft: 0.04 }); g.box(X + s2 * (o + 0.09), 0.0, Z, 0.18, 0.2, o * 2, { soft: 0.04 }); g.box(X, -0.64, Z + s2 * (o + 0.06), o * 2 + 0.24, 0.1, 0.12, {}); g.box(X + s2 * (o + 0.06), -0.64, Z, 0.12, 0.1, o * 2, {}); }
+      if (k.mid) k.stripes([X, 0.11, Z - o - 0.09], [0, 1, 0], o * 2, 0.16, 8, { up: [0, 0, 1], t: 0.02 });
+      k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([X + sx * q, 0.1, Z + sz * q], [X + sx * (q - 0.35), top, Z + sz * (q - 0.35)], 0.22, 0.22, { caps: true });
+      for (const s2 of [-1, 1]) { g.beam([X - q + 0.35, top, Z + s2 * (q - 0.35)], [X + q - 0.35, top, Z + s2 * (q - 0.35)], 0.24, 0.3, {}); g.beam([X + s2 * (q - 0.35), top, Z - q + 0.35], [X + s2 * (q - 0.35), top, Z + q - 0.35], 0.24, 0.3, {}); if (k.mid) g.beam([X + s2 * q, 0.3, Z - q], [X + s2 * (q - 0.3), 2.6, Z + q - 0.3], 0.1, 0.1, { caps: false }); }
+      k.mat('dark'); g.tube([[X, top + 0.45, Z - 1.5], [X, top + 0.45, Z + 1.5]], 0.42, { sides: k.n(12), caps: true }); g.box(X, top + 0.2, Z + 1.85, 0.9, 0.7, 0.5, { soft: 0.1 });
+      k.mat('rust'); for (const sz of [-1, 1]) g.box(X, top + 0.1, Z + sz * 1.48, 3.3, 0.16, 0.2, {});
+      g.mat('iron', { tint: '#3b3732' }); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.tube([[X + sx * 1.48, top, Z + sz * 1.48], [X + sx * 1.48, 2.82, Z + sz * 1.48]], 0.05, { sides: k.n(5) }); });
     k.bone('lift_cage', (g) => { const c = 1.62;
       k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([sx * c, -2.9, sz * c], [sx * c, -0.05, sz * c], 0.15, 0.15, { caps: true });
       k.mat('rust'); g.box(0, -2.96, 0, c * 2 + 0.16, 0.14, c * 2 + 0.16, { soft: 0.04 }); if (k.mid) for (let q = -1.2; q <= 1.21; q += 0.6) g.box(q, -2.88, 0, 0.05, 0.03, c * 2, {});
@@ -9967,7 +10051,7 @@ V.parts = {
 
 // ── src/27_lift.js ──
 // Iron Valley · the relic's lift.  Once a round Ridge stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
-// 25_machines).  Whoever is in the cage when it goes back up is carried up with it, comes out through the hatch onto the deck,
+// 25_machines).  Whoever is in the cage when it goes back up is carried up with it, comes up through the hatch and steps out onto the deck,
 // and can walk the bow while the relic walks on: the valley from fifty metres up.  R (a pad's X): into the cage while it is
 // down, and off the deck (down to the ground under the lift).  A film drives the same thing with its hand on KeyR.
 V.lift = () => {
@@ -9979,17 +10063,21 @@ V.lift = () => {
   const FLOOR = -2.89, IN = 1.32;      // the cage's floor under its top (its frame), how far from its middle one stands inside the rails
   // the bow deck round the hatch, and the strip along the port edge out past the tanks to the bow (the rest is houses and plant)
   const DECK = [[11.6, 17.2, -8.7, 4.3], [11.6, 25.6, -8.7, -7.0]], DECKY = -0.1;
-  const onDeck = (x, z) => { let best = null, bd = 1e9; for (const [x0, x1, z0, z1] of DECK) { const cx = LR.clamp(x, x0, x1), cz = LR.clamp(z, z0, z1), d = Math.hypot(cx - x, cz - z); if (d < bd) { bd = d; best = [cx, cz]; } } return best; };
+  const onDeck = (x, z) => { let best = null, bd = 1e9; for (const [x0, x1, z0, z1] of DECK) { const cx = LR.clamp(x, x0, x1), cz = LR.clamp(z, z0, z1), d = Math.hypot(cx - x, cz - z); if (d < bd) { bd = d; best = [cx, cz]; } }
+    // (while the cage is away the hatch is a hole: one stops at its coaming)
+    const H = 2.15; if (lift() > 0.002 && Math.abs(best[0] - 14) < H && Math.abs(best[1] + 2.5) < H) { const ex = H - Math.abs(best[0] - 14), ez = H - Math.abs(best[1] + 2.5); if (ex < ez) best[0] = 14 + Math.sign(best[0] - 14 || 1) * H; else best[1] = -2.5 + Math.sign(best[1] + 2.5 || 1) * H; }
+    return best; };
   let veil = null; const fade = () => { if (LR.RENDER || typeof document === 'undefined') return; if (!veil) { veil = document.createElement('div'); veil.style.cssText = 'position:fixed;inset:0;background:#07090b;opacity:0;transition:opacity .35s;pointer-events:none;z-index:38'; document.body.appendChild(veil); } veil.style.opacity = 1; setTimeout(() => (veil.style.opacity = 0), 380); };
   // on the deck: walk the bow; R takes the walker down to the ground under the lift
-  const toDeck = (lx = 0, lz = 0) => { const u = relic(); fade(); P.ride = { unit: u, frame: () => W('body'), local: [14 + lz * 0.8, DECKY, -2.5 + lx * 0.8], clamp: onDeck, slow: 0.8,
+  // (from the cage, put away flush with the deck: straight out of it, where one stands — no cut)
+  const toDeck = (lx = 0, lz = 0, at = null) => { const u = relic(); if (!at) fade(); P.ride = { unit: u, frame: () => W('body'), local: at ? [at[0], DECKY, at[1]] : [14 + lz * 0.8, DECKY, -2.5 + lx * 0.8], clamp: onDeck, slow: 0.8,
     update: (Pl) => { if (Pl.use) { const B = W('body'), c = W('lift_cage'); Pl.ride = null; fade(); const x = c ? c.p[0] : B.p[0], z = c ? c.p[2] : B.p[2]; Pl.place(x - B.z[0] * 5, z - B.z[2] * 5, (Math.atan2(B.x[0], -B.x[2]) * 180) / Math.PI); } } }; };
   // in the cage: inside its rails; while it is down one can step back out of its open side; when it has gone up, out on the deck
   const board = (l) => { const u = relic(); let up = false; P.ride = { unit: u, frame: () => W('lift_cage'), local: [LR.clamp(l[0], -IN, IN), FLOOR, LR.clamp(l[2], -IN, IN)], slow: 0.5,
     clamp: (x, z) => [LR.clamp(x, lift() > 0.97 ? -2.4 : -IN, IN), LR.clamp(z, -IN, IN)],
     update: (Pl) => { const fr = lift(); if (fr < 0.97) up = true;
       if (fr > 0.97 && Pl.ride.local[0] < -IN - 0.6) { Pl.ride = null; return; }      /* stepped out on to the ground */
-      if (up && fr < 0.015) toDeck(Pl.ride.local[0], Pl.ride.local[2]); } }; };
+      if (up && fr < 0.002) { const l = toLocal(W('body'), Pl.x, Pl.y, Pl.z); toDeck(0, 0, [l[0], l[2]]); } } }; };
   V.liftBoard = board; V.liftDeck = toDeck;
   // what the HUD says (lib/88_hud: a marker over the cage from 70 m while it is down or coming down, the prompt with R
   // within reach, on the deck the way down)
@@ -10010,7 +10098,7 @@ V.lift = () => {
   LR.on('frame', (time) => { if (!LR.vfx || !LR.vfx.burst) return; const c = W('lift_cage'); if (!c) return; const fr = lift();
     const at = (v) => [c.p[0] + c.x[0] * v[0] + c.y[0] * v[1] + c.z[0] * v[2], c.p[1] + c.x[1] * v[0] + c.y[1] * v[1] + c.z[1] * v[2], c.p[2] + c.x[2] * v[0] + c.y[2] * v[1] + c.z[2] * v[2]];
     if (was < 0.995 && fr >= 0.995) { LR.vfx.burst('dust', at([0, -2.95, 0]), { t: time, size: 0.9, id: 'lift-dust' }); LR.vfx.burst('steam', at([0, 0.5, 0]), { t: time + 0.05, size: 0.7, dir: [0, -1, 0.3], id: 'lift-steam' }); LR.vfx.burst('sparks', at([1.62, -2.9, 1.62]), { t: time - 0.05, size: 0.6, dir: [1, 0.4, 0], n: 0.7, id: 'lift-sparks' }); }
-    if (was > 0.03 && fr <= 0.03 && was < 0.5) { LR.vfx.burst('sparks', at([0, 0.2, 0]), { t: time, size: 0.7, dir: [0, -1, 0], n: 0.8, id: 'lift-lock' }); LR.vfx.burst('steam', at([1.4, 0.4, -1.4]), { t: time + 0.1, size: 0.6, dir: [0, -1, 0], id: 'lift-lock-steam' }); }
+    if (was > 0.03 && fr <= 0.03 && was < 0.5) { LR.vfx.burst('sparks', at([1.62, -2.9, 1.62]), { t: time, size: 0.6, dir: [0, 1, 0], n: 0.7, id: 'lift-lock' }); LR.vfx.burst('steam', at([1.4, 1.2, -1.4]), { t: time + 0.1, size: 0.6, dir: [0, 1, 0], id: 'lift-lock-steam' }); }
     was = fr; });
   // where the cage hangs at a time of the machines' clock (a film places the walker by it)
   V.liftAt = (t) => { const u = relic(), r = M.poseAt(u, t), c = r.cmd; return { cage: r.W.lift_cage, body: r.W.body, lift: c.extras && c.extras.lift !== undefined ? c.extras.lift : 0 }; };
