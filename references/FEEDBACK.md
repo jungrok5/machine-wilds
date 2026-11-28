@@ -26,7 +26,12 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   argue against using them.
 - **X posts are read through the mirror** (`api.fxtwitter.com/2/thread/<id>`, the clip from `video.twimg.com`), as
   motion-skills' CONTRIBUTING.md says; do not give up on an X link ("미러사이트로 접근해").
-- **ElevenLabs only after the owner says yes for that request** (CLAUDE.md). Sound is on hold until the owner reopens it.
+- **Varco 3D has 100,000 points a month, refilled monthly: use it freely where it helps** (2026-11-28, "필요하면
+  마음껏써"). Varco has no sound tool (text, image, mesh, remesh, PBR, rig, animate only).
+- **ElevenLabs only after the owner says yes for that request** (CLAUDE.md). For the YouTube film the owner chose the
+  **engine's own sound** (footfalls, wings, machines, weather, drawn by `trailer.mjs --sound`), not ElevenLabs (2026-11-28).
+- **A file too big to send goes to a GitHub release** of the repository (an MP4 is never committed); give the owner
+  the release link (2026-11-28, "용량때문에 내가 받을수없게되면 릴리즈에 올려줘").
 
 ## The look of the world
 
@@ -67,7 +72,7 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
 - **A giant machine in the sky**, a balloon-like airship inside a cloud: faint through the haze in clear weather; in a
   storm the lightning around it lights it up from inside the cloud, so you feel something huge is in there ("오~ 안에
   뭔가 있네 거대한게"). The walker can fly to it and board it.
-- **Wings for the walker**: they snap open ("촤락") on a double tap of Space (or another key) and it flies freely. They
+- **Wings for the walker**: they snap open ("촤락") on a double tap of Space (the owner's choice, 2026-11-28; a pad's A twice, touch the jump button twice) and it flies freely. They
   must read as **real mechanical feathers** — every vane swaying naturally in the wind, rising and falling as it
   glides, and a true wingbeat when it is steered or climbs; build them with the utmost care (code, Blender, Varco —
   whatever makes the feathers best). The wings' skeleton, numbers and ways stay code (gym and check read them).
