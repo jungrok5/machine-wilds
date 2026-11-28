@@ -93,6 +93,34 @@ Lay the line like a way: turns wide enough for the speed (at 14 m/s a 40 m radiu
 one in four, never lower over the land than the trees and the tallest walker's lifted head. Lamps on a flyer look
 down (`gaze`): from the ground a kite at night is a beam sweeping the mist and a red point crossing the sky.
 
+### A flyer that drifts — `flight: { mode: 'drift', … }` (an airship, a balloon: `lib/48_mech_fly_drift.js`)
+No wings: it is carried by its gas and pushed by propellers, at a walking pace, round its closed line. Its hull yaws into a
+turn `yawLead` seconds before the line bends (half of what the line will be heading then: a hull a hundred metres long does
+not follow a kink), banks only a few degrees with the turn (`bankK` ° per 0.01 1/m, at most `bankMax`), and the wind works
+on it all the time — heave, pitch, roll and yaw in long swells and shorter gusts (`sway`, at `wind` 0…1; 0.5). Every swell
+is a whole number of waves a lap, so one lap later it is in the same pose to the millimetre (the propellers, `spin` extras
+with a rate, are the exception the loop check leaves out). `drive(cmd, q)` writes the angles of whatever the command steers
+(`q`: `t`, `kappa`, the swells, `sw` their frequencies): rudders into the turn, a crane slewing, a windsock, a searchlight.
+```js
+M.define('nimbus', { tonnes: 210, ride: 0, limbs: [], extras: [/* props: spin with a rate · vanes, cranes: spin driven by drive() · chains: lag */],
+  flight: { mode: 'drift', speed: 3, abs: true, yawLead: 9, bankK: 2.6, bankMax: 3.4, sway: { heave: 0.62, pitch: 0.9, roll: 1.05, yaw: 1.2 }, span: 40,
+            hull: [[64, 0, 0], [-66, 0, 0], [0, -20, 0], …],      // body points the land must clear: the hull's ends and belly, the gondola's keel, the outriggers' tips
+            drive: (cmd, q) => { cmd.extras.rudder = LR.clamp(q.kappa * 2600, -18, 18); } } });
+M.spawn('nimbus', { name: 'Nimbus', fly: [[x, z, height above the sea]…] });      // abs: true — the third number is a height, not metres over the land
+```
+Lay its line where its length fits: a turn of radius r yaws it `v / r` rad/s (95 m at 3 m/s is 1.8°/s); keep the climbs to a few
+metres a lap (the shared flight slows a flyer on a climb: ±10 m over a lap took 3 m/s down to 2.2). Everything that hangs
+(`lag` chains, a trailing wire) counts against the clearance — its lowest point, from the whole pose.
+
+| drift rule (`gym.mjs`) | limit | when it fails |
+|---|---|---|
+| clear | ≥ 120 m over the land under every `hull` point and every hanging part's end | raise the line there; shorten what hangs |
+| bank · pitch | ≤ 6° · ≤ 5° (judged in a gale, `wind` 1) | less `bankK` or `sway.roll`; a gentler climb or `sway.pitch` |
+| yaw | ≤ 2.5°/s; the hull ≤ 12° off its track | widen the turn; less `yawLead` or `sway.yaw` |
+| pace | 2–4 m/s | `speed`; flatter climbs |
+| alive | heaves ≥ 0.4 m and sways ≥ 0.8° (in a gale); something spins ≥ 30°/s | give it `sway`; propellers as `spin` extras with a `rate` |
+| loop, determinism | the whole pose one lap later ≤ 20 mm; the same instant twice the same | a swell or a drive term not on the lap's beat (use `q.sw`) |
+
 ## The walker's own body — `avatar: { … }` and `spawn(kind, { avatar: true, at, yaw })`
 A realm may give whoever walks it a body: a kind on **two legs** (the kit's own: 2 or 3 segments, left and its mirror),
 spawned once with `avatar: true` where the walk starts. Without one the realm is walked in the first person only.
