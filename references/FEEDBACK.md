@@ -31,6 +31,8 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   motion-skills' CONTRIBUTING.md says; do not give up on an X link ("미러사이트로 접근해").
 - **Varco 3D has 100,000 points a month, refilled monthly: use it freely where it helps** (2026-11-28, "필요하면
   마음껏써"). Varco has no sound tool (text, image, mesh, remesh, PBR, rig, animate only).
+- **No sound for now** (2026-11-28, after hearing the engine's own sound on the X cut: "사운드는 계속 별로다 만들지말고"):
+  films are silent; do not make or add sound (engine, ElevenLabs or any other) until the owner asks for it again.
 - **ElevenLabs only after the owner says yes for that request** (CLAUDE.md). For the YouTube film the owner chose the
   **engine's own sound** (footfalls, wings, machines, weather, drawn by `trailer.mjs --sound`), not ElevenLabs (2026-11-28).
 - **A file too big to send goes to a GitHub release** of the repository (an MP4 is never committed); give the owner
