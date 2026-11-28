@@ -22,7 +22,8 @@ const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-un
 let bad = 0;
 for (const [u, w, h, kind] of [['/', 1280, 720, 'walk'], ['/', 390, 844, 'walk'], ['/?film=1', 1280, 720, 'film'], ['/demo/iron-valley/', 1280, 720, 'forward']]) {
   const p = await b.newPage({ viewport: { width: w, height: h } }), errs = [], fails = [];
-  p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 160)); }); p.on('pageerror', (e) => errs.push('page: ' + String(e).slice(0, 160)));
+  const beacon = /cloudflareinsights|Failed to load resource: net::ERR_FAILED/;      /* (the analytics beacon reports only from the site's own address: refused from localhost) */
+  p.on('console', (m) => { if (m.type() === 'error' && !(beacon.test(m.text()) && /cloudflareinsights/.test(m.text() + (m.location() && m.location().url || '')))) errs.push(m.text().slice(0, 160)); }); p.on('pageerror', (e) => errs.push('page: ' + String(e).slice(0, 160)));
   p.on('response', (r) => { if (r.status() >= 400) fails.push(r.status() + ' ' + r.url().slice(0, 120)); });
   await p.goto(`http://localhost:${port}${u}${kind === 'walk' ? '?go=1' : ''}`, { timeout: 120000 });
   if (kind === 'forward') await p.waitForTimeout(4000); else await p.waitForFunction(() => window.READY === true, null, { timeout: wait }).catch(() => {});

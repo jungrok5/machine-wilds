@@ -770,3 +770,13 @@ same PR — the next session has the repository, not this machine.
 - *A pose that depends on the weather is a different pose in the gym.* The sway first read `LR.wx.wind`: in the gym the
   stub threw, and `shot-at.mjs` would have put the camera a metre off the deck. *Fix:* the wind on it is the kind's own
   number (`flight.wind`); the gym judges it in a gale (`windTest`).
+
+**A 2019 iMac lost the page's WebGL context, and Chrome then blocked WebGL for the whole site** (2026-11-28, the
+owner's screen: "Web page caused context loss and was blocked"). The sky machine's cloud was raymarched at a share of the
+picture (half of it on the higher tiers), with no cap: on a 5K display at 2× that is 3.7 million rays of 68 steps, each
+with five more toward the light — a frame long enough for the GPU's watchdog to reset it. Chrome blocks WebGL for a site
+that does this until the browser is restarted, so the page cannot even retry in safe mode. *Fix:* the cloud has a pixel
+budget per tier whatever the screen (0.12–0.5 million rays), fewer steps, no rays when it is out of view, a cheaper tier
+after a run of slow frames, and none in safe mode; a desktop picture is at most 4K (8.3 million pixels). *Rule:* every
+full-screen pass has an absolute pixel budget, never only a share of the screen; test the largest screen a visitor may
+bring (a 5K iMac, a 4K monitor at 2×), not only the CPU renderer's 1280.

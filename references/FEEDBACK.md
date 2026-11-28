@@ -24,6 +24,9 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   ("이펙트 확인할 영상줘").
 - **Spend the tokens a job needs** to get it right ("토큰 더 써"); bring in a specialist agent for a specialist job (an
   effects pass, a sound pass), but judge its result yourself.
+- **A film's frames are reviewed by specialists before the owner sees them** (2026-11-28, "프레임은 각 영역
+  전문가한테 리뷰시켜봐 손 많이 봐야겠는데"): a cinematographer, a VFX / lighting artist, an animator and an art
+  director each look at the previews and key frames; their findings are fixed (or answered) before the cut is shown.
 - **Use the tools the owner has connected** — Varco 3D for props and textures, Blender (`pip install bpy`) to finish them —
   with Poly Haven first and generation only for what it lacks ("폴리헤븐에있으면 그거쓰고 없으면 만들면되지"). Do not
   argue against using them.
@@ -58,6 +61,13 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   발생할것 같지 않은 순간에도"). It never pops or changes in steps between frames ("프레임이 뚝뚝 끊어지듯").
 - **Light:** no milky haze in front of the walker from its own lamp ("캐릭터 앞에 후레시 … 뿌옇게"); a lamp beam is
   judged on a PC screen at play, not only in a still.
+- **Clouds are high-quality volumes** (2026-11-28, "구름은 더 고퀄리티 부피감 있는 그런 구름 있지 않나"): billowing,
+  lit shapes with a silver lining and dark bellies, the way a console game draws them — never a flat or smeary layer.
+- **The sky machine must read as a giant inside its cloud** (2026-11-28, "안에 거대한 기계 있다는 느낌도 안 드네"):
+  its shape shows through the cloud (a silhouette when lightning flashes behind it, lights glowing through, parts hanging
+  out of the base, a glimpse where the cloud thins), with something small nearby to give it scale.
+- **The page runs on an ordinary Mac** (2026-11-28, a 2019 iMac 5K lost its WebGL context and Chrome blocked the site):
+  every full-screen pass has a pixel budget, whatever the screen; a slow GPU gets a cheaper tier, never a lost context.
 - **Films look sharp**: the soft look of a CPU render is the engine's to fix (render size, sharpening, no haze), not an
   excuse ("영상은 좀 뿌옇다").
 
@@ -111,6 +121,10 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   the page where it reads as the page's own licence ("오해할만한데"); "made with AI", not "made by hand" ("직접만든이
   아니고 AI로 만든").
 - **Its sources are listed** (Poly Haven; AnyMachine as a reference; the motion-skills skills it grew from).
+
+- **The site lives at `wilds.num2323.com`** (2026-11-28, "클라우드플레어에 num2323.com 도메인 하위로 해당 페이지 연결해주고
+  웹애널리틱스도 켜줘"): the same pattern as the owner's other sites — a DNS-only CNAME to `jungrok5.github.io` on Cloudflare,
+  `docs/CNAME`, and Cloudflare Web Analytics (a beacon in the `--cdn` build). Links in README and posts use this address.
 
 ## The portfolio
 

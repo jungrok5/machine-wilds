@@ -4,7 +4,8 @@ A Claude Code skill (this repository's root is the skill: `SKILL.md`) and its en
 walkable, ruined, overgrown world in the browser where giant walking machines keep their rounds in the mist.
 `lib/` is the engine (a deferred WebGL 2 renderer, forked from motion-skills' `scanned-realm`), `scripts/` the tools,
 `starter/` and `examples/iron-valley/` two realms, `references/` the notes, `docs/` the site on GitHub Pages: the example itself, playable at the root
-(pushes to `main` deploy it). Moved here with its history from <https://github.com/jungrok5/motion-skills>.
+(pushes to `main` deploy it), served at <https://wilds.num2323.com/> (`docs/CNAME`; the name is a DNS-only CNAME to `jungrok5.github.io` on
+Cloudflare). The `--cdn` build adds Cloudflare Web Analytics from `realm.json` `analytics` (the site's public beacon token). Moved here with its history from <https://github.com/jungrok5/motion-skills>.
 
 - **Read `references/FEEDBACK.md` before any change**: the owner's notes, kept as standing rules. Every new note from
   the owner goes into it in the same PR that acts on it (a rule, its date, the words it came from); its trap, if any,
