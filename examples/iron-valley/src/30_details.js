@@ -1,4 +1,4 @@
-// Iron Valley · the small things, and the scans placed by name: what stands on the old road and on the viaduct, the
+// Machine Wilds · the small things, and the scans placed by name: what stands on the old road and on the viaduct, the
 // camp in the hall, crags on the north bank, mossy rocks on the slopes, and what the machines have knocked down along
 // their ways.  Every placed scan has a generated stand-in or is simply absent without scans (?scan=0).
 V.details = () => {

@@ -2,13 +2,13 @@
 // weather and a view, run a few lines in it, and take pictures some seconds apart.  For what a still render does not show:
 // a lamp in the mist from the walker's own eye, the HUD and its prompts, faults forced on, a burst of dust fired on purpose.
 //   node scripts/look.mjs <realm-dir | docs> [--q "t=60&tod=23.2&wx=mist&eye=first&at=-120,118,90"] [--eval "<js>"]
-//                           [--shots 3] [--every 2.5] [--size 960x540] [--out out/look] [--name look] [--wait 6]
+//                           [--print "<expr>"] [--shots 3] [--every 2.5] [--size 960x540] [--out out/look] [--name look] [--wait 6]
 // --q is added to the page's address (its own options: t, tod, wx, eye=first|third|top, at=x,z,yaw, q=low|medium|high,
 // scale, hud=0, fault=4, scout=1, film=1 …).  --eval runs in the page once the world is up, with `LR`, `V` (the realm) and
 // `P` (the walker) in scope, e.g.
 //   --eval "P.zoomBy(0.45); LR.vfx.burst('dust', [P.x + 6, LR.land.h(P.x + 6, P.z), P.z], { size: 1.6, id: 'look' })"
 //   --eval "V.liftDeck(-5.9, 0)"            (on Ridge's deck)
-// Prints console errors and failed requests; pictures go to <out>/<name>-<i>.jpg.  On a CPU allow a minute or two to load.
+// --print evaluates an expression after the pictures and prints it (JSON).  Prints console errors and failed requests; pictures go to <out>/<name>-<i>.jpg.  On a CPU allow a minute or two to load.
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
 import { join, resolve, extname } from 'node:path';
@@ -29,5 +29,6 @@ await p.goto(`http://localhost:${port}/?go=1&tour=0&${opt('q', '')}`, { timeout:
 await p.waitForFunction(() => window.READY === true, null, { timeout: 300000 }); await p.waitForTimeout(+opt('wait', 6) * 1000);
 const js = opt('eval'); if (js) await p.evaluate((src) => { const LR = window.realm ? window.realm.LR : window.LR, V = window.realm ? window.realm.V : window.V, P = LR.player; return new Function('LR', 'V', 'P', src)(LR, V, P); }, js);
 for (let i = 0; i < shots; i++) { await p.waitForTimeout(i ? every : 500); const f = join(out, `${name}-${i}.jpg`); await p.screenshot({ path: f, type: 'jpeg', quality: 85, timeout: 120000 }).then(() => console.log(f)).catch(() => console.log('(picture timed out)')); }
+const pr = opt('print'); if (pr) console.log('print:', JSON.stringify(await p.evaluate((src) => { const LR = window.realm ? window.realm.LR : window.LR, V = window.realm ? window.realm.V : window.V, P = LR.player; return new Function('LR', 'V', 'P', 'return (' + src + ')')(LR, V, P); }, pr)));
 console.log(`errors ${errs.length}${errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''} · failed requests ${fails.length}${fails.length ? ': ' + fails.slice(0, 3).join(' | ') : ''}`);
 await b.close(); server.close();

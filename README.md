@@ -72,7 +72,7 @@ went from 8.7 s to 4.1 s with no difference visible at 960 × 540.
 5. **Look**: a cast sheet per kind (four sides, walk, idle, set piece), close sheets, the page check (`check.mjs`), stills.
 6. **Output**: one walkable page (scans read from `assets/` or from Poly Haven's server), with the sheets, map and stills.
 
-## The example: Iron Valley
+## The example world (`examples/iron-valley`)
 
 A pass where a maintenance yard was left forty years ago. The land is 640 m across, from −3 m at the brook to 47 m
 on the north ridge, with a broken viaduct, a hall, pylons, a container yard. Nineteen machines of eight kinds: two long-necked watchers, three

@@ -1,4 +1,4 @@
-// Iron Valley · the machines.  Three kinds, each designed for this valley (numbers here, parts in 26_parts.js):
+// Machine Wilds · the machines.  Three kinds, each designed for this valley (numbers here, parts in 26_parts.js):
 //   Crane (crane)   a 25 m four-legged watcher on heron legs with a long neck — it walks the long round and wades the tarn
 //   Porter (porter)    a 9 m six-legged carrier with an overgrown load — a string of three works the north bank
 //   Ridge (ridge)     a 58 m eight-legged relic that keeps to the rim; from the valley only its lights show
@@ -112,10 +112,13 @@ V.machines = () => {
   // five times in two seconds at a walk, leaves the ground between steps at a run, gathers before a hop and gives at the knees after.
   const PV = { kind: 'mammal', width: 0.09, drum: 0.09, ball: 0.07, toes: 3, toeLen: 0.22, act: [0, 1, 1], hipDrop: 0.06, style: 'shell', bar: 0.012 };      // (the hip turns on a drive inside its drum: it swings through a right angle, more than a cylinder follows)
   const ploverLeg = Object.assign({}, PV, { name: 'L', at: [0, -0.06, -0.25], segs: [0.5, 0.48, 0.3], knee: 1, gamma: 12, home: [0.05, -0.23] });
-  M.define('plover', { title: 'Plover', age: 0.5, tonnes: 0.3, ride: 1.3, belly: [0.36, 0.16, 0.2], aware: 0, lensGain: 22, lodK: 2.5, build: (k) => V.parts.plover(k),
-    palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#b8742a'] },
+  // its wings: folded along its back until a double tap of Space opens them (48_mech_wings) — a span of about four metres, nine
+  // primaries a hand, seven secondaries, three tertials, steel vanes painted at the tips
+  const ploverWings = { at: [0.02, 0.21, 0.16], arm: [0.42, 0.5, 0.36], feathers: { tert: 3, sec: 7, prim: 9 }, len: { tert: 0.42, sec: 0.6, prim: [0.62, 0.88] }, chord: 0.21, dihedral: 7 };
+  M.define('plover', { title: 'Plover', age: 0.5, tonnes: 0.3, ride: 1.3, belly: [0.36, 0.16, 0.2], aware: 0, lensGain: 22, lodK: 2.5, build: (k) => V.parts.plover(k), wings: ploverWings,
+    palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#b8742a'], vane: ['ceramic', '#e4e5e2'], vaneDark: ['ceramic', '#9aa3aa'] },
     limbs: [ploverLeg, M.mirror(ploverLeg)], neck: { at: [0.34, 0.24, 0], links: [[0.2, 62]] }, head: { len: 0.34 },
-    extras: [{ name: 'whip', type: 'lag', parent: 'body', at: [-0.42, 0.3, 0.1], dir: [-0.3, 1, 0], len: 0.9, lag: 0.22, gain: 1.3, maxDeg: 24 }],
+    extras: [{ name: 'whip', type: 'lag', parent: 'body', at: [-0.42, 0.3, 0.1], dir: [-0.3, 1, 0], len: 0.9, lag: 0.22, gain: 1.3, maxDeg: 24 }, ...M.wingExtras(ploverWings)],
     avatar: { stepWalk: 0.8, stepRun: 1.45, reach: 0.32, lift: [0.09, 0.12], swingGamma: 12, lean: [4, 12], gather: 0.1, tuck: 0.1 } });
   for (const k in V.ways) M.route(k, V.ways[k], { width: { rim: 38, round: 15, bank: 13, brook: 13, east: 14, shelf: 3.4 }[k] || 13, grade: k === 'rim' ? 0.12 : 0.2 });
   M.spawn('crane', { name: 'Crane 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
