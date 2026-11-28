@@ -18,9 +18,14 @@
     const shots = {
       // ── dawn ──
       // the valley before the sun: mist over the forest, and far off on the southern rim the relic walking its line as the light comes
-      DAWN: { dur: 13, tod: 5.2, tod1: 8.7, weather: 'clear', T0: 122, rate: 3, start: [-22, 60, 0],
+      DAWN: { dur: 10, tod: 4.95, tod1: 6.1, weather: 'clear', T0: 118, rate: 3, start: [-22, 60, 0],      /* (the sun comes up ENE behind it: the camera stands WSW of it on the far rim, long lens, low) */
         act() {},
-        cam(s) { const q = pose(relic, 122 + s * 3), x = -64 + 2.2 * s; return [[x, floor(x, -118, 80) + 46 - s * 0.5, -118], [q.p[0] + 6, q.p[1] - 12, q.p[2]], 40]; } },
+        cam(s) { const r0 = pose(relic, 118), d = [0.91, -0.4], rt = [0.4, 0.91], D = 250 - 3.2 * s, q = pose(relic, 118 + s * 3), e = [r0.p[0] - d[0] * D, 0, r0.p[2] - d[1] * D]; e[1] = floor(e[0], e[2], 80) + 36;      /* (over the canopy) */
+          return [e, [q.p[0] - rt[0] * 0.17 * D, q.p[1] - 6, q.p[2] - rt[1] * 0.17 * D], lerp(34, 30, ease(s / 10))]; } },      /* (Ridge on the right third, a slow push in) */
+      // the valley from the south rim: the walker on a rock and, below and beyond, the giants at their rounds
+      VISTA: { dur: 7, tod: 9.4, weather: 'haze', T0: 200, start: [-96, 104, 30], aware: false,      /* (on the lookout rock, facing NNE across the floor) */
+        act(s, K) { P.pitch = damp(P.pitch, -0.05, 1.2); },
+        cam(s) { const d = [0.505, -0.863], r = [0.863, 0.505], k = 9.5 + 0.35 * s, e = [-96 - d[0] * k + r[0] * 3.2, 0, 104 - d[1] * k + r[1] * 3.2]; e[1] = floor(-96, 104, 60) + 4.6 + 0.1 * s; return [e, [0, 6, -60], 30]; } },      /* (behind it and to its right, long lens: the walker small in the lower left, the giants out on the floor) */
       // ── a morning of haze ──
       // the one who walks here, on the old road: behind it (the page's own third view) …
       V1: { dur: 3.4, tod: 7.7, weather: 'haze', T0: 30, start: [-147, 119, 77], view: 'third', zoom: 4.6,
@@ -100,22 +105,22 @@
         cam(s) { const t = s / 8; return [[P.x - 3.3 + t * 0.7, P.y + 1.45, P.z + 3.1 - t * 0.9], me(0.95), 36]; } },
       // ── night, rain, the old depot (30_details: the workshop, its tubes and lamps, the van, the forklift, the hoist) ──
       // out in the rain by the van, the depot's lights inside; the walker comes past the van and goes in
-      DV: { dur: 7, tod: 22.6, weather: 'rain', T0: 260, start: [40.5, 141, 175],
+      DV: { dur: 7, tod: 20.1, weather: 'rain', T0: 260, start: [40.5, 141, 175],
         act(s, K, st) { if (s < 0.4) return; if (!st.a) st.a = goTo(39.2, 134.9, K); else if (!st.b) st.b = goTo(39.0, 129.4, K); else goTo(33.5, 127.5, K); },
         cam(s) { const x = 44.2 - s * 0.18, z = 131.6 + s * 0.1, y = floor(x, z, 60); return [[x, y + 1.25, z], look([31.5, V.hall.y + 1.7, 128.5], me(1.1), 0.3), 52]; } },
       // inside: the bench under its lamp, the engine on the hoist; it comes to the bench and looks down at what was left on it
-      DW: { dur: 7, tod: 22.65, weather: 'rain', T0: 268, start: [31.5, 121.5, -60],
+      DW: { dur: 7, tod: 20.15, weather: 'rain', T0: 268, start: [31.5, 121.5, -60],
         act(s, K, st) { if (!st.there) st.there = goTo(27.4, 117.6, K) ? s : 0; else P.pitch = damp(P.pitch, -0.5, 1.3); },
         cam(s) { const y = V.hall.y + 0.24; return [[23.4 + s * 0.28, y + 1.05 + s * 0.04, 121.6 - s * 0.12], look([27.2, y + 0.9, 116.2], me(1.0), 0.45), 46]; } },
       // the forklift where the roof came down, a tube dying over the bay, the rain coming in through the gap
-      DF: { dur: 5, tod: 22.7, weather: 'rain', T0: 276, start: [33.5, 125, 90], act() {},
+      DF: { dur: 5, tod: 20.2, weather: 'rain', T0: 276, start: [33.5, 125, 90], act() {},
         cam(s) { const y = V.hall.y + 0.24; return [[35.2 + s * 0.3, y + 1.3, 129.4 - s * 0.35], [40.6, y + 1.0, 125.2], 48]; } },
       // and out again, seen through its own camera: past the van into the dark, the fault crackling in the picture
       DS: { dur: 8, tod: 22.75, weather: 'rain', T0: 282, start: [39.6, 129.2, 174], view: 'first', scout: true,
         act(s, K) { goTo(41.6, 150, K); P.pitch = damp(P.pitch, -0.04, 1.2); } },
       // ── evening ──
       // golden hour at the tarn: it walks up to the turtle that stands there, and looks up
-      B: { dur: 8.2, tod: 17.9, weather: 'clear', T0: 20, start: [99, 102.5, 14],
+      B: { dur: 8.2, tod: 18.3, weather: 'clear', T0: 20, start: [99, 102.5, 14],
         act(s, K, st) { if (s > 0.4 && !st.there) st.there = goTo(101.6, 92.2, K) ? s : 0; if (st.there) P.pitch = damp(P.pitch, 0.5, 1.5); },
         cam(s) { const u = ease((s - 4.6) / 2.6), b = at(-4.8 + 0.4 * u, 1.7 + 0.4 * u, 0); return [low(b, 2.0), [lerp(P.x, 100.5, 0.45), P.y + 2.5 + u * 0.9, lerp(P.z, 88.5, 0.45)], 54]; } },
       // haze, the sun behind it: the relic comes on along the rim
@@ -163,11 +168,11 @@
         cam(s) { const k = 0.3 * s; return [low([-89.2 - 0.233 * k, 0, -25.6 - 0.973 * k], 2.1), [-94.6, 5.4 + ease((s - 3) / 2) * 0.9, -50], 38]; } },
       // ── night ──
       // on the rim way the relic comes on in the dark: lit windows, two eyes, legs coming down
-      N1: { dur: 8, tod: 22.2, weather: 'mist', T0: 1006, start: [rel(qn, 27, 13.5)[0], rel(qn, 27, 13.5)[1], yawOf(qn) + 165],
+      N1: { dur: 6, tod: 20.0, weather: 'mist', T0: 1006, start: [rel(qn, 27, 13.5)[0], rel(qn, 27, 13.5)[1], yawOf(qn) + 165],
         act(s, K) { P.pitch = damp(P.pitch, 0.6, 0.9); },
-        cam(s) { const q = pose(relic, 1006 + s), c = rel(qn, 34, 17.5); return [low([c[0], 0, c[1]], 1.2), look(me(1.7), [q.p[0], q.p[1] - 9, q.p[2]], 0.72), 60]; } },
+        cam(s) { const q = pose(relic, 1006 + s), c = rel(qn, 60 - s * 0.6, 25 - s * 0.2), h = headOf(relic); return [low([c[0], 0, c[1]], 1.0), [h[0], h[1] - 2, h[2]], 40]; } },      /* (low, behind the walker: its shape against the giant's lit head) */
       // on the viaduct it stops and looks up; the kites come over
-      A: { dur: 9.2, tod: 22.6, weather: 'mist', T0: 46.0, start: [-22, 64, 0],
+      A: { dur: 9.2, tod: 20.3, weather: 'rain', T0: 46.0, start: [-22, 64, 0],
         act(s, K) { if (s > 0.3 && s < 4.5) K.KeyW = true; if (s > 4.9) P.pitch = damp(P.pitch, 0.62, 1.6); },
         cam(s) { const u = ease((s - 5.0) / 2.6), v = ease(s / 4.6); return [at(-5.2 + 0.6 * v, -1.4, 1.0 - 0.55 * v), at(7, 0, 1.5 + 0.4 * v + u * 6.6), 60]; } },
     };
@@ -219,6 +224,6 @@
     return { fps: 24, shots, title: { big: 'MACHINE WILDS', small: '', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'DV', 'DW', 'DF', 'DS', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
-      range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
+      range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 86], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
   };
 }
