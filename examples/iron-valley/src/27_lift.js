@@ -1,4 +1,4 @@
-// Iron Valley · the relic's lift.  Once a round Ridge stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
+// Machine Wilds · the relic's lift.  Once a round Ridge stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
 // 25_machines).  Whoever is in the cage when it goes back up is carried up with it, comes up through the hatch and steps out onto the deck,
 // and can walk the bow while the relic walks on: the valley from fifty metres up.  R (a pad's X): into the cage while it is
 // down, and off the deck (down to the ground under the lift).  A film drives the same thing with its hand on KeyR.
@@ -27,6 +27,8 @@ V.lift = () => {
       if (fr > 0.97 && Pl.ride.local[0] < -IN - 0.6) { Pl.ride = null; return; }      /* stepped out on to the ground */
       if (up && fr < 0.002) { const l = toLocal(W('body'), Pl.x, Pl.y, Pl.z); toDeck(0, 0, [l[0], l[2]]); } } }; };
   V.liftBoard = board; V.liftDeck = toDeck;
+  // flying, its deck is somewhere to come down (lib/80_player: LR.pads) — the bow round the hatch and the strip out to the bow
+  LR.pads = LR.pads || []; for (const r of DECK) LR.pads.push({ name: 'Ridge', frame: () => W('body'), rect: r, y: DECKY, board: (l) => toDeck(0, 0, onDeck(l[0], l[2])) });
   // what the HUD says (lib/88_hud: a marker over the cage from 70 m while it is down or coming down, the prompt with R
   // within reach, on the deck the way down)
   LR.interact.add({ poll: (Pl) => { const c = W('lift_cage'), u = relic(); if (!c || !u) return null; const fr = lift(), floor = M.apply(c, [0, FLOOR + 1.2, 0]);

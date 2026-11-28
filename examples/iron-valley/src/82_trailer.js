@@ -1,4 +1,4 @@
-// Iron Valley · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
+// Machine Wilds · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
 // trailer.mjs to draw its frames.  The camera is free; the walker's body is driven by keys; every shot sets its own hour,
 // weather and machines' clock.  Every machine in the cut is walking, flying or doing its big move.
 {
@@ -175,7 +175,31 @@
     for (const n in shots) if (shots[n].aware === undefined) shots[n].aware = !['DAWN', 'K', 'PAN'].includes(n);
     // the giants' faults, to look at them (not in the cut): the turtle at the brook and the relic over the walker, crackling often
     shots.FXG = Object.assign({}, shots.TW, { fault: 4 }); shots.FXR = Object.assign({}, shots.H1, { fault: 4 });
-    return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
+    // ── wings (lib/48_mech_wings, the flight in lib/80_player) ──
+    // on the southern rim with the relic walking behind it, the walker steps to the edge, its wings open in a cascade from the
+    // shoulder to the last primary, and it beats out over the valley
+    const onBody = (v) => M.apply(relic.pose.W.body, v), wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a)), steer = (x, z, k = 2.5) => { P.yaw += wrapA(Math.atan2(x - P.x, -(z - P.z)) - P.yaw) * Math.min(1, k / 24); };
+    const inAir = (st, up, speed, energy = 0.8) => { if (st.air) return; st.air = true; P.y = floor(P.x, P.z, P.y + 2) + up; P.air = true; P.openWings({ speed, lift: 0, keepView: true }); P.wings.tw = 9; P.energy = energy; };
+    shots.WU = { dur: 9, tod: 17.35, weather: 'clear', T0: 170, start: [34, -236.5, 90], aware: true,      /* (the rim road, the relic forty metres behind on it) */
+      act(s, K, st) { if (s > 0.3 && s < 2.05) { K.KeyW = true; K.ShiftLeft = true; } if (s >= 2.05 && !st.o) { st.o = true; P.openWings({ speed: 6.5, lift: 5.2, keepView: true }); } if (s > 2.3 && s < 6.2) K.Space = true; },
+      cam(s) { const u = ease((s - 2.4) / 4.6), e = at(lerp(7.5, -7, u), lerp(2.2, 4.5, u), lerp(0.9, 3.2, u)), q = pose(relic, 170 + s), h = [q.p[0], q.p[1] + 4, q.p[2]], t = look(look(me(1.0), h, 0.12), at(6, 0, 0.6), u); e[1] = Math.max(e[1], floor(e[0], e[2], P.y + 3) + 0.9); return [e, t, lerp(54, 58, u)]; } };      /* (ahead of it, looking back: it runs at us with the giant behind; then up and away behind it) */
+    // gliding north over the forest, the light low, banking one way and the other
+    shots.WG = { dur: 8, tod: 17.45, weather: 'clear', T0: 190, start: [6, -150, 180],
+      act(s, K, st) { inAir(st, 26, 12); if (s > 2.2 && s < 3.6) K.KeyD = true; if (s > 4.6 && s < 6.0) K.KeyA = true; },
+      cam(s) { const e = at(-5.4, -2.6 + Math.sin(s * 0.4) * 1.0, 1.5), t = at(9, 0.6, -0.4); return [e, t, 60]; } };
+    // the relic from the air: come up behind it, along its flank, flare and set down on its bow deck while it walks
+    const deckAt = (t) => { const r = V.liftAt(t), B = r.body, v = [14.2, -0.1, -7.8];      /* (the port walkway by the hatch: open from the bow) */ return [B.p[0] + B.x[0] * v[0] + B.y[0] * v[1] + B.z[0] * v[2], B.p[1] + B.x[1] * v[0] + B.y[1] * v[1] + B.z[1] * v[2], B.p[2] + B.x[2] * v[0] + B.y[2] * v[1] + B.z[2] * v[2]]; };
+    shots.WR = { dur: 12, tod: 17.55, weather: 'clear', T0: 226,
+      get start() { const d = deckAt(226), q = pose(relic, 226), b = [d[0] + q.fw[0] * 60 - q.rt[0] * 9, d[2] + q.fw[1] * 60 - q.rt[1] * 9];      /* (ahead of its bow and off to port: it comes in over the bow along the port rail) */ return [b[0], b[1], (Math.atan2(d[0] - b[0], -(d[2] - b[1])) * 180) / Math.PI]; },
+      act(s, K, st) { const d = deckAt(226 + s); if (!st.air) { st.air = true; P.y = d[1] + 7; P.air = true; P.openWings({ speed: 10, lift: 0, keepView: true }); P.wings.tw = 9; P.energy = 0.9; }
+        if (!P.flying) return; const dist = Math.hypot(d[0] - P.x, d[2] - P.z), path = d[1] + 0.3 + Math.max(0, dist - 6) * 0.1; steer(d[0], d[2], dist < 12 ? 6 : 2.5);
+        if (dist < 9) { if (P.y < d[1] + 0.5) K.Space = true; else K.KeyS = true; } else if (P.y < path - 0.4) K.Space = true; else if (P.y > path + 1.6) K.KeyW = true; },      /* (in close: flare, and beat if it sinks below the deck) */
+      cam(s) { const d = deckAt(226 + s), e = at(-6.2, -2.4, 1.7); if (!P.flying) return [onBody([6.5, 12.5, -15]), [P.x, P.y + 0.8, P.z], 38];      /* (down: from off its port side, the walker on the walkway, the valley under) */ return [e, look(d, [P.x, P.y + 0.6, P.z], 0.55), 56]; } };
+    // beating up toward the clouds: from under it, its wings working against the sky
+    shots.WC = { dur: 6, tod: 17.6, weather: 'clear', T0: 240, start: [-30, -60, 150],
+      act(s, K, st) { inAir(st, 40, 10, 1); if (s > 0.4) K.Space = true; },
+      cam(s) { const e = at(-2.6, 1.1, -2.9), t = at(1.6, -0.3, 2.2); return [e, t, 66]; } };
+    return { fps: 24, shots, title: { big: 'MACHINE WILDS', small: '', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'DV', 'DW', 'DF', 'DS', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
