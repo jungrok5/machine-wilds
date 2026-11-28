@@ -13,6 +13,9 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   once put back to English: "부제영어그대로둬 왜 한글로바꾼거야".)
 - **Merge only on the owner's word for that PR**, and when the word comes, merge everything it covers ("작업한거 다머지").
   Always finish with a PR; never push to `main`.
+- **Before a full film render, ask the owner and wait for a yes** (2026-11-28, "전체랜더전에 컨펌받아"): show the cut
+  first — the shot list with lengths and a key-frame sheet (or short low-resolution previews) — say how long the render
+  will take, then wait. Key frames, tests and previews need no yes; the long render does.
 - **Do not wait idle on a render**: a render runs in the background while the rest is done ("렌더링 기다리는동안
   나머지하면 되잖아"). Long jobs: check the scripts that start them (a list read with `while read` drops its last line
   when the file has no newline at the end — that cost two hours once; `scripts/cut.mjs` splits its lists itself).
