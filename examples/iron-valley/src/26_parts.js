@@ -132,6 +132,7 @@ V.parts = {
     for (const s of [-1, 1]) k.lamp('head', { at: [0.2, 0.06, s * 0.118], dir: [0.5, 0, s], color: [1, 0.5, 0.14], power: 0.3, range: 4, lens: 0.016, glow: 0.7 });
     k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
     k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
+    if (k.S.wings) k.wings(k.S.wings);      // the wings (lib/48_mech_wings): arms and steel feathers, every vane on its own bone
   },
   // Turtle: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
   // three rows, forty years of moss on top; four sprawled girder legs come out from under the rim; a blunt head on a short neck

@@ -27,6 +27,8 @@ V.lift = () => {
       if (fr > 0.97 && Pl.ride.local[0] < -IN - 0.6) { Pl.ride = null; return; }      /* stepped out on to the ground */
       if (up && fr < 0.002) { const l = toLocal(W('body'), Pl.x, Pl.y, Pl.z); toDeck(0, 0, [l[0], l[2]]); } } }; };
   V.liftBoard = board; V.liftDeck = toDeck;
+  // flying, its deck is somewhere to come down (lib/80_player: LR.pads) — the bow round the hatch and the strip out to the bow
+  LR.pads = LR.pads || []; for (const r of DECK) LR.pads.push({ name: 'Ridge', frame: () => W('body'), rect: r, y: DECKY, board: (l) => toDeck(0, 0, onDeck(l[0], l[2])) });
   // what the HUD says (lib/88_hud: a marker over the cage from 70 m while it is down or coming down, the prompt with R
   // within reach, on the deck the way down)
   LR.interact.add({ poll: (Pl) => { const c = W('lift_cage'), u = relic(); if (!c || !u) return null; const fr = lift(), floor = M.apply(c, [0, FLOOR + 1.2, 0]);
