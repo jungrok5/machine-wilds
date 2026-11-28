@@ -25,7 +25,7 @@
       // the valley from the south rim: the walker on a rock and, below and beyond, the giants at their rounds
       VISTA: { dur: 7, tod: 9.4, weather: 'haze', T0: 200, start: [-96, 104, 30], aware: false,      /* (on the lookout rock, facing NNE across the floor) */
         act(s, K) { P.pitch = damp(P.pitch, -0.05, 1.2); },
-        cam(s) { const d = [0.505, -0.863], r = [0.863, 0.505], k = 9.5 + 0.35 * s, e = [-96 - d[0] * k + r[0] * 3.2, 0, 104 - d[1] * k + r[1] * 3.2]; e[1] = floor(-96, 104, 60) + 4.6 + 0.1 * s; return [e, [0, 6, -60], 30]; } },      /* (behind it and to its right, long lens: the walker small in the lower left, the giants out on the floor) */
+        cam(s) { const d = [0.505, -0.863], r = [0.863, 0.505], k = 30 - 0.8 * s, e = [-96 - d[0] * k + r[0] * 6, 0, 104 - d[1] * k + r[1] * 6]; e[1] = Math.max(floor(e[0], e[2], 60) + 3, floor(-96, 104, 60) + 7.5); return [e, [0, 2, -60], 30]; } },      /* (back on the path up to it and raised: long lens, the walker small in the lower left, the giants out on the floor) */
       // ── a morning of haze ──
       // the one who walks here, on the old road: behind it (the page's own third view) …
       V1: { dur: 3.4, tod: 7.7, weather: 'haze', T0: 30, start: [-147, 119, 77], view: 'third', zoom: 4.6,
