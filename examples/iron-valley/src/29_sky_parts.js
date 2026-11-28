@@ -19,7 +19,7 @@ V.parts.nimbus = (k) => {
   const glowBall = (bone, at, r, col, w = 1, lamp = null) => { k.bone(bone, () => { const ly = g.layer, seg = k.n(10); g.layer = LR.mat.L('steel'); g.tint = col.map((c) => Math.round(LR.sat(Math.sqrt(LR.sat(c)) * 0.5) * 255)); g.flags = F.LAMP | F.NOWEATHER; g.weight = Math.round(LR.sat(w) * 255); g.aoV = 1;
       g.blob(at[0], at[1], at[2], r, { amp: 0, seg, rings: Math.max(4, seg - 3) }); g.flags = 0; g.weight = 0; g.layer = ly; });
     if (lamp && k.lod === 0) k.lamps.push(Object.assign({ bone: k.kin.index[bone], at: at.slice(), dir: [0, 1, 0], color: col, power: 1, cone: 0, range: 30, beam: false, lens: r, name: '' }, lamp)); };
-  const win = (c, nrm, w, h, seed, frame = 'dark') => k.along(c, nrm, (gg) => { k.mat(frame); gg.box(0, 0.03, 0, w + 0.16, 0.06, h + 0.16, {}); gg.mat('glass', { tint: '#47555a', flags: F.WINDOW, seed: seed & 255 }); gg.box(0, 0.075, 0, w, 0.03, h, {}); if (k.fine && w > 0.9) { k.mat(frame); gg.box(0, 0.09, 0, 0.05, 0.02, h, {}); } }, [0, 1, 0]);
+  const win = (c, nrm, w, h, seed, frame = 'dark') => k.along(c, nrm, (gg) => { if (k.fine) { k.mat(frame); gg.box(0, 0.03, 0, w + 0.16, 0.06, h + 0.16, {}); } gg.mat('glass', { tint: '#47555a', flags: F.WINDOW, seed: seed & 255 }); gg.box(0, 0.075, 0, w, 0.03, h, {}); if (k.fine && w > 0.9) { k.mat(frame); gg.box(0, 0.09, 0, 0.05, 0.02, h, {}); } }, [0, 1, 0]);
   const lantern = (p, r = 0.16) => { g.mat('glass', { tint: '#ffdca6', flags: F.GLOW, weight: 0.9 }); g.blob(p[0], p[1], p[2], r, { amp: 0, seg: k.n(8), rings: 5 }); k.mat('dark'); g.tube([[p[0], p[1] + r * 0.8, p[2]], [p[0], p[1] + r * 1.6, p[2]]], r * 0.35, { sides: 5, caps: true }); };
   const rnd = LR.rng('nimbus-cloth');
 
@@ -47,7 +47,7 @@ V.parts.nimbus = (k) => {
         if (r < 6) continue; const P = (lift, k2) => (u, v) => surf(x + (u - 0.5) * w * k2, phi + (v - 0.5) * dp * k2, lift);
         k.mat('rope', { tint: '#6f6656' }); grid(P(0.05, 1.07), 2, 2, { out: outward, Lu: w, Lv: hh }); k.mat('canvas', { tint: cols[i % cols.length], seed: 90 + i }); grid(P(0.08, 1), k.fine ? 3 : 1, k.fine ? 3 : 1, { out: outward, Lu: w, Lv: hh }); } }
     // the iron hoops, proud of the cloth
-    if (k.lod < 2) { k.mat('frame'); const nh = k.fine ? 72 : 36; for (const x of H) { const r = rad(x) + 0.14, pts = []; for (let i = 0; i <= nh; i++) { const a = (i / nh) * TAU; pts.push([x, r * Math.cos(a), r * Math.sin(a)]); } g.tube(pts, k.fine ? 0.2 : 0.24, { sides: k.fine ? 5 : 3 }); } }
+    if (k.lod < 2) { k.mat('frame'); const nh = k.fine ? 72 : 28; for (const x of H) { const r = rad(x) + 0.14, pts = []; for (let i = 0; i <= nh; i++) { const a = (i / nh) * TAU; pts.push([x, r * Math.cos(a), r * Math.sin(a)]); } g.tube(pts, k.fine ? 0.2 : 0.24, { sides: k.fine ? 5 : 3 }); } }
     // the seams' bolt-ropes and the nose battens
     if (k.fine) { k.mat('rope'); for (let j = 0; j < 20; j++) { const pts = []; for (let x = -57.5; x <= 57.5; x += 1.6) pts.push(surf(x, j * gw, 0.07)); g.tube(pts, 0.075, { sides: 4 }); } }
     if (k.mid) { k.mat('dark'); for (let j = 0; j < 12; j++) { const a = (j / 12) * TAU, pts = []; for (let x = 52; x <= 63.4; x += 0.8) pts.push(surf(x, a, 0.12)); g.tube(pts, 0.16, { sides: 4, caps: true }); }
@@ -166,8 +166,8 @@ V.parts.nimbus = (k) => {
     k.rail([[-51.6, DY, 4.6], [-51.6, DY, 8.5], [-46, DY, 8.5], [-40, DY, 8.5], [-34, DY, 8.5], [-28, DY, 8.5], [-24.1, DY, 8.5]], 1.1);
     k.rail([[-23.9, DY, 9.5], [-21, DY, 9.5]], 1.1); k.rail([[-12.8, DY, -9.5], [-11.2, DY, -9.5]], 1.1); k.rail([[1.2, DY, -9.5], [3.0, DY, -9.5]], 1.1); k.rail([[16.0, DY, 9.5], [20, DY, 9.5]], 1.1); k.rail([[16.0, DY, -9.5], [20, DY, -9.5]], 1.1); k.rail([[2.2, DY, 9.5], [3.0, DY, 9.5]], 1.1);
     // the landing deck's lamps along its rails, its floodlight on a pole, the windsock's mast
-    for (const s of [-1, 1]) for (let x = -50.5; x <= -26; x += 4.1) glowBall('body', [x, DY + 0.12, s * 8.25], 0.09, [1.0, 0.55, 0.14], 0.5);
-    for (let z = -3.4; z <= 3.41; z += 1.7) glowBall('body', [-51.35, DY + 0.12, z], 0.09, [0.2, 1.0, 0.35], 0.6);
+    if (k.fine) { for (const s of [-1, 1]) for (let x = -50.5; x <= -26; x += 4.1) glowBall('body', [x, DY + 0.12, s * 8.25], 0.09, [1.0, 0.55, 0.14], 0.5);
+      for (let z = -3.4; z <= 3.41; z += 1.7) glowBall('body', [-51.35, DY + 0.12, z], 0.09, [0.2, 1.0, 0.35], 0.6); }
     k.mat('frame'); g.tube([[-25.4, DY, 8.6], [-25.4, DY + 7.0, 8.6], [-26.2, DY + 7.3, 8.0]], 0.1, { sides: 5, caps: true }); k.lamp('body', { name: 'flood', at: [-26.3, DY + 7.2, 7.9], dir: [-0.71, -0.55, -0.44], color: [1.0, 0.86, 0.66], power: 55, cone: 34, range: 30, lens: 0.3 });
     k.mat('frame'); g.tube([[-50.6, DY, -7.7], [-50.6, DY + 6.7, -7.7]], 0.08, { sides: 5, caps: true });
     // ── the engine cars on their outriggers either side, the pushers behind them ──
@@ -175,7 +175,7 @@ V.parts.nimbus = (k) => {
       g.beam([x + 1.5, DY - 1.4, s * 9.6], [x + 1.0, e[1] - 0.6, s * 21.6], 0.5, 0.7); g.beam([x - 1.5, DY - 1.4, s * 9.6], [x - 1.0, e[1] - 0.6, s * 21.6], 0.5, 0.7); g.beam([x, DY + 1.0, s * 9.6], [x, e[1] + 0.3, s * 21.6], 0.4, 0.5);
       if (k.fine) for (let f = 0.15; f < 0.95; f += 0.2) g.tube([lerp([x + 1.5, DY - 1.4, s * 9.6], [x + 1.0, e[1] - 0.6, s * 21.6], f), lerp([x, DY + 1.0, s * 9.6], [x, e[1] + 0.3, s * 21.6], f + 0.1)], 0.07, { sides: 3 });
       k.mat('shell'); k.along([x + 3.9, e[1], e[2]], [-1, 0, 0], (gg) => { gg.lathe(0, 0, [[0.3, 0], [1.3, 0.25], [1.62, 1.2], [1.65, 5.2], [1.3, 7.0], [0.55, 7.7]], { sides: k.n(14) }); });
-      if (k.mid) { k.mat('dark'); k.grille([x + 3.95, e[1], e[2]], [1, 0, 0], 1.6, 1.6, { up: [0, 1, 0] }); k.mat('rust'); for (const q of [-0.5, 0.5]) k.stack([x + q * 2, e[1] + 1.4, e[2] + s * 0.4], [x + q * 2 - 0.6, e[1] + 2.9, e[2] + s * 0.6], 0.16, { role: 'rust' }); k.ladder([x, e[1] - 1.6, s * 21.6], [x, e[1] - 1.6, s * 10.2], 0.5, [0, 1, 0]); } }
+      if (k.mid) { k.mat('dark'); k.grille([x + 3.95, e[1], e[2]], [1, 0, 0], 1.6, 1.6, { up: [0, 1, 0] }); k.mat('rust'); for (const q of [-0.5, 0.5]) k.stack([x + q * 2, e[1] + 1.4, e[2] + s * 0.4], [x + q * 2 - 0.6, e[1] + 2.9, e[2] + s * 0.6], 0.16, { role: 'rust' }); if (k.fine) k.ladder([x, e[1] - 1.6, s * 21.6], [x, e[1] - 1.6, s * 10.2], 0.5, [0, 1, 0]); } }
     // the bridge's beacons and the others' housings
     for (const b of V.skyBeacons) { k.mat('dark'); g.lathe(b[0], b[2], [[0.32, b[1] - 0.55], [0.36, b[1] - 0.3], [0.2, b[1] - 0.25]], { sides: k.n(8) }); glowBall('body', b, 0.24, [1.0, 0.07, 0.03], 1, { power: 1.6, range: 36, name: 'beacon' }); }
     // what the walker steps off onto the town: the street from the landing deck in through the sheds to the arch

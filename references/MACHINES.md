@@ -112,6 +112,13 @@ Lay its line where its length fits: a turn of radius r yaws it `v / r` rad/s (95
 metres a lap (the shared flight slows a flyer on a climb: ±10 m over a lap took 3 m/s down to 2.2). Everything that hangs
 (`lag` chains, a trailing wire) counts against the clearance — its lowest point, from the whole pose.
 
+A drifting flyer can live inside a cloud of its own (`lib/64_cloud.js`): `LR.cloud.host = { unit, offset, radii, hulls,
+rods, wires, trail, glow, beacons, search }` — the bank follows it, the weather thickens it, and in rain the lightning
+strikes its rods, crawls down its conductors and lights the cloud from inside with its hull's shadow in the glow.
+A film counts on strikes with `LR.cloud.strikes = [t | { t, kind: 'cloud' | 'rod' | 'ground', rod }]`; a still or the live
+page takes `?strike=t:kind:rod`. The example realm's Nimbus (`src/28_sky.js`) is the example; a walker that flies lands on
+`V.skyDeck` (its body frame) and finds it with `V.skyAt(t)`.
+
 | drift rule (`gym.mjs`) | limit | when it fails |
 |---|---|---|
 | clear | ≥ 120 m over the land under every `hull` point and every hanging part's end | raise the line there; shorten what hangs |
