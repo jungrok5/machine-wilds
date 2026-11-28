@@ -274,7 +274,7 @@ V.parts = {
       // the deck truss: two box girders, cross frames at every hip, a plated deck
       k.mat('frame'); for (const s of [-1, 1]) g.box(0, -2.2, s * 8.2, 52, 3.4, 2.2, { soft: 0.05, grain: 'x' }); for (const x of [18, 6, -6, -18]) { g.box(x, -2.2, 0, 3.4, 3.0, 18.4, { soft: 0.05 }); for (const s of [-1, 1]) g.box(x, -1.6, s * 9.6, 4.6, 4.6, 1.6, { soft: 0.1 }); }
       if (k.mid) { k.mat('rust'); for (let x = -23; x <= 23; x += 5.8) for (const s of [-1, 1]) { g.beam([x, -3.8, s * 7.2], [x + 2.9, -0.6, s * 7.2], 0.4, 0.4, { caps: false }); g.beam([x + 2.9, -0.6, s * 7.2], [x + 5.8, -3.8, s * 7.2], 0.4, 0.4, { caps: false }); } }
-      k.mat('rust'); g.box(0, -0.35, 0, 54, 0.5, 19.6, { soft: 0.03 });
+      k.mat('rust'); for (const [x0, x1, z0, z1] of [[-27, 12.14, -9.8, 9.8], [15.86, 27, -9.8, 9.8], [12.14, 15.86, -9.8, -4.36], [12.14, 15.86, -0.64, 9.8]]) g.box((x0 + x1) / 2, -0.35, (z0 + z1) / 2, x1 - x0, 0.5, z1 - z0, { soft: 0.03 });      /* (the plated deck, round the lift's hatch: an opening right through it) */
       // the girders' fascia: painted panels bay by bay, yellow and cream by turns, what is left of them
       for (const s of [-1, 1]) { for (let i = 0; i < 8; i++) { const x = -21 + i * 6; k.mat(i % 2 ? 'casing' : 'paint'); g.box(x, -2.2, s * 9.37, 5.2, 2.7, 0.14, { soft: 0.1 }); } k.digits('07', [9, -2.2, s * 9.45], [0, 0, s], 1.7, { up: [0, 1, 0] }); }      /* its number, on a cream bay of each side */
       // the station: a long house in three steps, panelled in concrete, with rows of windows (some still lit after dark)
@@ -336,9 +336,17 @@ V.parts = {
     k.bone('mast', (g) => { k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([sx * 0.9, 0, sz * 0.9], [sx * 0.25, 22, sz * 0.25], 0.22, 0.22, { caps: false }); if (k.mid) for (let y = 0; y < 22; y += 2.75) { const w0 = 0.9 - (0.65 * y) / 22, w1 = 0.9 - (0.65 * (y + 2.75)) / 22; for (const [a, b] of [[[-1, -1], [1, -1]], [[1, -1], [1, 1]], [[1, 1], [-1, 1]], [[-1, 1], [-1, -1]]]) g.beam([a[0] * w0, y, a[1] * w0], [b[0] * w1, y + 2.75, b[1] * w1], 0.1, 0.1, { caps: false }); } k.mat('rust'); g.box(0, 18.5, 0, 4.6, 0.3, 0.5); g.box(0, 14.5, 0, 0.5, 0.3, 3.8); k.dish([2.1, 18.65, 0], [0.4, 0.3, 1], 0.8); k.dish([-2.1, 18.65, 0], [-0.3, 0.3, -1], 0.7); k.ladder([0.98, 0, 0], [0.32, 21.5, 0], 0.45, [1, 0.03, 0], { off: 0.14, r: 0.035, step: 0.35 }); k.hose([[0.3, 0, 0.5], [0.22, 10, 0.4], [0.1, 21, 0.2]], 0.05); });
     k.lamp('mast', { at: [0, 22.2, 0], dir: [0, 1, 0], color: [1, 0.1, 0.05], power: 8, range: 40, lens: 0.3, glow: 1 });
     for (const e of k.S.extras) if (e.name.startsWith('cable')) k.bone(e.name, (g) => { g.mat('iron', { tint: '#3e3a36' }); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], 0.09, { sides: k.n(5) }); k.mat('rust'); g.box(0, e.len, 0, 0.7, 1.0, 0.5, { soft: 0.3 }); });
-    // the lift: a winch box under the deck with a hatch over it, a cage on four ropes paid out in sections, its own lamp to the
-    // ground; the cage is open on the side away from the hull, railed on the other three, its floor edged in the yellow of a step
-    k.bone('body', (g) => { k.mat('dark'); g.box(14, -4.25, -2.5, 3.9, 0.6, 3.9, { soft: 0.1 }); k.mat('paint'); for (const s2 of [-1, 1]) g.box(14, -4.6, -2.5 + s2 * 1.95, 3.9, 0.12, 0.1); k.hatch([14, -0.08, -2.5], [0, 1, 0], 2.6, 2.6, { up: [1, 0, 0], t: 0.12, role: 'rust' }); });
+    // the lift: a hatch right through the bow deck (open, a yellow coaming round it above and below), a
+    // headframe over it with the winch on top and the four ropes down to the cage, paid out in sections; the cage is open on
+    // the side away from the hull, railed on the other three, its floor edged in the yellow of a step, its own lamp to the ground
+    k.bone('body', (g) => { const X = 14, Z = -2.5, o = 1.86, q = 2.12, top = 4.7;
+      k.mat('paint'); for (const s2 of [-1, 1]) { g.box(X, 0.0, Z + s2 * (o + 0.09), o * 2 + 0.36, 0.2, 0.18, { soft: 0.04 }); g.box(X + s2 * (o + 0.09), 0.0, Z, 0.18, 0.2, o * 2, { soft: 0.04 }); g.box(X, -0.64, Z + s2 * (o + 0.06), o * 2 + 0.24, 0.1, 0.12, {}); g.box(X + s2 * (o + 0.06), -0.64, Z, 0.12, 0.1, o * 2, {}); }
+      if (k.mid) k.stripes([X, 0.11, Z - o - 0.09], [0, 1, 0], o * 2, 0.16, 8, { up: [0, 0, 1], t: 0.02 });
+      k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([X + sx * q, 0.1, Z + sz * q], [X + sx * (q - 0.35), top, Z + sz * (q - 0.35)], 0.22, 0.22, { caps: true });
+      for (const s2 of [-1, 1]) { g.beam([X - q + 0.35, top, Z + s2 * (q - 0.35)], [X + q - 0.35, top, Z + s2 * (q - 0.35)], 0.24, 0.3, {}); g.beam([X + s2 * (q - 0.35), top, Z - q + 0.35], [X + s2 * (q - 0.35), top, Z + q - 0.35], 0.24, 0.3, {}); if (k.mid) g.beam([X + s2 * q, 0.3, Z - q], [X + s2 * (q - 0.3), 2.6, Z + q - 0.3], 0.1, 0.1, { caps: false }); }
+      k.mat('dark'); g.tube([[X, top + 0.45, Z - 1.5], [X, top + 0.45, Z + 1.5]], 0.42, { sides: k.n(12), caps: true }); g.box(X, top + 0.2, Z + 1.85, 0.9, 0.7, 0.5, { soft: 0.1 });
+      k.mat('rust'); for (const sz of [-1, 1]) g.box(X, top + 0.1, Z + sz * 1.48, 3.3, 0.16, 0.2, {});
+      g.mat('iron', { tint: '#3b3732' }); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.tube([[X + sx * 1.48, top, Z + sz * 1.48], [X + sx * 1.48, 2.82, Z + sz * 1.48]], 0.05, { sides: k.n(5) }); });
     k.bone('lift_cage', (g) => { const c = 1.62;
       k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([sx * c, -2.9, sz * c], [sx * c, -0.05, sz * c], 0.15, 0.15, { caps: true });
       k.mat('rust'); g.box(0, -2.96, 0, c * 2 + 0.16, 0.14, c * 2 + 0.16, { soft: 0.04 }); if (k.mid) for (let q = -1.2; q <= 1.21; q += 0.6) g.box(q, -2.88, 0, 0.05, 0.03, c * 2, {});
