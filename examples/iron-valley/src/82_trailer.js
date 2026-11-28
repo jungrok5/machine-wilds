@@ -201,6 +201,23 @@
         if (!P.flying) return; const dist = Math.hypot(d[0] - P.x, d[2] - P.z), path = d[1] + 0.3 + Math.max(0, dist - 6) * 0.1; steer(d[0], d[2], dist < 12 ? 6 : 2.5);
         if (dist < 9) { if (P.y < d[1] + 0.5) K.Space = true; else K.KeyS = true; } else if (P.y < path - 0.4) K.Space = true; else if (P.y > path + 1.6) K.KeyW = true; },      /* (in close: flare, and beat if it sinks below the deck) */
       cam(s) { const d = deckAt(226 + s), e = at(-6.2, -2.4, 1.7); if (!P.flying) return [onBody([6.5, 12.5, -15]), [P.x, P.y + 0.8, P.z], 38];      /* (down: from off its port side, the walker on the walkway, the valley under) */ return [e, look(d, [P.x, P.y + 0.6, P.z], 0.55), 56]; } };
+    // ── the sky machine (src/28_sky.js, lib/64_cloud.js) ──
+    const ship = U('Nimbus'), shipB = (t) => V.skyAt(t), onShip = (t, v) => M.apply(shipB(t), v), SD = V.skyDeck, deckC = (t) => onShip(t, [(SD.rect[0] + SD.rect[1]) / 2, SD.y, 0]);
+    // rain, from the ground: a cloud low over the valley, nothing in it — then lightning inside it, and for a moment the shape of
+    // something enormous; a bolt finds its rods, and again the shape
+    shots.WS = { dur: 11, tod: 20.4, weather: 'rain', T0: 192, start: [156, 62, -110],      /* (the bog by the tarn, the ship some 350 m off to the west-south-west in its cloud) */
+      act(s, K, st) { if (!st.on) { st.on = true; LR.cloud.strikes = [192 + 1.25, { t: 192 + 5.95, kind: 'rod', rod: 2 }, 192 + 9.4]; } },
+      cam(s) { const B = shipB(192 + s), e = [154 - s * 0.3, 0, 66 + s * 0.12]; e[1] = floor(e[0], e[2], 40) + 1.7; return [e, [B.p[0], B.p[1] - 14, B.p[2]], 48 - s * 0.6]; } };
+    // up into its cloud on a clear evening: the hull coming out of the white as the walker beats toward it
+    shots.WA = { dur: 10, tod: 19.35, weather: 'clear', T0: 520, get start() { const B = shipB(520), p = [B.p[0] - B.x[0] * 230 + B.z[0] * 40, B.p[2] - B.x[2] * 230 + B.z[2] * 40]; return [p[0], p[1], 0]; },
+      act(s, K, st) { const d = deckC(520 + s); if (!st.air) { st.air = true; P.y = d[1] - 45; P.air = true; P.openWings({ speed: 12, lift: 0, keepView: true }); P.wings.tw = 9; P.energy = 1; } if (!P.flying) return; steer(d[0], d[2], 1.4); if (P.y < d[1] - 6) K.Space = true; },
+      cam(s) { const e = at(-7.5, 2.4, -1.2), d = deckC(520 + s); return [e, look([P.x, P.y + 1, P.z], d, 0.5), 54]; } };
+    // and down onto its deck: in over the stern, flare, set down on the plate under the envelope while the ship drifts on
+    shots.WL = { dur: 13, tod: 19.45, weather: 'clear', T0: 540, get start() { const B = shipB(540), d = deckC(540), p = [d[0] - B.x[0] * 62 + B.z[0] * 6, d[2] - B.x[2] * 62 + B.z[2] * 6]; return [p[0], p[1], 0]; },
+      act(s, K, st) { const d = deckC(540 + s); if (!st.air) { st.air = true; P.y = d[1] + 6; P.air = true; P.openWings({ speed: 10, lift: 0, keepView: true }); P.wings.tw = 9; P.energy = 0.9; }
+        if (!P.flying) { if (s > st.down + 1.2 && s < st.down + 4) K.KeyW = true; return; } st.down = s; const dist = Math.hypot(d[0] - P.x, d[2] - P.z), path = d[1] + 0.3 + Math.max(0, dist - 5) * 0.09; steer(d[0], d[2], dist < 12 ? 6 : 2.5);
+        if (dist < 9) { if (P.y < d[1] + 0.5) K.Space = true; else K.KeyS = true; } else if (P.y < path - 0.4) K.Space = true; else if (P.y > path + 1.6) K.KeyW = true; },
+      cam(s) { if (P.flying) { const d = deckC(540 + s); return [at(-6.5, -2.2, 1.6), look(d, [P.x, P.y + 0.6, P.z], 0.5), 56]; } return [onShip(540 + s, [-58, SD.y + 4.5, 9]), [P.x, P.y + 1.4, P.z], 50]; } };
     // beating up toward the clouds: from under it, its wings working against the sky
     shots.WC = { dur: 6, tod: 17.6, weather: 'clear', T0: 240, start: [-30, -60, 150],
       act(s, K, st) { inAir(st, 40, 10, 1); if (s > 0.4) K.Space = true; },
