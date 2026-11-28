@@ -1,4 +1,4 @@
-// Iron Valley · the trailer: a short film with the walker's body in it.  The camera is free (not the walker's eye): it rides
+// Machine Wilds · the trailer: a short film with the walker's body in it.  The camera is free (not the walker's eye): it rides
 // behind a kite, comes down to the body, follows it under the turtle and the relic; the body is driven by keys, frame by frame.
 //   node trailer.mjs . --dry                    every shot stepped without drawing: where the body goes
 //   node trailer.mjs . --keys [--only B,D1]     three frames a shot → out/cine/key-<shot>-<n>.jpg (look before the long render)

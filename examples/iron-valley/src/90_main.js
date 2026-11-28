@@ -1,4 +1,4 @@
-// Iron Valley · start.  The land, what people left on it, the machines and their ways (footfalls pressed into the land),
+// Machine Wilds · start.  The land, what people left on it, the machines and their ways (footfalls pressed into the land),
 // the small things, then what grows around all of it.
 LR.start({
   // scans (assets.json → fetch-assets.mjs): each surface takes the place of the recipe of the same name at its real size

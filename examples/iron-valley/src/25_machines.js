@@ -1,4 +1,4 @@
-// Iron Valley · the machines.  Three kinds, each designed for this valley (numbers here, parts in 26_parts.js):
+// Machine Wilds · the machines.  Three kinds, each designed for this valley (numbers here, parts in 26_parts.js):
 //   Crane (crane)   a 25 m four-legged watcher on heron legs with a long neck — it walks the long round and wades the tarn
 //   Porter (porter)    a 9 m six-legged carrier with an overgrown load — a string of three works the north bank
 //   Ridge (ridge)     a 58 m eight-legged relic that keeps to the rim; from the valley only its lights show

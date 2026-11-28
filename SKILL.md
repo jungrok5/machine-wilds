@@ -24,7 +24,7 @@ of their designs, names or assets is here** — every machine and place is desig
 Reference: **AnyMachine** <https://github.com/apekshik/anymachine> (MIT) — the method behind `machine-build-reel`, and the reason the example has
 shelled kinds (its owner saw that repository's shelled machines and asked for some); nothing of its code, designs or
 assets is used: the turtle, the crayfish and the woodlice are this valley's own.
-Built and proven on `examples/iron-valley`, Iron Valley (a valley 640 m across with 36 m of relief: a broken
+Built and proven on `examples/iron-valley`, the Machine Wilds valley (a valley 640 m across with 36 m of relief: a broken
 viaduct, a maintenance hall with a camp fire, pylons, a container yard; seven kinds of machine — a 25 m long-necked
 four-legged watcher, a string of six-legged carriers, a 73 m eight-legged relic on the rim, a skein of five kites
 with nine-metre wings overhead, two turtles under mossed domes of plate, a crayfish in oxide-red plates with claws and
@@ -90,7 +90,7 @@ and one standing in the water) is a second, unrelated topic.
 | `lib/17_mechmats.js` | recipes: `steel chrome paintmetal rustplate ceramic rubber concrete asphalt` (a scan may take any of their names) |
 | `lib/00_core.js` … `lib/90_app.js`, `lib/shell.html`, `vendor/` | the scanned-realm engine with: the skinned path (`70_render`), lamps in the air and light passes (`75_post`), `mist` (`25_weather`), slopes (`80_player`), footfalls and calls (`85_audio`), dust and spray (`60_fx`) · three.js r170 and meshoptimizer (MIT) |
 | `starter/` | Lantern Quarry — the smallest realm that uses every part, steps ①–⑧ commented |
-| `examples/iron-valley/` | Iron Valley — `BRIEF.md`, `realm.json`, `assets.json`, `src/` (land, words, ruins, machines, parts, details, plants, start) |
+| `examples/iron-valley/` | the Machine Wilds valley — `BRIEF.md`, `realm.json`, `assets.json`, `src/` (land, words, ruins, machines, parts, details, plants, start) |
 | `references/` | **BRIEF** (topic → brief, the review) · **MACHINES** (designing a kind: every key, mass → numbers, parts, ways, what each check means) · **KIT** (every builder of the engine) · **ASSETS** (choosing and fitting scans, licence) · **LOOK** · **PERF** · **SOURCE** · **LESSONS** |
 
 ## Project layout (what you create)

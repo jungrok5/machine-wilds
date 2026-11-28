@@ -1,4 +1,4 @@
-// Iron Valley · the reel (scripts/film.mjs).  Seven shots; in each the camera and the machines' clock are functions of the shot's
+// Machine Wilds · the reel (scripts/film.mjs).  Seven shots; in each the camera and the machines' clock are functions of the shot's
 // time, so a frame can be drawn alone.  `t` is the second of the valley's clock the shot starts at — found by asking the gym
 // where a machine is (the walk is a pure function of time).  A camera returns { at, up | y, look | yaw, pitch, fov }.
 {
