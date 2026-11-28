@@ -747,3 +747,26 @@ lists itself, prints them, `--plan` to see them first), `scripts/shot-at.mjs`, `
 `scripts/site-check.mjs`, `scripts/puff-lab/`, and the foot probe as a gym rule (`footTurn`). *Rule:* a loop over a
 file of lists counts what it started against what it was given; a tool written for the job goes into `scripts/` in the
 same PR — the next session has the repository, not this machine.
+
+**The airship's cloud: four traps between "a volume" and "a cloud a ship is hidden in"** (Nimbus, 2026-11-28).
+- *Additive light drawn at zero.* The bolts were invisible for an hour: three's `AdditiveBlending` is `SrcAlpha, One`,
+  and the engine's glows write alpha 0 (light added, nothing covered). *Fix:* the blend the VFX use — `One,
+  OneMinusSrcAlpha` (alpha 0 is then a pure add). *Rule:* anything that adds light here copies 62_vfx's blend.
+- *A coverage knob that did not cover.* The bank came out as a few smoky puffs whatever the coverage: the
+  Perlin-Worley channel lies in 0.45…0.86 and the Worley-cut result had its median at 0.15, so "62 %" filled a fifth.
+  *Fix:* read the noise back (`readRenderTargetPixels` on a slice) and remap it to about even odds; coverage c then
+  fills about c. *Rule:* measure a noise's percentiles before thresholding it.
+- *The ship in front of its own cloud.* In every view the hull read crisply against the bank. Debug views
+  (`?clouddbg=2`: what the bank lets through; `4`: its near half) showed why: a ray from below met only ~60 m of cloud
+  before the hull (the outline was stretched upward), and a noise gap sat in front of the hull — travelling with it,
+  so it would have stayed there for minutes. *Fix:* a wider outline, and a core round the host where holes are filled
+  and coverage raised. *Rule:* a volume that must hide something is judged on the transmittance of the rays that end on
+  that thing, not on how the cloud looks around it.
+- *A reveal needs the shadow, not just the glow.* A flash 70 m behind the hull lit only cloud the eye could not see, and
+  the scene-wide flash (`uWx2.w`) lit the hull's near side pale. *Fix:* the reveal flash 40 m behind it, light that
+  diffuses ~100 m, the hull's two ellipsoids casting their shadow into the lit cloud, and a dim scene flash for strikes
+  inside the cloud. And in stills, a strike that only lives in the last frame of eight is averaged away by the
+  temporal resolve: render a strike with `frames=2` and a clock just after it (`?strike=t:kind:rod`).
+- *A pose that depends on the weather is a different pose in the gym.* The sway first read `LR.wx.wind`: in the gym the
+  stub threw, and `shot-at.mjs` would have put the camera a metre off the deck. *Fix:* the wind on it is the kind's own
+  number (`flight.wind`); the gym judges it in a gale (`windTest`).
