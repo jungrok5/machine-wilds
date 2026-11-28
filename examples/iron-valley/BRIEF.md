@@ -1,4 +1,4 @@
-# Brief — Iron Valley ("the valley where iron rings")
+# Brief — Machine Wilds ("the valley where iron rings")
 
 ## The place
 A wooded valley forty years after people left it; the machines they built to watch it, carry for it and relay its

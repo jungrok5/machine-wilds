@@ -1,4 +1,4 @@
-// Iron Valley · the machines' parts.  The legs are the kit's stock mechanisms (k.limbs); everything that makes a machine
+// Machine Wilds · the machines' parts.  The legs are the kit's stock mechanisms (k.limbs); everything that makes a machine
 // this machine — hull, neck, head, load — is written here, each part in the frame of the one bone it rides.
 // A body, a head: x forward, y up, z right.  A neck link: X the pin, Y along it, Z its back.
 V.parts = {

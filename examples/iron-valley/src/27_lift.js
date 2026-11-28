@@ -1,4 +1,4 @@
-// Iron Valley · the relic's lift.  Once a round Ridge stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
+// Machine Wilds · the relic's lift.  Once a round Ridge stops on the rim and lets a cage down its ropes to the ground (its 'lift' move,
 // 25_machines).  Whoever is in the cage when it goes back up is carried up with it, comes up through the hatch and steps out onto the deck,
 // and can walk the bow while the relic walks on: the valley from fifty metres up.  R (a pad's X): into the cage while it is
 // down, and off the deck (down to the ground under the lift).  A film drives the same thing with its hand on KeyR.

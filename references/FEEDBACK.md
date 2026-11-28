@@ -33,6 +33,12 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
 - **A file too big to send goes to a GitHub release** of the repository (an MP4 is never committed); give the owner
   the release link (2026-11-28, "용량때문에 내가 받을수없게되면 릴리즈에 올려줘").
 
+## One name
+
+- **The project, the world and the film are all "Machine Wilds"** (2026-11-28, "machine wilds인데 왜 아이언밸리야
+  통일해"): the page title, the loading screen, the HUD, the title card, README, the films and posts. "Iron Valley" is
+  not used on screen or in public copy; the example's folder is renamed to match once the work in flight is merged.
+
 ## The look of the world
 
 - **Effects at AAA console-game quality**, the way an Unreal or console game draws them — not photographs of real

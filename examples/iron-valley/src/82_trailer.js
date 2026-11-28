@@ -1,4 +1,4 @@
-// Iron Valley · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
+// Machine Wilds · the film (lib/89_cine): a day in the valley, dawn to night, played in the page (?film=1) and stepped by
 // trailer.mjs to draw its frames.  The camera is free; the walker's body is driven by keys; every shot sets its own hour,
 // weather and machines' clock.  Every machine in the cut is walking, flying or doing its big move.
 {
@@ -199,7 +199,7 @@
     shots.WC = { dur: 6, tod: 17.6, weather: 'clear', T0: 240, start: [-30, -60, 150],
       act(s, K, st) { inAir(st, 40, 10, 1); if (s > 0.4) K.Space = true; },
       cam(s) { const e = at(-2.6, 1.1, -2.9), t = at(1.6, -0.3, 2.2); return [e, t, 66]; } };
-    return { fps: 24, shots, title: { big: 'IRON VALLEY', small: 'MACHINE-WILDS', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
+    return { fps: 24, shots, title: { big: 'MACHINE WILDS', small: '', line: 'a forest of walking machines, in the browser', repo: 'github.com/jungrok5/machine-wilds', rights: '© 2026 jungrok5 · no reuse or re-editing of this film', skip: 'Esc · walk it yourself' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'DROP', 'RW', 'SNOW', 'DV', 'DW', 'DF', 'DS', 'B', 'H1', 'R1', 'R2', 'R3', 'LIFT1', 'LIFT2', 'TOP', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80], JUMP: [0, 138], DROP: [112, 226], LIFT2: [0, 216], TOP: [118, 216] } };
