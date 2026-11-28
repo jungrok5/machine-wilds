@@ -185,6 +185,7 @@ k.lamp('head', { at: [1.2, -0.3, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1
 | bends | no joint on the wrong side; none folded past 165° | a stride too long for the leg, a lift too high; for a tarsus see `ankleMin` |
 | knees | every knee and ankle ≥ 5 cm above the land | an insect leg on a side slope: more `ride`, a longer femur |
 | swing | the foot clears the ground between footfalls | raise `lift` or `clear` |
+| foot turn | no foot turns its pitch or curl more than 15° between two frames at 24 fps (`footTurn`) | a curve with a jump or a ramp too steep for a short swing: ease `footPitch` / `toeCurl` over the swing, lower `lift` |
 | support | ≥ 2 feet down on four legs, ≥ 3 on six or more | `duty` too low for the pattern |
 | cylinders | ≥ 15 % of every rod in its barrel, through everything | the hinge swings too wide: more `ankleFollow`, less `lift`, a taller `ride`; or give `bar` |
 | belly | ≥ 0.5 m over the land | a mound under the body |

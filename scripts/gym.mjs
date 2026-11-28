@@ -19,7 +19,7 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[
 const dir = resolve(args[0] && !args[0].startsWith('--') ? args[0] : '.');
 
 // the limits a machine must keep (references/MACHINES.md says why each number is what it is)
-export const LIMITS = { clamp: 0.002, slip: 0.004, gap: 0.03, sole: 0.5, tiltOver: 4, bendFlip: 0, foldMax: 165, bodyAcc: 1.6, bodyAccLight: 2.8, kneeLow: 0.05, swingLow: -0.02, overlapMin: 0.15, belly: 0.5, loop: 0.02, determinism: 1e-9, avatarAcc: 16, avatarRunAcc: 26, flyClear: 26, bankMax: 58, flyPitch: 24, flyLoad: 1.9, wing: 62, fixShare: 0.02, idleBreath: 0.02, idleSlip: 0.004, anticipation: 0.04, recovery: 0.03 };
+export const LIMITS = { clamp: 0.002, slip: 0.004, gap: 0.03, sole: 0.5, tiltOver: 4, bendFlip: 0, foldMax: 165, bodyAcc: 1.6, bodyAccLight: 2.8, kneeLow: 0.05, swingLow: -0.02, overlapMin: 0.15, belly: 0.5, loop: 0.02, determinism: 1e-9, avatarAcc: 16, avatarRunAcc: 26, flyClear: 26, bankMax: 58, flyPitch: 24, flyLoad: 1.9, wing: 62, fixShare: 0.02, idleBreath: 0.02, idleSlip: 0.004, anticipation: 0.04, recovery: 0.03, footTurn: 15 };
 
 export function load(realmDir, { course = false } = {}) {
   const noop = () => new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : noop()), apply: () => noop(), construct: () => noop() });
@@ -78,6 +78,7 @@ export function judge(A, lim = LIMITS) {
   f(A.foldMax <= lim.foldMax, `bends: a joint folded ${A.foldMax.toFixed(0)}° (past ${lim.foldMax}° it is shut)`);
   f(A.kneeLow >= lim.kneeLow, `bends: a knee or ankle came to ${(A.kneeLow).toFixed(2)} m of the ground`);
   f(A.swingLow >= lim.swingLow, `feet: a swinging foot went ${(-A.swingLow * 1000).toFixed(0)} mm into the ground`);
+  f(!(A.footTurn > lim.footTurn), `feet: a foot turned ${(A.footTurn || 0).toFixed(1)}° in one frame at 24 fps (past ${lim.footTurn}° it snaps: ease its pitch and curl over the swing)`);
   f(A.overlapMin >= lim.overlapMin, `cylinders: a rod has ${(A.overlapMin * 100).toFixed(0)} % of its barrel left`);
   f(A.belly >= lim.belly, `body: the belly came to ${A.belly.toFixed(2)} m of the land`);
   f(A.supportMin >= A.needSupport, `support: only ${A.supportMin} feet down at some moment (needs ${A.needSupport})`);

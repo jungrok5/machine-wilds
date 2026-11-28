@@ -6,6 +6,12 @@ walkable, ruined, overgrown world in the browser where giant walking machines ke
 `starter/` and `examples/iron-valley/` two realms, `references/` the notes, `docs/` the site on GitHub Pages: the example itself, playable at the root
 (pushes to `main` deploy it). Moved here with its history from <https://github.com/jungrok5/motion-skills>.
 
+- **Read `references/FEEDBACK.md` before any change**: the owner's notes, kept as standing rules. Every new note from
+  the owner goes into it in the same PR that acts on it (a rule, its date, the words it came from); its trap, if any,
+  into `references/LESSONS.md`; a rule a machine can check into `gym.mjs` or `check.mjs`. A tool written to do the job
+  (a render loop, a probe, a check) goes into `scripts/`, not a scratch folder: nothing the next session needs stays
+  on this machine.
+- Replies to the owner in Korean; everything on screen, in the repository and in commits in English.
 - A skill takes a topic and designs a new realm in its style — not a re-render of the example. A new realm designs its
   own machines, the walker's own two-legged body included (`avatar: true`; `lib/48_mech_avatar.js`).
 - Machines are built and moved by code only. Before any render run `node scripts/gym.mjs <realm> --course` and
@@ -32,8 +38,11 @@ walkable, ruined, overgrown world in the browser where giant walking machines ke
   the engine (`examples/iron-valley/trailer.mjs`); their frames, sound and MP4s are never committed.
 - Never put MP4s (or other large media) in `docs/`. The share image (`docs/og.jpg`: the README's picture, the link
   preview and GitHub's social preview) is 1280×640, ≤ 200 KB.
-- Before finishing any site change, serve `docs/` (`python3 -m http.server`) and check the page at 1280 px and 390 px:
-  no console errors or 404s, the walk and `?film=1` load, `demo/iron-valley/` forwards.
+- Before finishing any site change, run `node scripts/site-check.mjs` (it serves `docs/` and checks the page at 1280 px and
+  390 px: no console errors or 404s, the walk and `?film=1` load, `demo/iron-valley/` forwards; `--shots <dir>` to look).
+- A film for social media is `node scripts/cut.mjs <realm> --ranges <cut.json>` (checks, parallel render, silent join with
+  the card only at the end, an MP4 under X's 2:20 and 512 MB). A camera on a moving giant is written in its own frame
+  with `node scripts/shot-at.mjs` and drawn with `render.mjs`; `?fault=4` shows every machine's faults often, live.
 - Every link a piece of work was made from is its source: keep `references/SOURCE.md` and the README in step (Poly Haven; AnyMachine as a reference; the three motion-skills skills it grew from).
 - Work on a branch and **always finish with a PR to `main`**. Never push to `main`, never merge a PR (or enable
   auto-merge): the owner reviews and merges. Only an explicit "merge it" from the owner for that PR changes this.

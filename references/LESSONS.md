@@ -737,3 +737,13 @@ right through the deck plate, a headframe over it, the cage put away flush with 
 *Rule:* measure motion per frame at the film's rate (a jump in one frame is a snap whatever the curve says); an effect
 lives by the clock time of what made it, never by the state of what made it now; a held resource is not taken back
 mid-life; variety is designed per instance and per owner, not added as noise.
+
+**A quarter of a film was never drawn, and the tools that drew the rest lived in a scratch folder** (the X cut,
+2026-11-27). Four lists of shots were read with `while read g; … done < groups.txt`; the file had no newline after its
+last line, so `read` returned false on it and the fourth list never started — found two hours in, when three lists were
+done. The render loop, the camera helper for a moving giant, the per-frame foot probe and the site check had all been
+written in the session's scratch folder, gone with the session. *Fix:* `scripts/cut.mjs` (it splits the shots into
+lists itself, prints them, `--plan` to see them first), `scripts/shot-at.mjs`, `scripts/look.mjs`,
+`scripts/site-check.mjs`, `scripts/puff-lab/`, and the foot probe as a gym rule (`footTurn`). *Rule:* a loop over a
+file of lists counts what it started against what it was given; a tool written for the job goes into `scripts/` in the
+same PR — the next session has the repository, not this machine.
