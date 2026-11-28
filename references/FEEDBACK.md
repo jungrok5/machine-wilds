@@ -112,6 +112,10 @@ if there was one, also goes in `references/LESSONS.md`; a rule a machine can che
   아니고 AI로 만든").
 - **Its sources are listed** (Poly Haven; AnyMachine as a reference; the motion-skills skills it grew from).
 
+- **The site lives at `wilds.num2323.com`** (2026-11-28, "클라우드플레어에 num2323.com 도메인 하위로 해당 페이지 연결해주고
+  웹애널리틱스도 켜줘"): the same pattern as the owner's other sites — a DNS-only CNAME to `jungrok5.github.io` on Cloudflare,
+  `docs/CNAME`, and Cloudflare Web Analytics (a beacon in the `--cdn` build). Links in README and posts use this address.
+
 ## The portfolio
 
 - The résumé entry is written for a game developer: what was built and how, its limits, how it was optimised, the
