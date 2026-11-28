@@ -3,8 +3,7 @@
 //   node trailer.mjs . --dry                    every shot stepped without drawing: where the body goes
 //   node trailer.mjs . --keys [--only B,D1]     three frames a shot → out/cine/key-<shot>-<n>.jpg (look before the long render)
 //   node trailer.mjs . --only K,D1,D2           frames → out/cine/<shot>/f_00000.jpg (kept: a stopped render goes on)
-//   node trailer.mjs . --sound [--lufs -16]     out/cine/cine.wav: the engine's sound of every shot, heard from the camera, each
-//                                               event on its frame (references/SOUND.md); out/cine/sound-events.json beside it
+//   node trailer.mjs . --sound                  out/cine/cine.wav from the machines' footfalls and calls, heard from the camera
 //   node trailer.mjs . --join [--nohead]        out/cine.mp4 (shots in ORDER, each cut to RANGE, the sound, out/cine/title.png last; --nohead: no card before)
 //   node trailer.mjs . --ranges cut.json --out social [--size 1440x810]   another cut: { shot: [from, to] } in order, then --join with the same --ranges
 // Needs the built page (scripts/build.mjs) and the scans (scripts/fetch-assets.mjs).  Nothing it writes is committed.
@@ -32,7 +31,7 @@ if (has('join')) { if (!existsSync(cutFile)) { console.error('no cut.json in ' +
   ff(['-loop', '1', '-framerate', String(FPS), '-i', out + '/card-tail.png', '-t', String(TAIL), '-vf', `scale=${OW}:${OH},fade=t=in:st=0:d=0.7,fade=t=out:st=${TAIL - 0.8}:d=0.8`, ...enc, out + '/tail.mp4']); parts.push('tail.mp4');
   writeFileSync(out + '/list.txt', parts.map((p) => `file '${p}'`).join('\n')); const T = HEAD + Ts + TAIL, wav = !mute && existsSync(out + '/cine.wav'), a = ['-f', 'concat', '-safe', '0', '-i', out + '/list.txt']; if (wav) a.push('-i', out + '/cine.wav');
   const fs = Math.round(OH / 64), mark = TITLE.repo ? `drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='${TITLE.repo}':fontsize=${fs}:fontcolor=white@0.42:shadowcolor=black@0.35:shadowx=1:shadowy=1:x=w-tw-${fs + 6}:y=h-th-${fs}:enable='between(t,${HEAD},${(HEAD + Ts).toFixed(2)})'` : 'null';
-  a.push('-vf', mark); if (wav) a.push('-af', `adelay=${HEAD * 1000}|${HEAD * 1000},afade=t=in:st=${HEAD}:d=0.8,afade=t=out:st=${(HEAD + Ts - 0.6).toFixed(2)}:d=2.4,apad`, '-c:a', 'aac', '-b:a', '192k'); else a.push('-an');
+  a.push('-vf', mark); if (wav) a.push('-af', `adelay=${HEAD * 1000}|${HEAD * 1000},afade=t=in:st=${HEAD}:d=0.8,afade=t=out:st=${(HEAD + Ts - 0.6).toFixed(2)}:d=2.4,volume=-3dB,apad`, '-c:a', 'aac', '-b:a', '192k'); else a.push('-an');
   const dst = `${dir}/out/cine${wav ? '' : '-silent'}.mp4`; a.push('-t', T.toFixed(2), '-c:v', 'libx264', '-crf', opt('crf') || '18', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', dst); ff(a); console.log(`${dst} · ${T.toFixed(1)} s · ${OW} × ${OH}${wav ? ' · with sound' : ' · silent'}`); process.exit(0); }
 const dry = has('dry'), keys = has('keys'), sound = has('sound');
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--disable-dev-shm-usage', '--autoplay-policy=no-user-gesture-required'] }), page = await browser.newPage({ viewport: { width: W, height: H } });
@@ -45,39 +44,20 @@ ORDER = INFO.order; RANGE = INFO.range; if (opt('ranges')) { const R2 = JSON.par
 await page.evaluate(() => { window.realm.filmStart(24); window.realm.LR.player.stopTour(); window.realm.LR.wx.set({ auto: false }); window.cine = window.realm.cine; });
 const save = async (f) => writeFileSync(f, Buffer.from((await page.evaluate(() => window.realm.canvas.toDataURL('image/jpeg', 0.95))).split(',')[1], 'base64'));
 if (sound) {
-  // the sound (lib/85_audio · 86_sfx · 87_ear; references/SOUND.md): every shot stepped dry while the ear listens from the camera —
-  // the machines' feet by their weight, their pumps, valves and calls, the faults' crackle to their own envelopes, the strikes
-  // (heard later by their distance), the walker's feet and wings, the lift, the loops (a giant near, the air past a flight) —
-  // each event placed on the frame its picture shows it; the listener and the weather kept frame by frame.  Then every shot is
-  // rendered on its own (its own hour, weather and place; the sound cuts with the picture, the shot before ringing on a third of a
-  // second under it) and laid end to end; ffmpeg brings it to −16 LUFS with its true peak under −1 dBTP.  Beside the WAV:
-  // sound-events.json (every event with its shot and its time) to check against the frames.
-  // (--mix rain=0,sfx=0: a stem — the buses wind, birds, insects, rain, world, steps, thunder, sfx scaled, to judge one layer)
-  const PRE = 2.5, LUFS = +(opt('lufs') || -16), MIX = Object.fromEntries((opt('mix') || '').split(',').filter(Boolean).map((kv) => [kv.split('=')[0], +kv.split('=')[1]]));
-  const res = await page.evaluate(async ([ORDER, FPS, RANGE, PRE, MIX]) => { const LR = window.realm.LR, C = window.cine, ear = LR.ear, shots = []; let T = 0;
-    for (const n of ORDER) { ear.record(); C.begin(n, false); const [r0, r1] = RANGE[n];
-      for (let k = 0; k < r1; k++) { const c0 = C.time(); C.tick(false); const tt = (k - r0) / FPS; ear.after(tt, (C.time() - c0) * FPS, tt >= -PRE - 0.05, -PRE); }
-      const r = ear.stop(), len = (r1 - r0) / FPS; shots.push({ name: n, at: T, len, frames: r.frames, events: r.events }); T += len; }
-    // a strike seen late in a shot is heard in the next when that one is in the rain too (else it is lost with the cut)
-    for (let i = 0; i < shots.length; i++) { const a = shots[i], b = shots[i + 1], wet = b && b.frames.length && b.frames[b.frames.length - 1].rain > 0.3;
-      a.events = a.events.filter((e) => { if (e.kind !== 'thunder' || e.carried) return true; const arrive = e.at + e.d / 343; if (arrive < a.len - 0.05) return true; if (wet) b.events.push(Object.assign({}, e, { at: +(e.at - a.len).toFixed(5), carried: 1 })); return false; }); }
-    const out = await LR.audio.renderFilm({ fps: FPS, shots, pre: PRE, tail: 0.32, sampleRate: 48000, volume: 0.9, seed: 'machine-wilds', mix: MIX }); if (!out.ch) return { none: JSON.stringify(out) };
-    const n = out.ch[0].length, pcm = new Int16Array(n * 2), k = out.peak > 0.98 ? 0.98 / out.peak : 1; for (let i = 0; i < n; i++) for (let c = 0; c < 2; c++) pcm[i * 2 + c] = Math.round(Math.max(-1, Math.min(1, out.ch[c][i] * k)) * 32767);
-    const u8 = new Uint8Array(pcm.buffer); let bin = ''; for (let i = 0; i < u8.length; i += 32768) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 32768));
-    const loopsOf = (s) => { const m = {}; for (const f of s.frames) if (f.t >= 0) for (const l of f.loops || []) { const q = m[l.id] || (m[l.id] = { kind: l.kind, frames: 0, dMin: 1e9 }); q.frames++; q.dMin = Math.min(q.dMin, +l.d.toFixed(1)); } return m; };
-    const list = shots.map((s) => ({ name: s.name, at: +s.at.toFixed(4), len: +s.len.toFixed(4), loops: loopsOf(s), events: s.events.map((e) => { const o = Object.assign({}, e); if (o.env) { o.envLen = o.env.length; delete o.env; } if (o.clicks) o.clicks = o.clicks.length; return o; }) }));
-    return { sr: out.sr, n, b64: btoa(bin), shots: list, info: out.shots, peak: out.peak }; }, [ORDER, FPS, RANGE, PRE, MIX]);
-  if (res.none) { console.log('no sound:', res.none); await browser.close(); process.exit(1); }
-  const pcm = Buffer.from(res.b64, 'base64'), h = Buffer.alloc(44); h.write('RIFF', 0); h.writeUInt32LE(36 + pcm.length, 4); h.write('WAVEfmt ', 8); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(res.sr, 24); h.writeUInt32LE(res.sr * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(pcm.length, 40);
-  const raw = out + '/cine-raw.wav'; writeFileSync(raw, Buffer.concat([h, pcm])); await browser.close();
-  // loudness: measure, set the gain, hold the peaks under the ceiling (a limiter with no make-up of its own), measure again
-  const meter = (f) => { const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', f, '-af', 'ebur128=peak=true', '-f', 'null', '-'], { encoding: 'utf8' }), s = r.stderr || '', I = s.match(/I:\s+(-?[\d.]+) LUFS/g), P = s.match(/Peak:\s+(-?[\d.]+) dBFS/g); return { I: I ? +I[I.length - 1].match(/-?[\d.]+/)[0] : null, TP: P ? +P[P.length - 1].match(/-?[\d.]+/)[0] : null }; };
-  const m0 = meter(raw); let gain = LUFS - m0.I, m1 = null;
-  for (let i = 0; i < 3; i++) { spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', raw, '-af', `volume=${gain.toFixed(2)}dB,alimiter=limit=${Math.pow(10, -1.6 / 20).toFixed(4)}:attack=2:release=80:level=disabled:asc=1`, '-c:a', 'pcm_s16le', out + '/cine.wav']); m1 = meter(out + '/cine.wav'); if (Math.abs(m1.I - LUFS) < 0.3) break; gain += LUFS - m1.I; }
-  writeFileSync(out + '/sound-events.json', JSON.stringify({ fps: FPS, shots: res.shots, info: res.info, loudness: { raw: m0, final: m1, gain: +gain.toFixed(2) } }, null, 1));
-  const kinds = {}; for (const s of res.shots) for (const e of s.events) kinds[e.kind] = (kinds[e.kind] || 0) + 1;
-  console.log(out + '/cine.wav', (res.n / res.sr).toFixed(1) + ' s', JSON.stringify(kinds), `raw ${m0.I} LUFS · final ${m1.I} LUFS, true peak ${m1.TP} dBTP`);
-  process.exit(0); }
+  // the sound: every shot stepped dry, the machines' footfalls and calls heard from where the camera is, then one offline render
+  const wav = await page.evaluate(async ([ORDER, FPS, RANGE]) => { const LR = window.realm.LR, M = LR.mech, C = window.cine, ev = []; let T = 0, first = null; const seen = new Map();
+    for (const n of ORDER) { C.begin(n, false); seen.clear(); const N = RANGE[n][1]; for (let k = 0; k < N; k++) { C.tick(false); if (k < RANGE[n][0]) continue; const cp = C.camNow(), yaw = -cp[3], rx = Math.cos(yaw), rz = Math.sin(yaw), tt = T + (k - RANGE[n][0]) / FPS, t = C.time(); if (!first) first = cp;
+        for (const u of M.units) { if (u.avatar) continue; const c = M.cmd(u, t);
+          { const mv = c.move, key = u.name + 'mv'; if (mv && mv.sound && seen.get(key) !== mv && c.mt >= mv.sound[0]) { seen.set(key, mv); const p = c.body.p, d = Math.hypot(p[0] - cp[0], p[1] - cp[1], p[2] - cp[2]); ev.push({ at: tt, kind: 'call', d, side: ((p[0] - cp[0]) * rx + (p[2] - cp[2]) * rz) / Math.max(4, d), f: mv.sound[1], len: mv.sound[2], gain: mv.sound[3] }); } }
+          { const cr = u.fly && u.K.spec.cry; if (cr) { const kk = Math.floor((t + (u.phase || 0) * cr[0]) / cr[0]), key = u.name + 'cry'; if (seen.has(key) && seen.get(key) !== kk) { const p = c.body.p, d = Math.hypot(p[0] - cp[0], p[1] - cp[1], p[2] - cp[2]); ev.push({ at: tt, kind: 'call', d, side: ((p[0] - cp[0]) * rx + (p[2] - cp[2]) * rz) / Math.max(4, d), f: cr[1], len: cr[2], gain: cr[3] || 0.6 }); } seen.set(key, kk); } }
+          if (u.fly || u.post || c.rate < 0.02) continue; for (const l of u.kin.limbs) { const lq = c.limbs[l.name], key = u.name + l.name; if (lq.sw) { seen.set(key, -1e9); continue; } if (seen.get(key) === lq.k) continue; const fresh = seen.has(key); seen.set(key, lq.k); if (!fresh) continue; const d = Math.hypot(lq.p[0] - cp[0], lq.p[1] - cp[1], lq.p[2] - cp[2]); ev.push({ at: tt, kind: 'footfall', d, side: ((lq.p[0] - cp[0]) * rx + (lq.p[2] - cp[2]) * rz) / Math.max(4, d), tonnes: u.K.spec.tonnes || 50 }); } }
+        const av = M.units.find((u) => u.avatar); if (av && av.av) { const on = av.av.feet.map((q) => q.on).join(''), key = 'av'; if (seen.has(key) && seen.get(key) !== on && !av.av.air) { const d = Math.hypot(av.av.x - cp[0], av.av.z - cp[2]); ev.push({ at: tt, kind: 'footfall', d: Math.max(3, d), side: 0, tonnes: 0.6 }); } seen.set(key, on); } }
+      T += (RANGE[n][1] - RANGE[n][0]) / FPS; }
+    const res = await LR.audio.renderOffline(T + 0.5, { tod: 20, wind: 0.25, x: first[0], y: first[1], z: first[2], yaw: 0, sources: LR.world.sounds, events: ev, keep: true, volume: 0.9 }); if (!res.buffer) return { none: JSON.stringify(Object.assign({}, res, { buffer: undefined })), events: ev.length };
+    const b = res.buffer, nn = b.length, ch = [b.getChannelData(0), b.getChannelData(1)], pcm = new Int16Array(nn * 2); for (let i = 0; i < nn; i++) for (let c = 0; c < 2; c++) pcm[i * 2 + c] = Math.max(-32767, Math.min(32767, Math.round(ch[c][i] * 32767)));
+    const u8 = new Uint8Array(pcm.buffer); let bin = ''; for (let i = 0; i < u8.length; i += 32768) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return { sr: b.sampleRate, n: nn, b64: btoa(bin), events: ev.length, kinds: ev.reduce((a, e) => { a[e.kind + (e.tonnes < 1 ? '-own' : '')] = (a[e.kind + (e.tonnes < 1 ? '-own' : '')] || 0) + 1; return a; }, {}), peak: res.peak }; }, [ORDER, FPS, RANGE]);
+  if (wav.none) console.log('no sound:', wav.none, wav.events); else { const pcm = Buffer.from(wav.b64, 'base64'), h = Buffer.alloc(44); h.write('RIFF', 0); h.writeUInt32LE(36 + pcm.length, 4); h.write('WAVEfmt ', 8); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(wav.sr, 24); h.writeUInt32LE(wav.sr * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(pcm.length, 40); writeFileSync(out + '/cine.wav', Buffer.concat([h, pcm])); console.log(out + '/cine.wav', (wav.n / wav.sr).toFixed(1) + ' s', JSON.stringify(wav.kinds), 'peak', wav.peak.toFixed(2)); }
+  await browser.close(); process.exit(0); }
 for (const n of only) { const N = await page.evaluate((n) => window.cine.frames(n), n);
   if (dry) { await page.evaluate((n) => window.cine.begin(n, false), n); for (let k = 0; k < N; k++) { const r = await page.evaluate(() => window.cine.tick(false)); if (k % 12 === 0 || k === N - 1) console.log(n, JSON.stringify(r)); } continue; }
   if (keys) { const want = (opt('at') ? opt('at').split(',').map(Number) : [0.12, 0.55, 0.95]).map((q) => Math.round(q * (N - 1))); await page.evaluate((n) => window.cine.begin(n, true), n); for (let k = 0; k < N; k++) { const near = want.some((w) => k >= w - 3 && k <= w); const r = await page.evaluate((d) => window.cine.tick(d), near); if (want.includes(k)) { const f = `${out}/key-${n}-${want.indexOf(k) + 1}.jpg`; await save(f); console.log(f, JSON.stringify(r)); } } continue; }

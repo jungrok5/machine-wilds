@@ -95,12 +95,6 @@
       // ── effects, for looking at them (not in the cut): a dry landing off the barrier (its dust, its fault), the walker close
       // with its fault crackling over its skin
       FXL: { dur: 9.4, tod: 11, weather: 'clear', T0: 164.9, start: [-22, 44, 0], view: 'third', zoom: 5.4, act: leap },
-      // the wings, to hear and see them (not in the cut): off the broken end of the viaduct they snap open, it glides, beats
-      // four times climbing, glides on, folds them and drops the last metres to the floor (lib/87_ear: their clicks, beats, air)
-      FXW: { dur: 10, tod: 16.2, weather: 'clear', T0: 30, start: [-22, 46, 0], aware: false,
-        act(s, K, st) { if (!st.o) { if (s > 0.2) { K.KeyW = true; K.ShiftLeft = true; } if (P.z < 39.75 && P.z > 38.9 && !P.air) K.Space = true; if (P.z < 37.5 && P.air) { P.openWings(); st.o = s; } }
-          else { const a = s - st.o; if (a > 1.9 && a < 4.6) K.Space = true; if (a > 6.4 && !st.c && P.flying) { P.closeWings(); st.c = true; } } P.pitch = damp(P.pitch, -0.12, 1.5); },
-        cam(s) { return [at(-5.5, 2.4, 1.6), at(4, 0, 0.9), 56]; } },
       FXA: { dur: 8, tod: 17.6, weather: 'clear', T0: 60, start: [-118, 119, 80], fault: 3,
         act(s, K) { if (s > 1.2 && s < 5.5) goTo(-112, 120.5, K); P.pitch = damp(P.pitch, -0.1, 1.2); },
         cam(s) { const t = s / 8; return [[P.x - 3.3 + t * 0.7, P.y + 1.45, P.z + 3.1 - t * 0.9], me(0.95), 36]; } },
