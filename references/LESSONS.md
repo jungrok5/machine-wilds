@@ -202,6 +202,14 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   film: the wind's brown body, the forest's low wash, the machines' hum. Rain beds were 6–8 dB over every other shot.
   → A high-pass under the wind's body, less of the forest's and the hum's low, rain down by 10 dB; the low end is left
   to the footfalls, which come and go.
+- **A flight shot started with a cascade of wing clicks while its wings were already spread.** → The film's hand opens
+  them and sets `wings.tw = 9` (open and settled); the ear took any fall of `tw` for an opening. → Only a `tw` under a
+  second is an opening or a fold.
+- **The quiet things were inaudible and the far ones too loud.** → Measured, not guessed (`renderOffline` of one voice at
+  a time, low and high energy): the walker's steps 19 dB under the beds, the air past a glide 13 dB under, the relic's hum
+  loud from 86 m, a giant's foot at 125 m as loud as a turtle's at 20. → Steps and the glide's air up, the hum close only
+  (it falls off over a body length or two), far footfalls fall off faster than 1/d past 150 m; through the walker's own
+  eyes its feet are kept a body's length away (else the scout shots were 4 dB over the rest).
 - **`ffmpeg alimiter` turns the level up by itself.** → Its `level` option (auto make-up) is on by default: give it
   `level=disabled`, and measure the result (true peak) after it, not before.
 
