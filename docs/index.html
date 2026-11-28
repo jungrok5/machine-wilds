@@ -4175,6 +4175,90 @@ void main(){
 }
 
 
+// ── lib/48_mech_fly_drift.js ──
+// machine-wilds · 48_mech_fly_drift — a flyer that drifts: an airship, a balloon, anything carried by its gas rather than
+// by beating wings.  It is a mode of the flight (flight.mode = 'drift'), a pure function of time like every other: it
+// follows its closed line at a walking pace, its hull yawing slowly into a turn a few seconds before the line bends
+// (a hull a hundred metres long does not follow a kink), banked only a few degrees by the turn; and the wind works on it
+// all the time — it heaves, pitches, rolls and yaws a little in long slow swells and shorter gusts, more when it blows
+// harder (flight.wind).  Every swell is a whole number of waves a lap, so one lap later it is in the same pose to the
+// millimetre.  Its propellers are `spin` extras (their own rate); its rudders, cranes, a windsock and whatever else the
+// command steers are extras whose angles it writes (flight.drive).  Numbers only: it runs in Node (gym.mjs).
+//
+//   spec.flight = { mode: 'drift', speed (m/s), abs: true (the line's third number is a height above the sea, not above the land),
+//                   yawLead (s: how far ahead the hull turns into the line), bankK (° of bank per 0.01 1/m of turn), bankMax°,
+//                   sway: { heave m, pitch°, roll°, yaw° } (at a fresh wind), span (its beam, m: how far apart two flyers keep),
+//                   hull: [[x, y, z]…] body points the land must clear (the bottom of the hull, the gondola's keel), drive(cmd, k) }
+//   LR.mech.spawn(kind, { fly: [[x, z, height]…], offset (s) })
+{
+  const M = LR.mech, V = M.v, D2R = M.D2R, TAU = Math.PI * 2;
+  const planFly0 = M.planFly, flyCmd0 = M.flyCmd, audit0 = M.auditFly;
+  const isDrift = (u) => !!(u.K.spec.flight && u.K.spec.flight.mode === 'drift');
+  M.planFly = (u) => {
+    if (!isDrift(u)) return planFly0(u);
+    const F = u.K.spec.flight, L = LR.land;
+    if (F.abs && !u.flyAbs) { u.flyAbs = u.fly; u.fly = u.flyAbs.map((p) => [p[0], p[1], p[2] - L.h(p[0], p[1])]); }
+    planFly0(u); u.span = F.span || 30; u.wb = u.span; u.track = u.span;
+    // the swells: periods near the ones asked for, each a whole number of waves a lap
+    const W = (period) => Math.max(1, Math.round(u.lap / period)) * TAU / u.lap;
+    u.sw = { heave: [W(19), W(43)], pitch: [W(23), W(11)], roll: [W(17), W(37)], yaw: [W(41), W(19)], surge: W(29), crane: W(97) };
+    return u;
+  };
+  const course = (u, s, e) => { const a = u.at(s - e), b = u.at(s + e), dx = b[0] - a[0], dz = b[2] - a[2], hl = Math.hypot(dx, dz) || 1e-9; return [Math.atan2(dz, dx), Math.atan2(b[1] - a[1], hl)]; };
+  // how hard it blows on it (0 calm … 1 a gale): the kind's own number (flight.wind, 0.5) — not the page's weather, so a pose is
+  // the same in the gym, in shot-at.mjs and in the page whatever the sky is doing; the checks ask for a gale (u.windTest)
+  const windOf = (u) => (u.windTest !== undefined ? u.windTest : u.K.spec.flight.wind === undefined ? 0.5 : u.K.spec.flight.wind);
+  M.flyCmd = (u, t) => {
+    if (!isDrift(u)) return flyCmd0(u, t);
+    const S = u.K.spec, F = S.flight, sw = u.sw; t += u.offset || 0;
+    const s = u.sAt(t), dt = 1, sp = (u.sAt(t + dt) - u.sAt(t - dt)) / (2 * dt), p = u.at(s), c0 = course(u, s, 14);
+    // the hull turns into the line before it bends: it heads where the line will be heading yawLead seconds on (half of it)
+    const lead = F.yawLead === undefined ? 9 : F.yawLead, cL = course(u, u.sAt(t + lead), 14), h0 = c0[0] + 0.5 * LR.wrapPi(cL[0] - c0[0]);
+    const cA = course(u, u.sAt(t + lead * 0.5) - 30, 12), cB = course(u, u.sAt(t + lead * 0.5) + 30, 12), kappa = LR.wrapPi(cB[0] - cA[0]) / 60;
+    // the wind: long swells and shorter gusts, stronger in a strong wind
+    const w = windOf(u), g = 0.55 + 0.9 * w, A = Object.assign({ heave: 0.6, pitch: 1.0, roll: 1.1, yaw: 1.3 }, F.sway || {}), ph = u.phase || 0;
+    const wave = (k, a) => Math.sin(sw[k][0] * t + 1.3 + ph * 7 + a) * 0.7 + Math.sin(sw[k][1] * t + 0.4 + ph * 3 + a * 2.1) * 0.3;
+    const heave = A.heave * g * wave('heave', 0), pitchS = A.pitch * g * wave('pitch', 0.9), rollS = A.roll * g * wave('roll', 2.2), yawS = A.yaw * g * wave('yaw', 3.7);
+    // banked a little into the turn (a pendulum-hung gondola swings out; the hull leans with what the fins and the props ask)
+    const bankT = LR.clamp(kappa * 100 * (F.bankK === undefined ? 2.6 : F.bankK), -(F.bankMax || 3.5), F.bankMax || 3.5);
+    const fw = [Math.cos(c0[0]), 0, Math.sin(c0[0])], surge = 0.35 * g * Math.sin(sw.surge * t + ph * 5);
+    // it noses up a little as a swell lifts it (the gas first), and down as it sinks
+    const pitch = (c0[1] * 0.7 + pitchS + 0.5 * g * Math.cos(sw.heave[0] * t + 1.3 + ph * 7) * A.heave + (F.trim || 0)) * D2R, roll = (bankT + rollS) * D2R, h = h0 + yawS * D2R;
+    const P = [p[0] + fw[0] * surge, p[1] + heave, p[2] + fw[2] * surge];
+    const cmd = { fly: true, drift: true, t, limbs: {}, rate: 1, body: M.bodyFrame(P, h, pitch, roll), h, light: 1, u: s, fix: 0, low: 0, idle: 0, lat: 0, ground: P[1], beat: 0, phase: 0, bank: roll, pitch, speed: sp, kappa, climb: Math.sin(c0[1]), crab: LR.wrapPi(h - c0[0]), heave, wind: w, extras: {}, neck: {}, head: {} };
+    // what the command steers: rudders into the turn, elevators against the pitch, the cranes slewing, a windsock in the gusts
+    if (F.drive) F.drive(cmd, { t, kappa, pitchS, rollS, yawS, wind: w, g, sw, u });
+    return cmd;
+  };
+  // the numbers a drifting flyer must keep (gym.mjs judge): far over the land under every part of it, banked a few degrees
+  // at most, pitched little, turning slowly, really moving with the wind, at the pace it was given, closed and repeatable
+  M.auditFly = (u, o = {}) => {
+    if (!isDrift(u)) return audit0(u, o);
+    const S = u.K.spec, F = S.flight, L = LR.land, dt = o.dt || 0.1, n = Math.ceil(u.lap / dt), kin = u.kin;
+    const A = { fly: true, drift: true, unit: u.name, kind: u.kind, tonnes: S.tonnes || 1, lap: u.lap, len: u.len, clear: 1e9, clearAt: null, bankMax: 0, pitchMax: 0, yawRate: 0, crabMax: 0, speedMin: 1e9, speedMax: 0, heave: 0, tilt: 0, spin: 0, load: 1, bankShare: 0, wing: [0, 0, 0, 0], beatShare: 0, glide: 1, bob: 0, cycles: 0, stride: 0, moves: {}, reach: 0 };
+    const was = u.windTest; u.windTest = o.wind === undefined ? 1 : o.wind;      // judged in a gale: the most it will ever sway
+    let hLo = 1e9, hHi = -1e9, rLo = 1e9, rHi = -1e9, pLo = 1e9, pHi = -1e9, prevH = null;
+    const hull = F.hull || [[0, 0, 0]], lagTips = (kin.extras || []).filter((e) => e.type === 'lag');
+    for (let i = 0; i <= n; i++) {
+      const t = (u.lap * i) / n - (u.offset || 0), c = M.flyCmd(u, t), B = c.body;
+      for (const q of hull) { const w = M.apply(B, q), d = w[1] - L.h(w[0], w[2]); if (d < A.clear) { A.clear = d; A.clearAt = [w[0], w[2]]; } }
+      A.bankMax = Math.max(A.bankMax, Math.abs(c.bank) / D2R); A.pitchMax = Math.max(A.pitchMax, Math.abs(Math.asin(LR.clamp(B.x[1], -1, 1))) / D2R); A.crabMax = Math.max(A.crabMax, Math.abs(c.crab) / D2R);
+      A.speedMin = Math.min(A.speedMin, c.speed); A.speedMax = Math.max(A.speedMax, c.speed);
+      if (prevH !== null) A.yawRate = Math.max(A.yawRate, Math.abs(LR.wrapPi(c.h - prevH)) / D2R / (u.lap / n)); prevH = c.h;
+      const path = u.at(c.u)[1]; hLo = Math.min(hLo, B.p[1] - path); hHi = Math.max(hHi, B.p[1] - path); rLo = Math.min(rLo, c.bank); rHi = Math.max(rHi, c.bank); pLo = Math.min(pLo, c.pitch); pHi = Math.max(pHi, c.pitch);
+    }
+    // what hangs: every trailing part's lowest point, from the whole pose (a few hundred samples are enough for a slow thing)
+    if (lagTips.length) for (let i = 0; i <= 240; i++) { const t = (u.lap * i) / 240 - (u.offset || 0), r = M.poseAt(u, t); for (const e of lagTips) { const f = r.W[e.name], tip = M.apply(f, [0, e.len || 1, 0]), d = tip[1] - L.h(tip[0], tip[2]); if (d < A.clear) { A.clear = d; A.clearAt = [tip[0], tip[2]]; } } }
+    A.heave = hHi - hLo; A.tilt = Math.max(rHi - rLo, pHi - pLo) / D2R;
+    for (const e of kin.extras || []) if (e.type === 'spin' && e.rate) A.spin = Math.max(A.spin, Math.abs(e.rate));
+    const a = M.poseAt(u, 3.21), b = M.poseAt(u, 3.21), c2 = M.poseAt(u, 3.21 + u.lap); let det = 0, loop = 0; for (const k in a.W) det = Math.max(det, V.len(V.sub(a.W[k].p, b.W[k].p)));
+    for (const k in a.W) { const e = kin.extras.find((q) => q.name === k); if (e && e.type === 'spin' && e.rate) continue; const A2 = a.W[k], C2 = c2.W[k]; loop = Math.max(loop, V.len(V.sub(C2.p, A2.p)), 5 * V.len(V.sub(C2.x, A2.x)), 5 * V.len(V.sub(C2.y, A2.y))); }      /* (its place and its turn: an axis off by 1 mrad is 5 mm at a part's end) */      /* (a propeller turns at its own rate: its blades are not on the lap's beat) */
+    A.determinism = det; A.loop = loop; u.windTest = was;
+    return A;
+  };
+}
+
+
 // ── lib/48_mech_gait.js ──
 // machine-wilds · 48_mech_gait — walking on land that is not level.  A machine follows a closed way; where each foot
 // comes down is decided once, from the land (its height, its slope, what stands there), and everything else is a pure
@@ -7293,6 +7377,324 @@ void main(){ const vec3 B = vec3(36.0, 8.0, 36.0); float t = uTime * 0.18 + seed
 }
 
 
+// ── lib/64_cloud.js ──
+// machine-wilds · 64_cloud — a cloud of its own round something that lives in the sky (a realm's airship), and the
+// lightning in it.  Drawn after the lit world and its see-through things, before the picture is resolved:
+//   · the bank: a volume of noise (a 64³ tileable Perlin-Worley / Worley texture made on the graphics card at start) inside
+//     a lumpy, flat-bottomed ellipsoid that travels with its host and slips a little against it, so its shape lives.
+//     Raymarched at a fraction of the frame's size (more steps and a finer picture on the higher tiers), lit by the key light
+//     through a short march toward it (Beer's law with a powder term, a forward and a back lobe — the silver edge — and two
+//     octaves of light scattered more than once), by the sky above and the land below, and from inside by lightning, by its
+//     host's lamps after dark and by its red beacons.  Joined to the picture with the depth (a low-res sample counts only
+//     where its depth agrees), so a hull inside it is hidden by what is in front of it and hides what is behind it.  What
+//     stands under it or inside it loses some of its sun.  The weather sets it: thin and broken on a clear day (the host a
+//     faint shape in it), heavier in overcast and mist, dense and low in rain.
+//   · strikes (rain): flashes inside the bank that light it from within — the host's own body casts its shadow into the lit
+//     cloud (its hull is a pair of ellipsoids the shader knows), and one flash in each burst is put behind it as the eye sees
+//     it, so for a moment its silhouette stands in the glow — bolts from the cloud to its lightning rods with restrikes,
+//     arcs crawling down its conductors after, and discharges from the wire it trails to the ground.  Every strike lights
+//     the host's hull (a lamp), the cloud and the whole scene (the flash every pass reads, uWx2.w) for its frames.
+//   All of it is a pure function of the clock (and of the eye, for which flash goes behind the hull): a film frame is the
+//   same whenever it is drawn.
+// API ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+//   LR.cloud.host = { unit: 'name', offset: [x, y, z] (the bank's centre from the host's origin, world axes), radii: [x, y, z],
+//                     hulls: [[cx, cy, cz, rx, ry, rz]…] (≤ 2, body frame: what casts its shadow in the flashes),
+//                     rods: [[x, y, z]…] tips · wires: [[[x, y, z]…]…] conductors (body frame) · trail: { bone, at } the wire's end ·
+//                     glow: [x, y, z] its town's lights · beacons: [[x, y, z]…] (each with a turning shade 'shade_i') ·
+//                     search: { bone, at, dir, cone° } its searchlight, a cone of light through the cloud after dark }
+//   LR.cloud.strikes = [t | { t, kind: 'cloud'|'rod'|'ground', rod }]   strikes a film can count on (any weather)
+//   LR.cloud.strikeAt(time) → the strike lighting that time (or null) · LR.cloud.state(time) → the bank's numbers for that weather
+//   ?off=cloud leaves the bank and its lightning out · ?strike=t:kind:rod,… adds strikes · ?clouddbg=1…4 shows what the march sees
+{
+  const T = THREE, CL = (LR.cloud = { host: null, strikes: [], on: false });
+  const h1 = (a, b = 0) => LR.hash2(Math.floor(a) * 7919 + 31, b * 104729 + 11);
+  // the tiers: the bank's picture as a share of the frame, steps through it, steps toward the light
+  const Q = { low: [0.34, 24, 3], medium: [0.5, 36, 4], high: [0.5, 52, 5], ultra: [0.5, 68, 6] };
+
+  // ── the weather → the bank ─────────────────────────────────────────────────────────────────────────────────────────
+  // σ: extinction (1/m) at full density · cover: how much of the noise is cloud · base: the flat underside, in the bank's own
+  // units (−1 its lowest) · dark: how much light the storm swallows · erode: how ragged its edges are
+  CL.state = () => { const W = LR.wx, rain = W.rain || 0, cloud = W.cloud || 0, fog = (W.cur && W.cur.fog) || 0.001, mist = LR.sm(0.004, 0.012, fog) * (1 - rain);
+    const over = LR.sm(0.45, 0.95, cloud) * (1 - rain);
+    const s = { sigma: 0.016 + 0.007 * over + 0.011 * mist + 0.06 * rain, cover: 0.62 + 0.1 * over + 0.13 * mist + 0.31 * rain, base: -0.64 - 0.08 * over - 0.06 * mist - 0.22 * rain, dark: 0.15 + 0.35 * over + 0.6 * rain, erode: 0.6 - 0.25 * rain };
+    s.cover = Math.min(s.cover, 0.97); return s; };
+
+  // ── strikes ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+  // one burst in each 6.5 s slot that rain grants it (more of them the heavier the rain), and the film's own
+  const SLOT = 6.5, KINDS = ['cloud', 'cloud', 'cloud', 'rod', 'rod', 'ground'];
+  const make = (t0, seed, kind, rod, first) => { const k = kind || KINDS[Math.floor(h1(seed, 3) * KINDS.length)], s = { t0, seed, kind: k, rod: rod === undefined ? Math.floor(h1(seed, 4) * 5) : rod, side: h1(seed, 5) < 0.5 ? -1 : 1, pulses: [], strokes: [] };
+    if (k === 'cloud') { let t = 0; const n = 3 + Math.floor(h1(seed, 6) * 3), rv = first ? 0 : Math.floor(h1(seed, 7) * n); for (let i = 0; i < n; i++) { t += i ? 0.06 + 0.2 * h1(seed, 10 + i) : 0; s.pulses.push({ t, len: 0.05 + 0.1 * h1(seed, 20 + i), I: 0.55 + 0.45 * h1(seed, 30 + i), at: [(h1(seed, 40 + i) - 0.5) * 2.2, (h1(seed, 50 + i) - 0.3) * 1.0, (h1(seed, 60 + i) - 0.5) * 2.0], reveal: i === rv }); } s.dur = t + 0.3; }
+    else { let t = 0; const n = 2 + Math.floor(h1(seed, 6) * 3); for (let i = 0; i < n; i++) { t += i ? 0.05 + 0.14 * h1(seed, 10 + i) : 0; s.strokes.push({ t, I: i ? 0.5 + 0.4 * h1(seed, 30 + i) : 1 }); }
+      s.top = [(h1(seed, 41) - 0.5) * 90, 55 + 40 * h1(seed, 42), (h1(seed, 43) - 0.5) * 90]; s.ground = [(h1(seed, 44) - 0.5) * 60, 0, (h1(seed, 45) - 0.5) * 60]; s.crawl = 0.55 + 0.35 * h1(seed, 46);
+      s.pulses.push({ t: 0, len: t + 0.12, I: 1, at: null, reveal: true }); s.dur = Math.max(t + 0.35, s.crawl + 0.25); }
+    return s; };
+  CL.strikeAt = (time) => { let best = null;
+    for (const e of CL.strikes) { const o = typeof e === 'number' ? { t: e } : e; if (time >= o.t && time < o.t + 1.8) { const s = make(o.t, Math.round(o.t * 10) % 997, o.kind, o.rod, true);      /* (a film's own strike: its first flash is the one behind the hull) */ if (time < o.t + s.dur && (!best || s.t0 > best.t0)) best = s; } }
+    if (best) return best; const rain = LR.wx.rain || 0; if (rain < 0.45) return null; const chance = 0.25 + 0.65 * LR.sm(0.45, 0.95, rain), k = Math.floor(time / SLOT);
+    for (const kk of [k, k - 1]) { if (h1(kk, 1) > chance) continue; const t0 = kk * SLOT + 0.4 + h1(kk, 2) * (SLOT - 1.8), s = make(t0, kk % 997); if (time >= t0 && time < t0 + s.dur) return s; } return null; };
+  // how bright a stroke is at an age (s), frame by frame at 24 a second: on, nearly off, on, a tail
+  const FL = [1.0, 0.25, 0.8, 0.32, 0.12, 0.04, 0];
+  const strokeI = (age) => { if (age < 0) return 0; const a = age * 24, i = Math.floor(a); return i > 6 ? 0 : FL[i] * (0.85 + 0.15 * h1(Math.floor(age * 48), 9)); };
+  const pulseI = (p, age, seed) => { const a = age - p.t; if (a < 0 || a > p.len + 0.08) return 0; const env = a < p.len ? 1 : 1 - (a - p.len) / 0.08; return p.I * env * (0.45 + 0.55 * h1(Math.floor(a * 60) + seed * 13, 77)); };
+
+  // ── shaders ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+  // the noise: four tileable fields in one 64³ texture — r a Perlin-Worley (round billows with gaps between), g b a Worley
+  // fbm at three frequencies each (the erosion), all repeating across the cube's faces
+  const noiseFS = `//#include head
+//#include hash
+in vec2 vUv; out vec4 o; uniform float uZ;
+vec3 hp(vec3 c, float P){ return hash33(mod(c, P) + P * 3.17); }
+float worley(vec3 p, float P){ vec3 q = p * P, i = floor(q), f = fract(q); float md = 9.0;
+  for (int z = -1; z <= 1; z++) for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec3 of = vec3(float(x), float(y), float(z)); vec3 d = of + hp(i + of, P) - f; md = min(md, dot(d, d)); }
+  return 1.0 - sqrt(md); }
+float grad(vec3 c, vec3 f, float P){ vec3 g = hp(c, P) * 2.0 - 1.0; return dot(normalize(g + 1e-4), f); }
+float perlin(vec3 p, float P){ vec3 q = p * P, i = floor(q), f = fract(q), u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  float a = grad(i, f, P), b = grad(i + vec3(1, 0, 0), f - vec3(1, 0, 0), P), c = grad(i + vec3(0, 1, 0), f - vec3(0, 1, 0), P), d = grad(i + vec3(1, 1, 0), f - vec3(1, 1, 0), P);
+  float e = grad(i + vec3(0, 0, 1), f - vec3(0, 0, 1), P), f1 = grad(i + vec3(1, 0, 1), f - vec3(1, 0, 1), P), g = grad(i + vec3(0, 1, 1), f - vec3(0, 1, 1), P), h = grad(i + vec3(1, 1, 1), f - vec3(1, 1, 1), P);
+  return mix(mix(mix(a, b, u.x), mix(c, d, u.x), u.y), mix(mix(e, f1, u.x), mix(g, h, u.x), u.y), u.z) * 0.5 + 0.5; }
+float wfbm(vec3 p, float P){ return worley(p, P) * 0.625 + worley(p, P * 2.0) * 0.25 + worley(p, P * 4.0) * 0.125; }
+float remap(float v, float a, float b, float c, float d){ return c + (v - a) / (b - a) * (d - c); }
+void main(){
+  vec3 p = vec3(vUv, uZ);
+  float pf = perlin(p, 4.0) * 0.6 + perlin(p, 8.0) * 0.28 + perlin(p, 16.0) * 0.12; pf = sat((pf - 0.5) * 1.7 + 0.5);
+  float w = wfbm(p, 4.0), pw = sat(remap(pf, -(1.0 - w) * 0.9, 1.0, 0.0, 1.0));
+  o = vec4(pw, wfbm(p, 3.0), wfbm(p, 6.0), wfbm(p, 12.0));
+}`;
+  // the bank, marched
+  const CHUNK = `
+uniform highp sampler3D tN3; uniform vec4 uBC, uBR, uBP, uBW, uBQ; uniform mat4 uShip; uniform vec4 uHullC[2], uHullR[2];
+uniform vec4 uFl[3], uGl[3], uGlC[3], uSp, uSd;
+float remap(float v, float a, float b, float c, float d){ return c + (v - a) / (b - a) * (d - c); }
+// the bank's outline: an ellipsoid whose edge wanders with a slow noise, a flat ragged underside, a rounded top
+float shapeAt(vec3 p, out float hg){
+  vec3 q = (p - uBC.xyz) / uBR.xyz;
+  float big = textureLod(tN3, (p - uBW.xyz) * 0.0021 + vec3(0.31, 0.17, 0.53), 0.0).g;
+  hg = sat((q.y - uBR.w) / (1.0 - uBR.w));
+  float r = length(vec3(q.x, (q.y - 0.05) * 0.95, q.z)) + (big - 0.45) * 0.6;
+  return smoothstep(1.0, 0.62, r) * smoothstep(uBR.w - 0.04, uBR.w + 0.16, q.y + (big - 0.5) * 0.22) * smoothstep(1.0, 0.55, q.y);
+}
+float densAt(vec3 p, float hg, float sh, bool fine){
+  vec3 np = (p - uBW.xyz) * uBC.w; vec4 n = textureLod(tN3, np, 0.0);
+  // the Perlin-Worley lies in 0.45…0.86: spread it, let the Worley cells cut gaps, and bring the result to about even odds
+  // (measured: then a coverage of c fills about c of the volume)
+  float base = sat((n.r - 0.5) * 2.6); base = remap(base, (1.0 - n.g) * 0.55, 1.0, 0.0, 1.0); base = sat((base + 0.3) / 0.86);
+  // the noise's own surfaces make the billows: coverage picks how much of it is cloud, the outline cuts it (not fades it)
+  // round the host the cloud never opens a hole (the noise travels with it: a gap in front of it would stay there for minutes)
+  vec3 hl = (uShip * vec4(p, 1.0)).xyz; float core = smoothstep(1.0, 0.3, length((hl + vec3(0.0, 14.0, 0.0)) / vec3(125.0, 66.0, 80.0)));      // (centred a little low: the gondola is in it too)
+  base = mix(base, 0.45 + 0.55 * base, core); float cov = min(0.98, uBP.y * max(sh, core) + core * 0.3);
+  float d = remap(base, 1.0 - cov, 1.0, 0.0, 1.0) * mix(0.55, 1.0, max(sh, core));
+  if (d <= 0.0) return 0.0;
+#ifndef CLOUD_CHEAP
+  if (fine) { vec4 m = textureLod(tN3, np * 3.7 + vec3(0.0, uBW.w * 0.006, uBW.w * 0.003), 0.0); float det = m.g * 0.625 + m.b * 0.25 + m.a * 0.125;
+    d = remap(d, mix(1.0 - det, det, sat(hg * 3.0)) * uBP.w * 0.8, 1.0, 0.0, 1.0); }
+#endif
+  return sat(d * 1.25) * uBP.x;
+}
+// how much of a flash at f reaches p past the host's hull (soft: a cloud blurs a shadow)
+float shipLit(vec3 p, vec3 f){ vec3 a = (uShip * vec4(p, 1.0)).xyz, b = (uShip * vec4(f, 1.0)).xyz; float lit = 1.0;
+  for (int i = 0; i < 2; i++) { if (uHullR[i].w < 0.5) continue; vec3 A = (a - uHullC[i].xyz) / uHullR[i].xyz, B = (b - uHullC[i].xyz) / uHullR[i].xyz, d = B - A; float t = clamp(-dot(A, d) / max(dot(d, d), 1e-6), 0.0, 1.0);
+    lit = min(lit, smoothstep(0.82, 1.18, length(A + d * t))); }
+  return lit; }
+`;
+  const cloudFS = `//#include head
+//#include hash
+//#include pack
+//#include frame
+//#include air
+//#include sky
+in vec2 vUv; out vec4 o; uniform sampler2D tDepth; uniform float uEnvMips;
+${CHUNK}
+float hgp(float mu, float g){ float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * mu, 1.5)); }
+vec2 hitE(vec3 ro, vec3 rd, vec3 c, vec3 r){ vec3 o2 = (ro - c) / r, d2 = rd / r; float a = dot(d2, d2), b = dot(o2, d2), cc = dot(o2, o2) - 1.0, D = b * b - a * cc; if (D <= 0.0) return vec2(1.0, -1.0); D = sqrt(D); return vec2((-b - D) / a, (-b + D) / a); }
+// optical depth toward the key light: a few steps, each longer than the last
+float lightOD(vec3 p){ float od = 0.0, t = 0.0, ds = 7.0;
+  for (int i = 0; i < LIGHT_STEPS; i++) { vec3 q = p + uSunDir * (t + ds * 0.5); float hg, sh = shapeAt(q, hg); if (sh > 0.001) od += densAt(q, hg, sh, i == 0) * ds; t += ds; ds *= 2.0; }
+  return od; }
+void main(){
+  float d = textureLod(tDepth, vUv, 0.0).r; bool sky = d >= 0.999999;
+  vec3 wp = worldAt(vUv, sky ? 0.99999 : d), rd = wp - uCamPos; float dist = length(rd); rd /= dist; if (sky) dist = 1e6;
+  // what stands under the bank or in it loses some of its sun: the light's way out of the bank, coarsely
+  float keep = 1.0;
+  if (!sky) { vec2 hs = hitE(wp, uSunDir, uBC.xyz, uBR.xyz * 1.04); if (hs.y > 0.0) { float a = max(hs.x, 0.0), od = 0.0; for (int i = 0; i < 4; i++) { vec3 q = wp + uSunDir * mix(a, hs.y, (float(i) + 0.5) / 4.0); float hg, sh = shapeAt(q, hg); if (sh > 0.001) od += densAt(q, hg, sh, false); } od *= (hs.y - a) / 4.0;
+      keep = mix(1.0, exp(-od * 0.9), 0.7 * (1.0 - uCloud.x * uCloud.w * 0.8)); } }
+  vec2 th = hitE(uCamPos, rd, uBC.xyz, uBR.xyz * 1.04); float t0 = max(th.x, 0.0), t1 = min(th.y, uBQ.w > 3.5 ? (th.x + th.y) * 0.5 : dist);
+#ifdef CLOUD_DEBUG
+  if (uBQ.w > 2.5 && uBQ.w < 3.5) { o = vec4(min(dist, 2000.0) / 1000.0, t0 / 1000.0, th.y / 1000.0, 0.0) * 0.4; return; }
+#endif
+  if (t1 <= t0) { o = vec4(0.0, 0.0, 0.0, keep); return; }
+  float jit = ign(gl_FragCoord.xy + mod(uFrame, 32.0) * vec2(5.588, 3.371)), mu = dot(rd, uSunDir);
+  // two lobes (the silver edge looking toward the light, a softer back glow) and how much light the octaves keep
+  float ph0 = mix(hgp(mu, 0.78), hgp(mu, -0.22), 0.32), ph1 = mix(hgp(mu, 0.39), hgp(mu, -0.11), 0.32), ph2 = 0.0796;
+  vec3 sunC = uSunCol * PI, skyUp = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0), skyLow = envAt(normalize(vec3(rd.x, 0.05, rd.z)), uEnvMips - 1.0);
+  vec3 ground = vec3(0.085, 0.09, 0.085) * (uSunCol * max(uSunDir.y, 0.0) * (1.0 - uCloud.x * uCloud.w) + skyUp * 0.6);
+  vec3 flash = uWx2.w * vec3(0.55, 0.62, 0.95) * 1.2;
+  int N = STEPS; float ds = (t1 - t0) / float(N), T = 1.0, tw = 0.0, ws = 0.0, dmax = 0.0, shmax = 0.0; vec3 S = vec3(0.0);
+  for (int i = 0; i < STEPS; i++) {
+    float t = t0 + (float(i) + jit) * ds; vec3 p = uCamPos + rd * t; float hg, sh = shapeAt(p, hg); if (sh < 0.001) continue;
+    float dn = densAt(p, hg, sh, true); shmax = max(shmax, sh); dmax = max(dmax, dn / uBP.x); if (dn <= 0.0) continue;
+    float od = lightOD(p), pw = 1.0 - exp(-dn * 46.0);
+    // the key light: what comes straight through (two lobes), and what has diffused through the cloud (a thick cloud in sun is
+    // nearly as bright as white paper there: single scattering alone leaves it grey)
+    vec3 sun = sunC * ((ph0 * exp(-od) + 0.6 * ph1 * exp(-od * 0.4)) * mix(pw, 1.0, 0.35 + 0.65 * sat(mu * 0.5 + 0.5)) + 0.11 * exp(-od * 0.12) * (0.55 + 0.45 * pw)) * (1.0 - 0.85 * uBP.z * uBP.z);      // (under a storm's own lid little sun is left to diffuse)
+    // the sky's light: a thick cloud is as bright as the sky over it at its top and darker toward its base (light from above
+    // has had the whole of it to get through), lit a little from the land beneath; storms swallow more of it
+    float top = smoothstep(0.0, 1.0, hg), deep = mix(0.3, 1.0, top) * (1.0 - 0.6 * uBP.z * (1.0 - top));
+    vec3 amb = (skyUp * deep * 1.15 + skyLow * 0.2 + ground * (1.0 - 0.7 * top)) * (0.6 + 0.4 * pw) + flash;
+    vec3 inner = vec3(0.0);
+    for (int k = 0; k < 3; k++) { if (uFl[k].w <= 0.0) continue; vec3 v = uFl[k].xyz - p; float l = length(v); inner += vec3(0.74, 0.82, 1.0) * uFl[k].w * 6.0 * exp(-l / 90.0) / (1.0 + l * l / 14400.0) * shipLit(p, uFl[k].xyz); }      // (light diffusing through a cloud: a glow a hundred metres and more across)
+    for (int k = 0; k < 3; k++) { if (uGlC[k].w <= 0.0) continue; vec3 v = uGl[k].xyz - p; float l = length(v); inner += uGlC[k].rgb * uGlC[k].w * exp(-l / uGl[k].w) / (1.0 + l * l * 0.004); }
+    // its searchlight: a cone of light through the cloud (strongest looking back up it)
+    if (uSd.w > 0.0) { vec3 v = p - uSp.xyz; float l = length(v); vec3 lv = v / max(l, 1e-3); float cs = dot(lv, uSd.xyz); if (cs > uSp.w) inner += vec3(1.0, 0.93, 0.8) * uSd.w * smoothstep(uSp.w, mix(uSp.w, 1.0, 0.5), cs) * (0.3 + hgp(dot(lv, -rd), 0.6) * 6.0) / (1.0 + l * l * 0.0004) * exp(-l * 0.004); }
+    vec3 L = sun + amb + inner;
+    float a = exp(-dn * ds), w = T * (1.0 - a); S += w * L; tw += w * t; ws += w; T *= a;
+    if (T < 0.008) break;
+  }
+  // the air between the eye and the cloud veils it as it veils everything else (the haze the air pass gives the far land)
+  if (ws > 1e-5) { float tm = tw / ws, Tf = exp(-fogDepth(uCamPos, rd, tm)); vec3 hz = envAt(normalize(vec3(rd.x, 0.10 + max(rd.y, 0.0) * 0.5, rd.z)), 2.5);
+    S = S * Tf + (1.0 - T) * (1.0 - Tf) * hz; }
+  o = vec4(S, T * keep);
+#ifdef CLOUD_DEBUG
+  o = uBQ.w > 1.5 && uBQ.w < 2.5 || uBQ.w > 3.5 ? vec4(vec3(T) * 0.25, 0.0) : vec4(vec3(1.0 - T, dmax, shmax) * 0.6, 0.0);      // ?clouddbg=1: red how much of the ray it takes, green the densest, blue the outline · 2: what it lets through · 3: the march's range · 4: 2 for its near half      // ?clouddbg=1: how much of the eye's ray the bank takes, in red
+#endif
+}`;
+  // joined to the picture: four low-res samples, each counted by how well its depth agrees with this pixel's
+  const joinFS = `//#include head
+//#include frame
+in vec2 vUv; out vec4 o; uniform sampler2D tDepth, tCloud; uniform vec4 uLow;
+void main(){ float z = viewZ(textureLod(tDepth, vUv, 0.0).r); vec2 f = vUv * uLow.xy - 0.5, b = floor(f), fr = f - b; vec4 acc = vec4(0.0); float ws = 0.0;
+  for (int j = 0; j < 2; j++) for (int i = 0; i < 2; i++) { vec2 c = (b + vec2(float(i), float(j)) + 0.5) * uLow.zw; float zs = viewZ(textureLod(tDepth, c, 0.0).r);
+    float w = (i == 0 ? 1.0 - fr.x : fr.x) * (j == 0 ? 1.0 - fr.y : fr.y); w = max(w / (0.02 + abs(zs - z) / z * 40.0), 1e-6); acc += textureLod(tCloud, c, 0.0) * w; ws += w; }
+  o = acc / ws; }`;
+  // bolts and arcs: jagged strands as camera-facing segments, a white core and a blue glow, dimmed by the bank between them and the eye
+  const NS = 12, SEG = 24, BR = 8, NBR = 2;
+  const boltVS = `//#include head
+//#include hash
+//#include frame
+in vec3 position; in vec4 seg; uniform mat4 viewMatrix, projectionMatrix; uniform vec4 uSA[${NS}], uSB[${NS}], uSM[${NS}], uSC[${NS}]; uniform vec4 uBC, uBR, uBP; out vec2 vQ; out float vI; out float vCore; out float vArc;
+vec3 jag(vec3 A, vec3 B, float i, float n, float seed, float amp, bool pinned, vec3 s1, vec3 s2){ vec2 acc = vec2(0.0), all = vec2(0.0);
+  for (int m = 0; m < ${SEG}; m++) { if (float(m) >= n) break; vec2 r = hash22(vec2(seed * 1.37 + float(m) * 7.31, seed * 0.71 + 3.3)) - 0.5; if (float(m) < i) acc += r; all += r; }
+  if (pinned) acc -= all * i / n; return mix(A, B, i / n) + (s1 * acc.x + s2 * acc.y) * amp; }
+vec3 bez(vec3 A, vec3 M, vec3 B, float t){ float s = 1.0 - t; return A * s * s + M * 2.0 * s * t + B * t * t; }
+vec3 trunk(vec3 A, vec3 M, vec3 B, float i, float n, float sd, float amp, vec3 s1, vec3 s2){ return jag(A, B, i, n, sd, amp, true, s1, s2) - mix(A, B, i / n) + bez(A, M, B, i / n); }
+// how much of the bank lies between a point and the eye (its ellipsoid, at its mean density)
+float bankT(vec3 p){ vec3 ro = (uCamPos - uBC.xyz) / uBR.xyz, e = (p - uBC.xyz) / uBR.xyz, d = e - ro; float a = dot(d, d), b = dot(ro, d), c = dot(ro, ro) - 1.0, D = b * b - a * c; if (D <= 0.0) return 1.0; D = sqrt(D);
+  float s0 = clamp((-b - D) / a, 0.0, 1.0), s1 = clamp((-b + D) / a, 0.0, 1.0); return exp(-(s1 - s0) * length((p - uCamPos)) * uBP.x * uBP.y * 0.45); }
+void main(){
+  int k = int(seg.x + 0.5); vec4 A = uSA[k], B = uSB[k], Mc = uSM[k], C = uSC[k]; float I = A.w; vec4 OFF = vec4(2.0, 2.0, 2.0, 1.0); if (I <= 0.0) { gl_Position = OFF; return; }
+  float i = seg.y, n = seg.z, br = seg.w; if (br > 0.5 && br > C.x + 0.5) { gl_Position = OFF; return; }
+  float sd = B.w; vec3 d = B.xyz - A.xyz; float L = max(length(d), 1e-3); vec3 dn = d / L, toE = normalize(uCamPos - Mc.xyz), s1 = normalize(cross(dn, toE)), s2 = normalize(cross(dn, s1)); float amp = L * Mc.w, taper = 1.0;
+  vec3 P0, P1;
+  if (br < 0.5) { P0 = trunk(A.xyz, Mc.xyz, B.xyz, i, n, sd, amp, s1, s2); P1 = trunk(A.xyz, Mc.xyz, B.xyz, i + 1.0, n, sd, amp, s1, s2); }
+  else { float at = 3.0 + floor(hash11(sd + br * 3.1) * (${SEG}.0 - 8.0)); vec3 o0 = trunk(A.xyz, Mc.xyz, B.xyz, at, ${SEG}.0, sd, amp, s1, s2), dir = normalize(dn * 0.75 + s1 * (br < 1.5 ? 0.8 : -0.8) * (0.5 + hash11(sd * 3.3 + br)) + s2 * (hash11(sd + br * 7.0) - 0.5));
+    vec3 E = o0 + dir * L * (0.14 + 0.18 * hash11(sd + br * 9.0)); P0 = jag(o0, E, i, n, sd + br * 17.0, amp * 0.6, false, s1, s2); P1 = jag(o0, E, i + 1.0, n, sd + br * 17.0, amp * 0.6, false, s1, s2); taper = 1.0 - (i + 0.5) / n * 0.75; I *= 0.5 * taper; }
+  vec3 sdir = P1 - P0; float sl = length(sdir); sdir /= max(sl, 1e-4); vec3 side = normalize(cross(sdir, normalize(uCamPos - P0)));
+  float dist = length(P0 - uCamPos), px = dist * 2.2 / uRes.y, core = max(C.y * 0.12, px * 0.7) * (0.55 + 0.45 * taper), w = core * (C.w > 0.5 ? 5.0 : 9.0);
+  vec3 wp = mix(P0, P1, position.y * 0.5 + 0.5) + sdir * position.y * w * 0.5 + side * position.x * w;
+  vQ = position.xy; vCore = w / core; vArc = C.w; vI = I * max(bankT(P0), C.w > 0.5 ? 0.35 : 0.18) * smoothstep(0.4, 1.5, dist);
+  gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`;
+  const boltFS = `//#include head
+//#include frame
+in vec2 vQ; in float vI; in float vCore; in float vArc; out vec4 o; uniform sampler2D tDepth;
+void main(){ float zs = viewZ(textureLod(tDepth, gl_FragCoord.xy * uRes.zw, 0.0).r), zp = viewZ(gl_FragCoord.z); float tol = 0.4 + zp * 0.01; if (zp > zs + tol) discard;
+  float x = abs(vQ.x) * vCore, c = exp(-x * x * 1.6), g = exp(-abs(vQ.x) * 3.0) * (1.0 - vQ.y * vQ.y * 0.3);
+  vec3 cc = vArc > 0.5 ? vec3(0.8, 0.95, 1.0) : vec3(0.86, 0.9, 1.0), gc = vArc > 0.5 ? vec3(0.1, 0.55, 1.0) : vec3(0.42, 0.52, 1.0);
+  o = vec4((cc * c * 90.0 + gc * (g * g * 9.0 + g * 1.4)) * vI, 0.0); }`;
+
+  // ── setting up ──────────────────────────────────────────────────────────────────────────────────────────────────────
+  const v = (value) => ({ value }), V4 = (n) => Array.from({ length: n }, () => new T.Vector4());
+  const BU = { tN3: v(null), uBC: v(new T.Vector4()), uBR: v(new T.Vector4()), uBP: v(new T.Vector4()), uBW: v(new T.Vector4()), uBQ: v(new T.Vector4()), uShip: v(new T.Matrix4()), uHullC: v(V4(2)), uHullR: v(V4(2)), uFl: v(V4(3)), uGl: v(V4(3)), uGlC: v(V4(3)), uSp: v(new T.Vector4()), uSd: v(new T.Vector4()) };
+  CL.U = BU;
+  CL.init = () => {
+    if (LR.off.has('cloud') || !CL.host) return; const R = LR.render, G = LR.gpu, q = Q[G.tier.name] || Q.medium;
+    // ?strike=12.5:rod:2,40:cloud — strikes at those clock times (to look at one in a still or live)
+    for (const e of (LR.q('strike', '') || '').split(',').filter(Boolean)) { const [t, kind, rod] = e.split(':'); if (!isNaN(+t)) CL.strikes.push({ t: +t, kind: kind || undefined, rod: rod === undefined ? undefined : +rod }); }
+    // the noise, once: 64 slices of the cube
+    const N3 = 64, rt3 = new T.WebGL3DRenderTarget(N3, N3, N3, { format: T.RGBAFormat, type: T.UnsignedByteType, depthBuffer: false });
+    const tex = rt3.texture; tex.wrapS = tex.wrapT = tex.wrapR = T.RepeatWrapping; tex.minFilter = tex.magFilter = T.LinearFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+    const mN = LR.pass(noiseFS, { uZ: v(0) }); for (let z = 0; z < N3; z++) { mN.uniforms.uZ.value = (z + 0.5) / N3; LR.blit(mN, rt3, z); } LR.gpu.renderer.setRenderTarget(null); LR.settle(() => mN.dispose());
+    BU.tN3.value = tex; CL.q = q;
+    const S = LR.sky.U;
+    CL.mCloud = LR.pass(cloudFS, Object.assign(LR.uni('uTime uFrame uRes uCamPos uNearFar uViewProj uInvViewProj uPrevViewProj uView uProj uInvProj uWx uWx2 uWind uNoise uFogCol uFog uSunDir uSunCol uSkyAmb uGroundAmb uCloud uCloudOff uLod'), S, BU, { tDepth: R.U.tDepth, uEnvMips: R.U.uEnvMips }),
+      { defines: Object.assign({ STEPS: q[1], LIGHT_STEPS: q[2] }, G.tier.name === 'low' ? { CLOUD_CHEAP: 1 } : {}, LR.q('clouddbg') ? { CLOUD_DEBUG: 1 } : {}) });
+    CL.mJoin = LR.pass(joinFS, Object.assign(LR.uni('uTime uFrame uRes uCamPos uNearFar uViewProj uInvViewProj uPrevViewProj uView uProj uInvProj uWx uWx2 uWind uNoise uLod'), { tDepth: R.U.tDepth, tCloud: v(null), uLow: v(new T.Vector4()) }),
+      { blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.SrcAlphaFactor, blendSrcAlpha: T.ZeroFactor, blendDstAlpha: T.OneFactor });
+    // the strands
+    { const g = new T.BufferGeometry(), quad = [-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, 1, 0]; g.setAttribute('position', new T.BufferAttribute(new Float32Array(quad), 3));
+      const per = SEG + NBR * BR, n = NS * per, a = new Float32Array(n * 4); for (let i = 0; i < n; i++) { const s = Math.floor(i / per), r = i % per; a[i * 4] = s; if (r < SEG) { a[i * 4 + 1] = r; a[i * 4 + 2] = SEG; a[i * 4 + 3] = 0; } else { const b = Math.floor((r - SEG) / BR); a[i * 4 + 1] = (r - SEG) % BR; a[i * 4 + 2] = BR; a[i * 4 + 3] = 1 + b; } }
+      const ig = new T.InstancedBufferGeometry(); ig.setAttribute('position', g.attributes.position); ig.setAttribute('seg', new T.InstancedBufferAttribute(a, 4)); ig.instanceCount = n;
+      CL.SU = { uSA: v(V4(NS)), uSB: v(V4(NS)), uSM: v(V4(NS)), uSC: v(V4(NS)) };
+      const m = LR.material({ vertexShader: boltVS, fragmentShader: boltFS, uniforms: Object.assign(LR.uni('uTime uFrame uRes uCamPos uNearFar uViewProj uInvViewProj uPrevViewProj uView uProj uInvProj uWx uWx2 uWind uNoise uLod'), CL.SU, { uBC: BU.uBC, uBR: BU.uBR, uBP: BU.uBP, tDepth: R.U.tDepth }), depthTest: false, depthWrite: false, transparent: true, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor, blendSrcAlpha: T.ZeroFactor, blendDstAlpha: T.OneFactor });      // (light added: alpha 0 — three's AdditiveBlending would scale it by that 0)
+      const mesh = new T.Mesh(ig, m); mesh.frustumCulled = false; CL.boltScene = new T.Scene(); CL.boltScene.add(mesh); CL.boltMesh = mesh; LR.passes.push(m); }
+    R.after = R.after || []; R.after.push(CL.draw); CL.on = true;
+    LR.on('frame', CL.update, 29);
+  };
+  const size = () => { const R = LR.render, s = CL.q[0], w = Math.max(8, Math.round(R.w * s)), h = Math.max(8, Math.round(R.h * s)); if (!CL.rt || CL.rt.width !== w || CL.rt.height !== h) { if (CL.rt) CL.rt.dispose(); CL.rt = LR.rt(w, h, { type: LR.gpu.hdrType, filter: T.NearestFilter }); } return CL.rt; };
+  CL.draw = (cam, time) => {
+    if (!CL.on || !CL.live) return; const R = LR.render, r = LR.gpu.renderer, rt = size();
+    LR.blit(CL.mCloud, rt); CL.mJoin.uniforms.tCloud.value = rt.texture; CL.mJoin.uniforms.uLow.value.set(rt.width, rt.height, 1 / rt.width, 1 / rt.height); LR.blit(CL.mJoin, R.hdr);
+    if (CL.boltMesh.visible) { r.setRenderTarget(R.hdr); r.render(CL.boltScene, cam); }
+  };
+
+  // ── each frame: where the bank is, how thick, what lights it, the strike and its strands ──────────────────────────────
+  const apply = (f, p) => [f.p[0] + f.x[0] * p[0] + f.y[0] * p[1] + f.z[0] * p[2], f.p[1] + f.x[1] * p[0] + f.y[1] * p[1] + f.z[1] * p[2], f.p[2] + f.x[2] * p[0] + f.y[2] * p[1] + f.z[2] * p[2]];
+  const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const along = (pts, f) => { let L = 0; const acc = [0]; for (let i = 1; i < pts.length; i++) { L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2]); acc.push(L); } const s = LR.clamp(f, 0, 1) * L; let i = 1; while (i < acc.length - 1 && acc[i] < s) i++; return lerp3(pts[i - 1], pts[i], (s - acc[i - 1]) / Math.max(1e-6, acc[i] - acc[i - 1])); };
+  let lastStrike = -1;
+  CL.update = (time, dt, cam) => {
+    const H = CL.host, u = H && LR.mech.units.find((q) => q.name === H.unit); CL.live = !!(u && u.pose); if (!CL.live) return;
+    const B = u.pose.W.body, st = CL.state(), c = [B.p[0] + H.offset[0], B.p[1] + H.offset[1], B.p[2] + H.offset[2]], rr = H.radii;
+    BU.uBC.value.set(c[0], c[1], c[2], 1 / 230); BU.uBQ.value.w = +LR.q('clouddbg', 0); BU.uBR.value.set(rr[0], rr[1], rr[2], st.base); BU.uBP.value.set(st.sigma, st.cover, st.dark, st.erode);
+    // the noise travels with the bank at nine tenths of its pace (it overtakes its own cloud slowly) and boils upward
+    BU.uBW.value.set(c[0] * 0.9, c[1] * 0.9 - time * 0.25, c[2] * 0.9, time);
+    { const m = new T.Matrix4().set(B.x[0], B.y[0], B.z[0], B.p[0], B.x[1], B.y[1], B.z[1], B.p[1], B.x[2], B.y[2], B.z[2], B.p[2], 0, 0, 0, 1); BU.uShip.value.copy(m).invert(); }
+    (H.hulls || []).forEach((hh, i) => { if (i > 1) return; BU.uHullC.value[i].set(hh[0], hh[1], hh[2], 0); BU.uHullR.value[i].set(hh[3], hh[4], hh[5], 1); });
+    // its own lights in the cloud after dark: the town's warm glow under it and the red of its beacons as their shades come round
+    const night = LR.wx.lampsOn || 0, gl = BU.uGl.value, glc = BU.uGlC.value; for (let i = 0; i < 3; i++) glc[i].w = 0;
+    if (H.glow) { const p = apply(B, H.glow); gl[0].set(p[0], p[1], p[2], 34); glc[0].set(1.0, 0.6, 0.28, 0.02 + 0.55 * night); }
+    // the searchlight's cone (the host's beam lamp named in host.search), lit with the lamps
+    BU.uSd.value.w = 0; if (H.search) { const f = u.pose.W[H.search.bone]; if (f) { const p = apply(f, H.search.at), d = [f.x[0] * H.search.dir[0] + f.y[0] * H.search.dir[1] + f.z[0] * H.search.dir[2], f.x[1] * H.search.dir[0] + f.y[1] * H.search.dir[1] + f.z[1] * H.search.dir[2], f.x[2] * H.search.dir[0] + f.y[2] * H.search.dir[1] + f.z[2] * H.search.dir[2]];
+      BU.uSp.value.set(p[0], p[1], p[2], Math.cos(H.search.cone * Math.PI / 180)); BU.uSd.value.set(d[0], d[1], d[2], 0.03 + 2.2 * night); } }
+    const toCam = (p) => { const dx = cam.position.x - p[0], dz = cam.position.z - p[2], l = Math.hypot(dx, dz) || 1; return [dx / l, dz / l]; };
+    const blink = (i) => { const f = u.pose.W['shade_' + i]; if (!f) return 1; const p = f.p, d = toCam(p), hx = Math.hypot(f.x[0], f.x[2]) || 1; return 0.06 + 0.94 * LR.sm(0.55, 0.97, (f.x[0] * d[0] + f.x[2] * d[1]) / hx); };
+    if (H.beacons) { [0, 1].forEach((bi, j) => { const p = apply(B, H.beacons[bi]); gl[j + 1].set(p[0], p[1], p[2], 12); glc[j + 1].set(1.0, 0.05, 0.02, (0.02 + 0.5 * night) * blink(bi)); });
+      // and their lamps (light and halo) pulse with the shades
+      for (const l of LR.render.lamps || []) if (l.unit === u && !l.beam && l.color[1] < 0.2 && l.color[0] > 0.9) { let bi = 0, bd = 1e9; H.beacons.forEach((b, i) => { const p = apply(B, b), d = Math.hypot(p[0] - l.p[0], p[1] - l.p[1], p[2] - l.p[2]); if (d < bd) { bd = d; bi = i; } }); l.power *= blink(bi); } }
+    // ── the strike ──
+    const s = CL.strikeAt(time), U = CL.SU; for (let i = 0; i < NS; i++) U.uSA.value[i].w = 0; for (let i = 0; i < 3; i++) BU.uFl.value[i].w = 0; let used = 0, flash = 0;
+    if (s) { const age = time - s.t0, Bc = B, ship = Bc.p, d2e = Math.hypot(ship[0] - cam.position.x, ship[1] - cam.position.y, ship[2] - cam.position.z);
+      if (s.t0 !== lastStrike) { lastStrike = s.t0; if (!LR.RENDER) LR.emit('thunder', 0.4 + d2e / 340); }
+      const fl = BU.uFl.value; let nf = 0; const lamp = (p, I) => { LR.render.lamps = LR.render.lamps || []; LR.render.lamps.push({ p, d: [0, 1, 0], color: [0.75, 0.82, 1.0], power: I * 26000, cone: 0, range: 260, beam: false, unit: u, arc: true, spill: 1 }); };
+      if (s.kind === 'cloud') {
+        // flashes inside the bank; the one marked to reveal goes behind the hull as the eye sees it, so the hull stands black in it
+        for (const p of s.pulses) { const I = pulseI(p, age, s.seed); if (I <= 0.01 || nf >= 3) continue; let P;
+          if (p.reveal) { const e = [ship[0] - cam.position.x, ship[1] - cam.position.y, ship[2] - cam.position.z], l = Math.hypot(...e) || 1; P = [ship[0] + (e[0] / l) * 42 + p.at[0] * 22, ship[1] + 12 + p.at[1] * 14, ship[2] + (e[2] / l) * 42 + p.at[2] * 22]; }
+          else P = [c[0] + p.at[0] * rr[0] * 0.45, c[1] + p.at[1] * rr[1] * 0.6, c[2] + p.at[2] * rr[2] * 0.45];
+          fl[nf++].set(P[0], P[1], P[2], I * 3.2); lamp(P, I * 0.8); flash = Math.max(flash, I); } }
+      else { // a stroke: from high in the bank to a rod (or from the trailing wire to the ground), restriking, then the charge crawls down
+        let I = 0; for (const k of s.strokes) I = Math.max(I, strokeI(age - k.t) * k.I); const rod = H.rods[s.rod % H.rods.length];
+        let A, Bp; if (s.kind === 'rod') { Bp = apply(Bc, rod); A = [Bp[0] + s.top[0], Bp[1] + s.top[1], Bp[2] + s.top[2]]; }
+        else { const f = H.trail && u.pose.W[H.trail.bone]; A = f ? apply(f, H.trail.at) : apply(Bc, [0, -40, 0]); Bp = [A[0] + s.ground[0], LR.land.h(A[0] + s.ground[0], A[2] + s.ground[2]), A[2] + s.ground[2]]; }
+        const glowI = I > 0.02 ? I : age < s.strokes[s.strokes.length - 1].t + 0.3 ? 0.08 : 0;
+        if (glowI > 0) { const k = U.uSA.value[used], sd = s.seed * 3 + Math.min(s.strokes.length - 1, Math.floor(age / 0.08)) * 17; const M = lerp3(A, Bp, 0.5); M[0] += (h1(s.seed, 81) - 0.5) * 20; M[2] += (h1(s.seed, 82) - 0.5) * 20;
+          k.set(A[0], A[1], A[2], glowI * 1.4); U.uSB.value[used].set(Bp[0], Bp[1], Bp[2], sd % 997); U.uSM.value[used].set(M[0], M[1], M[2], 0.075); U.uSC.value[used].set(2, 0.9, 0, 0); used++;
+          if (I > 0.05) { const top = s.kind === 'rod' ? lerp3(A, Bp, 0.25) : apply(Bc, [0, -10, 0]); fl[nf++].set(top[0], top[1], top[2], I * 3.0); lamp(lerp3(A, Bp, 0.6), I); flash = Math.max(flash, I); } }
+        // the charge running down the conductors (a rod strike) or up the wire (a discharge): short arcs travelling along them
+        if (age < s.crawl + 0.15) { const wires = s.kind === 'rod' ? H.wires.map((w) => w.map((p) => apply(Bc, p))) : [];
+          let path = null; if (s.kind === 'rod') { const sp = wires[0], dsc = wires[s.side < 0 ? 1 : 2], ri = sp.reduce((bi, p, i) => (Math.abs(p[0] - Bp[0]) < Math.abs(sp[bi][0] - Bp[0]) ? i : bi), 0), ji = sp.reduce((bi, p, i) => (Math.abs(p[0] - dsc[0][0]) < Math.abs(sp[bi][0] - dsc[0][0]) ? i : bi), 0);
+              const run = ri <= ji ? sp.slice(ri, ji + 1) : sp.slice(ji, ri + 1).reverse(); path = [Bp, ...run, ...dsc]; }
+            else { const f = u.pose.W; path = [A, apply(f[H.trail.bone], [0, 0, 0]), apply(f[H.trail.bone.replace(/\d+$/, '1')], [0, 0, 0]), apply(f[H.trail.bone.replace(/\d+$/, '0')], [0, 0, 0])]; }
+          for (let j = 0; j < 4 && used < NS; j++) { const f0 = (age / s.crawl) * 1.1 - j * 0.09, f1 = f0 + 0.05 + 0.04 * h1(s.seed + j, 91); if (f1 < 0 || f0 > 1) continue; const a = along(path, f0), b = along(path, f1), m = lerp3(a, b, 0.5), off = 0.6 + 1.4 * h1(Math.floor(age * 30) + j, s.seed);
+            m[1] += off * 0.6; m[0] += (h1(Math.floor(age * 30), j + 5) - 0.5) * off; const Ia = (0.5 + 0.5 * h1(Math.floor(age * 48), j + 11)) * (1 - LR.sm(0.7, 1, f0)) * 0.7;
+            U.uSA.value[used].set(a[0], a[1], a[2], Ia); U.uSB.value[used].set(b[0], b[1], b[2], (Math.floor(age * 30) * 7 + j * 13 + s.seed) % 997); U.uSM.value[used].set(m[0], m[1], m[2], 0.16); U.uSC.value[used].set(1, 0.25, 0, 1); used++;
+            if (j === 0) lamp(b, 0.025 * Ia); } } }
+      // the whole scene lit by it, by how near the eye is
+      if (flash > 0) { const k = flash * (s.kind === 'cloud' ? 0.16 : 0.25 + 0.4 * Math.exp(-d2e / 600));      /* (a flash inside the cloud lights the land only through it: the hull stays dark against its glow) */ LR.wx.flash = Math.max(LR.RENDER ? 0 : LR.wx.flash, k * 0.85); LR.U.uWx2.value.w = Math.max(LR.U.uWx2.value.w, k * 0.85); } }
+    CL.boltMesh.visible = used > 0; CL.strike = s;
+  };
+  LR.on('init', () => CL.init(), 63);
+}
+
+
 // ── lib/70_render.js ──
 // machine-wilds · 70_render — what is drawn into the G-buffer (built things, the land), the cascaded sun shadow with
 // staggered updates, and the top-down rain map (which surfaces have open sky above them).
@@ -8348,6 +8750,8 @@ void main(){
     PR.begin('forward');
     // see-through things: water reads a half-size copy of the lit picture
     if (W.forward.children.length) { R.mCopy.uniforms.tSrc.value = R.hdr.texture; LR.blit(R.mCopy, R.copy); r.setRenderTarget(R.hdr); r.render(W.forward, cam); }
+    // what is drawn over the lit world and its see-through things, still on the frame's jitter (lib/64_cloud: a cloud bank, its lightning)
+    if (R.after) for (const f of R.after) f(cam, time, dt);
     cam.projectionMatrix.copy(P0); cam.projectionMatrixInverse.copy(P0).invert();
     // resolve onto the canvas grid
     // the lens: on the tour, in a still that asks for it, or while walking if it was switched on (L)
@@ -10320,6 +10724,298 @@ V.lift = () => {
 };
 
 
+// ── src/28_sky.js ──
+// Machine Wilds · the sky.  Nimbus: a storm-harvester — the biggest machine in the valley and the only one that does not walk.
+// A patched canvas envelope 130 m long on iron hoops, in a rope net whose crow's feet carry a gondola town on cables twelve
+// metres under it; five lightning rods along its spine and copper conductors down its flanks to the accumulator house,
+// where what it catches is kept in glass.  It drifts at a walking pace round a wide loop over the valley at the cloud base,
+// always inside its own cloud (lib/64_cloud): on a clear day a pale shape in a thin bank, in rain hidden — until the
+// lightning that it lives for lights the cloud from inside and something huge stands in it for a moment.
+//   numbers: flight mode 'drift' (lib/48_mech_fly_drift) · parts: below · the cloud, the strikes: the end of this file
+//   V.skyDeck = { unit, bone: 'body', rect: [x0, x1, z0, z1], y, walk: [[x0, x1, z0, z1]…] }   the landing deck in its body frame
+//   V.skyAt(t) → its body frame { x, y, z, p } at clock time t (x forward, y up, z right; p the envelope's centre)
+{
+  const R = 20, XN = 64, XT = -66, XM = 6, DECKY = -33, HOOPS = Array.from({ length: 15 }, (_, i) => -58 + i * (116 / 14)), GORES = 20;
+  // the envelope's radius along its length: a blunt nose, the widest at a tenth of the way back, a long taper to the tail
+  const rad = (x) => { if (x >= XM) { const u = Math.min(1, (x - XM) / (XN - XM)); return R * Math.sqrt(Math.max(0, 1 - Math.pow(u, 2.2))); } const v = Math.min(1, (XM - x) / (XM - XT)); return R * Math.pow(Math.max(0, 1 - Math.pow(v, 1.9)), 0.8); };
+  // the cloth sags between the hoops and between the seams of the gores (an old envelope, never quite full), more on top
+  const sag = (x, phi) => { const r = rad(x), gw = (Math.PI * 2) / GORES, fg = phi / gw - Math.floor(phi / gw), g = Math.sin(Math.PI * fg) ** 2; let b = 0;
+    if (x > HOOPS[0] && x < HOOPS[HOOPS.length - 1]) { const bay = HOOPS[1] - HOOPS[0], fb = (x - HOOPS[0]) / bay - Math.floor((x - HOOPS[0]) / bay); b = Math.sin(Math.PI * fb) ** 2; }
+    return (0.2 * g + 0.3 * b + 0.12 * g * b) * (r / R) * (0.7 + 0.5 * Math.max(0, Math.cos(phi))); };
+  const surf = (x, phi, lift = 0) => { const r = rad(x) - sag(x, phi) + lift; return [x, r * Math.cos(phi), r * Math.sin(phi)]; };       // phi from the top toward the right (+z)
+  const V3 = { add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], mul: (a, s) => [a[0] * s, a[1] * s, a[2] * s], len: (a) => Math.hypot(a[0], a[1], a[2]), lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t], cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2] };
+  const norm = (a) => { const l = V3.len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  // where it is struck and where the charge runs: the rods' tips, and the conductors from them to the accumulator (body frame)
+  const RODS = [[44, 13], [24, 11], [4, 15], [-16, 11], [-34, 9]].map(([x, h]) => ({ x, base: rad(x) - sag(x, 0) + 0.3, h }));
+  const tipOf = (r) => [r.x, r.base + r.h + 1.2, 0];
+  const ACC = [10, DECKY + 9.6, 0];      // the accumulator house's roof, where the conductors come down
+  const spine = () => { const pts = []; for (let x = 46; x >= -36; x -= 4) pts.push(surf(x, 0, 0.55)); return pts; };
+  const descent = (s) => { const pts = []; for (let a = 0; a <= 1.0001; a += 1 / 14) pts.push(surf(-4 + 4 * a, s * a * 1.78, 0.32)); const top = pts[pts.length - 1], end = [ACC[0] - 1.5, ACC[1] + 0.6, s * 3.2];
+    for (let i = 1; i <= 8; i++) { const f = i / 8, p = V3.lerp(top, end, f); p[1] -= Math.sin(Math.PI * f) * 1.1; pts.push(p); } return pts; };
+  V.sky3 = { R, rad, surf, DECKY, RODS, tipOf, spine, descent, ACC };
+
+  // the loop it keeps: an oval over the valley at the cloud base, [x, z, height above the sea] — turns no tighter than 95 m
+  // (a hull of 130 m then yaws under 2°/s), climbing and sinking a few metres a lap
+  V.skyLine = Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [205 * Math.cos(a) - 10, 6 + 140 * Math.sin(a), 282 + 4 * Math.sin(2 * a + 0.5)]; });
+
+  const base = V.machines;
+  V.machines = () => {
+    base(); const M = LR.mech;
+    const E = [];
+    // propellers: four pushers behind the engine cars on outriggers either side of the gondola, each at its own pace
+    for (const [n, x, s, rate] of [['prop_PF', 9.6, -1, 92], ['prop_SF', 9.6, 1, -101], ['prop_PA', -16.4, -1, 84], ['prop_SA', -16.4, 1, -96]]) E.push({ name: n, type: 'spin', parent: 'body', at: [x, DECKY + 4.4, s * 23], dir: [0, 1, 0], axis: [1, 0, 0], xdir: [1, 0, 0], rate });
+    // the tail: four fins in an X, the trailing vane of each hinged and steered (rudder and elevator at once)
+    for (let i = 0; i < 4; i++) { const th = Math.PI / 4 + (i * Math.PI) / 2, s = [0, Math.cos(th), Math.sin(th)], x = -58.6, r0 = rad(x) - 0.2; E.push({ name: 'vane_' + i, type: 'spin', parent: 'body', at: [x, s[1] * r0, s[2] * r0], dir: s, axis: s, xdir: [-1, 0, 0] }); }
+    // two cranes at the gondola's rails, their hooks on a rope
+    E.push({ name: 'crane_P', type: 'spin', parent: 'body', at: [-6, DECKY, -8.9], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0] }, { name: 'hook_P', type: 'lag', parent: 'crane_P', at: [0, 7.6, -11.2], dir: [0, -1, 0], len: 9, lag: 1.4, gain: 1.6, maxDeg: 18 });
+    E.push({ name: 'crane_S', type: 'spin', parent: 'body', at: [-19, DECKY, 8.9], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0] }, { name: 'hook_S', type: 'lag', parent: 'crane_S', at: [0, 7.6, 11.2], dir: [0, -1, 0], len: 6.5, lag: 1.2, gain: 1.6, maxDeg: 18 });
+    // what hangs under it: a drag anchor on a chain from the bow, the discharge wire from the accumulator with its weight
+    for (const [n, at, L, lag] of [['anchor', [34, DECKY - 5.4, 0], 12, 1.7], ['wire', [10, DECKY - 5.8, 0], 16, 2.3]]) for (let j = 0; j < 3; j++) E.push({ name: `${n}_${j}`, type: 'lag', parent: j ? `${n}_${j - 1}` : 'body', at: j ? [0, L, 0] : at, dir: j ? [0, 1, 0] : [0, -1, 0], len: L, lag: lag + j * 0.4, gain: 1.3, maxDeg: 14 });
+    // the landing deck's windsock, the searchlight on the bridge, the anemometer, the vents, the beacons' turning shades
+    E.push({ name: 'sock', type: 'spin', parent: 'body', at: [-50.6, DECKY + 6.6, -7.7], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0] });
+    E.push({ name: 'search', type: 'spin', parent: 'body', at: [29.5, DECKY + 10.2, 0], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0] });
+    E.push({ name: 'anemo', type: 'spin', parent: 'body', at: [26, DECKY + 15.8, -2.2], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0], rate: 260 });
+    [[-8, DECKY + 7.4, -5.5, 150], [-17, DECKY + 5.0, 5.6, -120], [13, DECKY + 9.9, 6.6, 170]].forEach(([x, y, z, rate], i) => E.push({ name: 'fan_' + i, type: 'spin', parent: 'body', at: [x, y, z], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0], rate }));
+    V.skyBeacons = [[XN + 0.9, 0, 0], [XT + 1.7, 0, 0], [tipOf(RODS[2])[0], tipOf(RODS[2])[1] + 0.9, 0], [32, DECKY + 11.4, -7.4], [32, DECKY + 11.4, 7.4], [-51.6, DECKY + 1.6, 8.0]];
+    V.skyBeacons.forEach((p, i) => E.push({ name: 'shade_' + i, type: 'spin', parent: 'body', at: p, dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0], rate: [150, -170, 130, 190, -185, 160][i] }));
+    M.define('nimbus', { title: 'Nimbus', age: 0.55, tonnes: 210, ride: 0, tall: 60, aware: 0, lensGain: 30, lodK: 1, cry: [61, 64, 5.5, 1.1], fault: 0, sound: { drone: { f: 30, blades: 4.2, gain: 1 } },      /* (lib/87_ear: four engine cars and a creaking hull, a rumble from the ground) */ build: (k) => V.parts.nimbus(k),
+      palette: { canvas: ['cloth', '#d6ccb4'], frame: ['paintmetal', '#4f4b43'], dark: ['paintmetal', '#26282b'], rust: ['rustplate', '#cbbca5'], shell: ['paintmetal', '#66706b'], copper: ['steel', '#c98a5c'], ceramic: ['ceramic', '#ddd5c4'], wood: ['planks', '#8f7a5e'], deck: ['iron', '#8d8c86'], paint: ['paintmetal', '#c99f2e'], tin: ['corrugated', '#bdb3a0'], steel: ['steel', '#a9abae'], rope: ['cloth', '#8a7c63'] },
+      limbs: [], extras: E,
+      flight: { mode: 'drift', speed: 3.0, abs: true, yawLead: 9, bankK: 2.6, bankMax: 3.4, sway: { heave: 0.62, pitch: 0.9, roll: 1.05, yaw: 1.2 }, span: 40,
+        hull: [[XN, 0, 0], [XT, 0, 0], [0, -R, 0], [-40, -13, 0], [36, DECKY - 6, 0], [-52, DECKY - 2.5, 8.5], [-52, DECKY - 2.5, -8.5], [9.6, DECKY + 4.4, 26.6], [9.6, DECKY + 4.4, -26.6], [-60, -16, -16], [-60, -16, 16]],
+        // what the command steers: the vanes into the turn and against the pitch, the cranes slewing now and then, the windsock in
+        // the gusts, the searchlight sweeping the valley under it
+        drive: (c, q) => { const rud = LR.clamp(q.kappa * 2600, -18, 18), elev = LR.clamp(-q.pitchS * 4, -10, 10);
+          for (let i = 0; i < 4; i++) { const th = Math.PI / 4 + (i * Math.PI) / 2; c.extras['vane_' + i] = rud * Math.sign(Math.cos(th)) * 0.9 + elev * Math.sign(Math.sin(th)) * -0.9 * Math.sign(Math.cos(th)); }
+          const w = q.sw.crane; c.extras.crane_P = 28 + 34 * Math.sin(w * q.t + 0.6) + 8 * Math.sin(w * 3 * q.t); c.extras.crane_S = -20 - 30 * Math.sin(w * 2 * q.t + 2.1);
+          const w0 = (Math.PI * 2) / q.u.lap, beat = (f) => Math.round(f / w0) * w0;      /* (a flutter on the lap's beat too: one lap later, the same pose) */
+          c.extras.sock = 180 + 14 * q.g * Math.sin(q.sw.yaw[1] * q.t * 2 + 0.3) + 5 * Math.sin(beat(3.1) * q.t) + 3 * Math.sin(beat(7.7) * q.t); c.extras.search = 52 * Math.sin(q.sw.heave[1] * q.t * 2 + 0.8); } } });
+    M.spawn('nimbus', { name: 'Nimbus', fly: V.skyLine, offset: 0, phase: 0.31 });
+  };
+  // the landing deck (body frame): open plate aft of the town, a gap in its rail astern and to port; walk: the deck, the street
+  V.skyDeck = { unit: 'Nimbus', bone: 'body', rect: [-51.2, -24.4, -8.0, 8.0], y: DECKY + 0.02, walk: [[-51.2, -24.4, -8.0, 8.0], [-24.4, 21.5, -2.0, 2.0]] };
+  V.skyAt = (t) => { const u = LR.mech.units.find((q) => q.name === 'Nimbus'); return u ? LR.mech.cmd(u, t).body : null; };
+  // its cloud (lib/64_cloud): a bank round it whose centre rides 14 m over its axis, 470 × 190 × 380 m; its hull for the flashes'
+  // shadows (the envelope, the gondola), its rods and conductors for the strikes, its trailing wire, its town's glow, its beacons
+  if (LR.cloud) LR.cloud.host = { unit: 'Nimbus', offset: [0, 14, 0], radii: [235, 95, 190], hulls: [[-1, 0, 0, 65, 20, 20], [-4, DECKY - 2.5, 0, 48, 5.5, 10.5]],
+    rods: RODS.map(tipOf), wires: [spine(), descent(-1), descent(1)], trail: { bone: 'wire_2', at: [0, 17.6, 0] }, glow: [0, DECKY + 4, 0], beacons: [[65, 0, 0], [-64.3, 0, 0]],
+    search: { bone: 'search', at: [0.22, 0.6, 0], dir: [0.85, -0.53, 0], cone: 5.5 } };
+}
+
+
+// ── src/29_sky_parts.js ──
+// Machine Wilds · Nimbus's parts (numbers and line in 28_sky.js).  Body frame: x forward, y up, z right; the envelope's axis
+// is the x axis, the gondola's deck 33 m under it.  Everything that gives the size away is here at a person's scale: 1.1 m
+// rails, 0.3 m rungs, doors, lanterns, windows, crates — on a thing 130 m long.
+V.parts.nimbus = (k) => {
+  const S = V.sky3, { R, rad, surf, DECKY, RODS, tipOf, ACC } = S, g = k.g, TAU = Math.PI * 2, F = LR.FLAG;
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s], lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], len = (a) => Math.hypot(a[0], a[1], a[2]), norm = (a) => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  // a sheet through P(u, v) (u, v in 0…1), normals from the surface, each triangle wound to face its normal; out(p) → which way is out
+  const grid = (P, nu, nv, o = {}) => { const base = g.n, e = 1e-3, s = 1 / g.tile;
+    for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) { const u = i / nu, v = j / nv, p = P(u, v), pu = sub(P(Math.min(1, u + e), v), P(Math.max(0, u - e), v)), pv = sub(P(u, Math.min(1, v + e)), P(u, Math.max(0, v - e)));
+      let n = norm(cross(pu, pv)); if (o.out && dot(n, o.out(p)) < 0) n = mul(n, -1); if (o.flip) n = mul(n, -1); g.vert(p[0], p[1], p[2], n[0], n[1], n[2], u * (o.Lu || 1) * s + g.uo, v * (o.Lv || 1) * s + g.vo); }
+    const P3 = (q) => [g.P[q * 3], g.P[q * 3 + 1], g.P[q * 3 + 2]];
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const a = base + j * (nu + 1) + i, b = a + 1, c = a + nu + 1, d = c + 1, N3 = [g.N[a * 4], g.N[a * 4 + 1], g.N[a * 4 + 2]];
+      let cr = cross(sub(P3(b), P3(a)), sub(P3(c), P3(a))); if (len(cr) < 1e-9) cr = cross(sub(P3(d), P3(b)), sub(P3(c), P3(b)));
+      if (dot(cr, N3) >= 0) { g.idx(a, b, c); g.idx(b, d, c); } else { g.idx(a, c, b); g.idx(b, c, d); } }
+    if (o.two) grid(P, nu, nv, Object.assign({}, o, { two: false, flip: !o.flip })); };
+  const outward = (p) => [0, p[1], p[2]];      // away from the envelope's axis
+  // a glowing lens (its strength rides the machine's lamps) — a ball, not a disc, so it reads from every side; lamp: also a light
+  const glowBall = (bone, at, r, col, w = 1, lamp = null) => { k.bone(bone, () => { const ly = g.layer, seg = k.n(10); g.layer = LR.mat.L('steel'); g.tint = col.map((c) => Math.round(LR.sat(Math.sqrt(LR.sat(c)) * 0.5) * 255)); g.flags = F.LAMP | F.NOWEATHER; g.weight = Math.round(LR.sat(w) * 255); g.aoV = 1;
+      g.blob(at[0], at[1], at[2], r, { amp: 0, seg, rings: Math.max(4, seg - 3) }); g.flags = 0; g.weight = 0; g.layer = ly; });
+    if (lamp && k.lod === 0) k.lamps.push(Object.assign({ bone: k.kin.index[bone], at: at.slice(), dir: [0, 1, 0], color: col, power: 1, cone: 0, range: 30, beam: false, lens: r, name: '' }, lamp)); };
+  const win = (c, nrm, w, h, seed, frame = 'dark') => k.along(c, nrm, (gg) => { if (k.fine) { k.mat(frame); gg.box(0, 0.03, 0, w + 0.16, 0.06, h + 0.16, {}); } gg.mat('glass', { tint: '#47555a', flags: F.WINDOW, seed: seed & 255 }); gg.box(0, 0.075, 0, w, 0.03, h, {}); if (k.fine && w > 0.9) { k.mat(frame); gg.box(0, 0.09, 0, 0.05, 0.02, h, {}); } }, [0, 1, 0]);
+  const lantern = (p, r = 0.16) => { g.mat('glass', { tint: '#ffdca6', flags: F.GLOW, weight: 0.9 }); g.blob(p[0], p[1], p[2], r, { amp: 0, seg: k.n(8), rings: 5 }); k.mat('dark'); g.tube([[p[0], p[1] + r * 0.8, p[2]], [p[0], p[1] + r * 1.6, p[2]]], r * 0.35, { sides: 5, caps: true }); };
+  const rnd = LR.rng('nimbus-cloth');
+
+  k.bone('body', () => {
+    // ── the envelope: twenty gores of canvas, a panel between each pair of hoops, no two panels quite the same cloth ──
+    const nG = k.fine ? 4 : k.mid ? 2 : 1, nB = k.fine ? 5 : k.mid ? 2 : 1, gw = TAU / 20, tints = ['#d6ccb4', '#cfc4aa', '#dad2bd', '#c9bfa6', '#d3c8ae', '#c3b99f'], odd = ['#a9a395', '#b8a785', '#9f9a8c', '#c8b48a', '#8f8a7d', '#d9d3c4'];
+    const H = V.sky3 && [-58, ...Array.from({ length: 14 }, (_, i) => -58 + (i + 1) * (116 / 14))], secs = [[-65.2, -58, 4], ...H.slice(0, -1).map((x, i) => [x, H[i + 1], nB]), [58, 63.7, 6]];
+    if (k.lod === 2) { k.mat('canvas'); grid((u, v) => { const x = LR.lerp(-65.2, 63.7, u), r = rad(x) - 0.15; return [x, r * Math.cos(v * TAU), r * Math.sin(v * TAU)]; }, 22, 12, { out: outward, Lu: 130, Lv: 120 }); }
+    else for (let j = 0; j < 20; j++) { const base = tints[j % tints.length];
+      secs.forEach(([x0, x1, n], si) => { const h = LR.hash2(j * 31 + 7, si * 17 + 3), tint = h < 0.11 ? odd[Math.floor(LR.hash2(j, si) * odd.length)] : base, shade = 0.95 + 0.08 * LR.hash2(si * 5 + 1, j * 3 + 2);
+        k.mat('canvas', { tint: tint, seed: (j * 16 + si) & 255 }); g.tint = g.tint.map((c) => Math.round(LR.clamp(c * shade, 0, 255)));
+        grid((u, v) => surf(LR.lerp(x0, x1, u), (j + v) * gw), Math.max(1, Math.round(n * (si === 0 || si === secs.length - 1 ? 1 : 1))), nG, { out: outward, Lu: x1 - x0, Lv: rad((x0 + x1) / 2) * gw }); }); }
+    // paint on the cloth: a faded red band behind the nose battens and the hull number on both flanks, in plain segment figures
+    if (k.mid) { const band = (x0, x1, tint) => { k.mat('canvas', { tint }); for (let j = 0; j < 20; j++) grid((u, v) => surf(LR.lerp(x0, x1, u), (j + v) * gw, 0.03), 1, nG, { out: outward, Lu: x1 - x0, Lv: 6 }); };
+      band(46.5, 49.4, '#7c3424'); band(-49.6, -48.0, '#7c3424');
+      const SEGS = { 0: 'abcdef', 7: 'abc' }, paint = (str, xc, side) => { const r0 = rad(xc), W = 4.6, Hh = 8.6, st = 1.05, gap = 1.8, phc = (side * Math.PI) / 2;
+        const rect = (u0, u1, v0, v1, uOff) => grid((u, v) => { const uu = uOff + LR.lerp(u0, u1, u), vv = LR.lerp(v0, v1, v) - Hh / 2; return surf(xc + side * uu, phc - side * (vv / r0), 0.05); }, 1, 2, { out: outward, Lu: u1 - u0, Lv: v1 - v0 });
+        k.mat('dark', { tint: '#3a332c' }); [...str].forEach((ch, i) => { const o = -((str.length * W + (str.length - 1) * gap) / 2) + i * (W + gap), on = SEGS[ch] || '';
+          if (on.includes('a')) rect(0, W, Hh - st, Hh, o); if (on.includes('d')) rect(0, W, 0, st, o); if (on.includes('g')) rect(0, W, Hh / 2 - st / 2, Hh / 2 + st / 2, o);
+          if (on.includes('b')) rect(W - st, W, Hh / 2, Hh, o); if (on.includes('c')) rect(W - st, W, 0, Hh / 2, o); if (on.includes('f')) rect(0, st, Hh / 2, Hh, o); if (on.includes('e')) rect(0, st, 0, Hh / 2, o); }); };
+      paint('07', 24, 1); paint('07', 24, -1); }
+    // patches sewn over tears: a darker hem under, the patch on it; and soot where the rods have been struck
+    if (k.mid) { const pr = LR.rng('nimbus-patch'), cols = ['#b39b72', '#a19d92', '#e0d8c2', '#8e877a', '#c2ad86', '#bdb7a8'];
+      for (let i = 0; i < 34; i++) { const x = pr.range(-52, 54), phi = pr.range(-2.4, 2.4) + (pr() < 0.3 ? Math.PI : 0), w = pr.range(1.4, 5.5), hh = pr.range(1.2, 4), r = rad(x), dp = hh / r;
+        if (r < 6) continue; const P = (lift, k2) => (u, v) => surf(x + (u - 0.5) * w * k2, phi + (v - 0.5) * dp * k2, lift);
+        k.mat('rope', { tint: '#6f6656' }); grid(P(0.05, 1.07), 2, 2, { out: outward, Lu: w, Lv: hh }); k.mat('canvas', { tint: cols[i % cols.length], seed: 90 + i }); grid(P(0.08, 1), k.fine ? 3 : 1, k.fine ? 3 : 1, { out: outward, Lu: w, Lv: hh }); } }
+    // the iron hoops, proud of the cloth
+    if (k.lod < 2) { k.mat('frame'); const nh = k.fine ? 72 : 28; for (const x of H) { const r = rad(x) + 0.14, pts = []; for (let i = 0; i <= nh; i++) { const a = (i / nh) * TAU; pts.push([x, r * Math.cos(a), r * Math.sin(a)]); } g.tube(pts, k.fine ? 0.2 : 0.24, { sides: k.fine ? 5 : 3 }); } }
+    // the seams' bolt-ropes and the nose battens
+    if (k.fine) { k.mat('rope'); for (let j = 0; j < 20; j++) { const pts = []; for (let x = -57.5; x <= 57.5; x += 1.6) pts.push(surf(x, j * gw, 0.07)); g.tube(pts, 0.075, { sides: 4 }); } }
+    if (k.mid) { k.mat('dark'); for (let j = 0; j < 12; j++) { const a = (j / 12) * TAU, pts = []; for (let x = 52; x <= 63.4; x += 0.8) pts.push(surf(x, a, 0.12)); g.tube(pts, 0.16, { sides: 4, caps: true }); }
+      for (let j = 0; j < 8; j++) { const a = (j / 8) * TAU, pts = []; for (let x = -64.8; x <= -57; x += 0.8) pts.push(surf(x, a, 0.1)); g.tube(pts, 0.13, { sides: 4, caps: true }); } }
+    // the mooring cone at the nose and the tail fitting
+    k.mat('steel'); k.along([62.6, 0, 0], [1, 0, 0], (gg) => { gg.lathe(0, 0, [[3.3, 0], [3.0, 0.7], [2.0, 1.6], [0.9, 2.3], [0.35, 2.9], [0.2, 3.4]], { sides: k.n(16) }); k.mat('frame'); gg.lathe(0, 0, [[3.45, -0.1], [3.45, 0.25], [3.2, 0.3]], { sides: k.n(16) }); });
+    k.mat('frame'); k.along([-65.6, 0, 0], [-1, 0, 0], (gg) => { gg.lathe(0, 0, [[1.4, 0], [1.2, 0.6], [0.6, 1.2], [0.25, 1.5]], { sides: k.n(12) }); });
+    // ── the rope net over the upper envelope, its load band, the crow's feet and the cables the gondola hangs from ──
+    const band = 1.84, I = (() => { const a = []; let s = 0; for (let x = -50; x <= 54; x += 0.5) { a.push([x, s]); s += 0.5 / Math.max(4, rad(x)); } return (x) => { const i = LR.clamp(Math.round((x + 50) / 0.5), 0, a.length - 1); return a[i][1]; }; })();
+    if (k.fine) { k.mat('rope'); const tanA = 1.05, step = 0.26;
+      for (const sgn of [-1, 1]) for (let q = -band - 6.4; q <= band + 0.01; q += step) { let run = [];
+        const flush = () => { if (run.length > 1) g.tube(run, 0.065, { sides: 3 }); run = []; };
+        for (let x = -48; x <= 52; x += 2) { const phi = q + sgn * I(x) * tanA; if (Math.abs(phi) > band) { flush(); continue; } run.push(surf(x, phi, 0.2)); } flush(); } }
+    const feet = [-44, -36, -28, -20, -12, -4, 4, 12, 20, 28, 36, 44], hang = [];
+    for (const s of [-1, 1]) { if (k.lod < 2) { k.mat('rope'); const pts = []; for (let x = -49; x <= 53; x += 2) pts.push(surf(x, s * band, 0.24)); g.tube(pts, 0.17, { sides: k.fine ? 5 : 3 }); }
+      for (const x of feet) { const r = rad(x), ring = add(surf(x, s * band, 0.3), [0, -3.2, s * -0.4]), gz = x < -24 ? 8.4 : 9.5, end = [x * 0.97 + (x < -24 ? 1 : 0), DECKY + (x < -24 ? 1.15 : 1.2), s * gz];
+        if (k.mid) { k.mat('rope'); for (const dx of [-2.6, 0, 2.6]) g.tube([surf(x + dx, s * band, 0.24), ring], 0.06, { sides: 3 }); k.mat('steel'); g.blob(ring[0], ring[1], ring[2], 0.22, { amp: 0, seg: 6, rings: 4 }); }
+        k.mat('dark'); g.tube([ring, lerp(ring, end, 0.5), end], k.fine ? 0.085 : 0.12, { sides: k.fine ? 4 : 3 }); hang.push([ring, end]); } }
+    // ── lightning rods: a tripod mast on the spine, a copper rod with a crown of points, an insulator stack, guy wires ──
+    RODS.forEach((rd, i) => { const b = [rd.x, rd.base, 0], top = [rd.x, rd.base + rd.h, 0], tip = tipOf(rd);
+      if (k.lod < 2) { k.mat('frame'); const legs = [[-2.3, -0.13], [2.3, -0.13], [0, 0.15]].map(([dx, dp]) => surf(rd.x + dx, dp * (dx ? 1 : 1) * (dx ? 1 : -1) + (dx ? 0 : 0), 0.15)).map((p, q) => (q === 2 ? surf(rd.x, 0.17, 0.15) : p)); const legs2 = [surf(rd.x - 2.3, -0.12, 0.15), surf(rd.x + 2.3, -0.12, 0.15), surf(rd.x, 0.16, 0.15)];
+        for (const p of legs2) g.tube([p, top], 0.17, { sides: k.n(6), caps: true });
+        if (k.fine) for (let q = 0; q < 3; q++) { const a = legs2[q], c = legs2[(q + 1) % 3]; for (let f = 0.15; f < 0.9; f += 0.25) g.tube([lerp(a, top, f), lerp(c, top, f + 0.125)], 0.06, { sides: 3 }); }
+        k.mat('ceramic'); for (let q = 0; q < 6; q++) { const y = rd.base + 0.4 + q * 0.32; g.lathe(rd.x, 0, [[0.2, y], [0.55, y + 0.06], [0.5, y + 0.14], [0.2, y + 0.2]], { sides: k.n(10) }); }
+        k.mat('frame'); g.lathe(rd.x, 0, [[0.05, top[1] - 0.1], [1.0, top[1] - 0.05], [1.0, top[1] + 0.12], [0.05, top[1] + 0.15]], { sides: k.n(10) });
+        if (k.fine) { k.mat('steel'); for (const a of [0.4, 2.0, 3.6, 5.2]) g.tube([[rd.x + Math.cos(a) * 0.95, top[1] + 0.15, Math.sin(a) * 0.95], [rd.x + Math.cos(a) * 0.95, top[1] + 1.25, Math.sin(a) * 0.95]], 0.035, { sides: 4 }); }
+        // guy wires to the hoops' feet
+        if (k.fine) { k.mat('steel'); for (const [dx, ph] of [[-7, 0.5], [7, 0.5], [-7, -0.5], [7, -0.5]]) g.tube([lerp(b, top, 0.82), surf(rd.x + dx, ph, 0.2)], 0.03, { sides: 3 }); } }
+      k.mat('copper'); g.tube([[rd.x, rd.base + 0.2, 0], [rd.x, top[1] + 0.2, 0], tip], [0.16, 0.12, 0.05], { sides: k.n(7), caps: true });
+      if (k.mid) for (let q = 0; q < 5; q++) { const a = (q / 5) * TAU + i, c = [rd.x, tip[1] - 1.1, 0]; g.tube([c, [rd.x + Math.cos(a) * 0.55, tip[1] - 0.2, Math.sin(a) * 0.55], [rd.x + Math.cos(a) * 0.62, tip[1] + 0.35, Math.sin(a) * 0.62]], [0.05, 0.035, 0.008], { sides: 4 }); }
+      // scorch: soot round the foot of the mast and branching burns in the cloth where strikes have run
+      if (k.mid) { k.mat('dark', { tint: '#2e2b27' }); grid((u, v) => surf(rd.x + (u - 0.5) * 7, (v - 0.5) * 0.36, 0.06), 3, 3, { out: outward, Lu: 7, Lv: 7 });
+        if (k.fine) { const lr = LR.rng('scorch' + i); const burn = (x, ph, dx, dph, n, w) => { const pts = [surf(x, ph, 0.07)]; for (let q = 0; q < n; q++) { x += dx + lr.range(-0.35, 0.35); ph += dph + lr.range(-0.02, 0.02); pts.push(surf(x, ph, 0.07)); if (lr() < 0.25 && w > 0.03) burn(x, ph, dx * 0.8 + lr.range(-0.3, 0.3), dph + lr.range(-0.04, 0.04), Math.floor(n * 0.5), w * 0.65); } g.tube(pts, w, { sides: 3 }); };
+          for (let q = 0; q < 5; q++) { const a = (q / 5) * TAU + lr.range(0, 1); burn(rd.x + Math.cos(a) * 2.6, Math.sin(a) * 0.13, Math.cos(a) * 0.55, Math.sin(a) * 0.035, 9, 0.07); } } } });
+    // the ridge conductor along the spine on insulator posts, the two descents down the flanks to the accumulator
+    k.mat('copper'); const sp = S.spine(); g.tube(sp, 0.13, { sides: k.n(6) }); for (const s of [-1, 1]) g.tube(S.descent(s), 0.12, { sides: k.n(6) });
+    if (k.mid) { k.mat('ceramic'); for (let q = 0; q < sp.length; q += 2) { const p = sp[q]; g.lathe(p[0], 0, [[0.12, p[1] - 0.5], [0.2, p[1] - 0.3], [0.12, p[1] - 0.05]], { sides: 6 }); }
+      for (const s of [-1, 1]) { const d = S.descent(s), p = d[15]; for (let q = 0; q < 5; q++) { const c = lerp(d[15], d[16], 0.1 + q * 0.12); g.blob(c[0], c[1], c[2], 0.28, { amp: 0, seg: 7, rings: 4, squash: [1, 0.5, 1] }); } } }
+    // ── the tail: four fins in an X, canvas in iron frames ──
+    for (let i = 0; i < 4; i++) { const th = Math.PI / 4 + (i * Math.PI) / 2, s = [0, Math.cos(th), Math.sin(th)], at = (x, w) => [x, s[1] * w, s[2] * w], wt = 19.5;
+      const PL = (u, v) => { const x = LR.lerp(-40.5, -58.4, u), xt = LR.lerp(-51.5, -58.4, u), r = rad(x) - 0.3; return at(LR.lerp(x, xt, v), LR.lerp(r, wt, v)); };
+      k.mat('canvas', { tint: i % 2 ? '#cbbfa3' : '#d4c9b0' }); grid(PL, k.fine ? 4 : 1, k.fine ? 3 : 1, { two: true, Lu: 18, Lv: 12 });
+      if (k.lod < 2) { k.mat('frame'); g.tube([PL(0, 0), PL(0, 1), PL(1, 1), PL(1, 0)], 0.26, { sides: k.n(6), caps: true }); if (k.mid) for (let f = 0.2; f < 1; f += 0.2) g.tube([PL(f, 0), PL(f, 1)], 0.12, { sides: 4 }); } }
+    // ── the gondola: a riveted hull under a planked deck, the landing deck astern, the town on top ──
+    const DY = DECKY, n6 = k.n(6);
+    k.mat('wood'); g.box(5, DY - 0.25, 0, 58, 0.5, 19.2, { grain: 'x' });
+    k.mat('shell'); k.loft('x', [[-24.2, 2.9, 9.55, DY - 3.0, 0, 4], [-20, 3.0, 9.6, DY - 3.05, 0, 4.5], [24, 3.0, 9.6, DY - 3.05, 0, 4.5], [33, 2.9, 9.2, DY - 3.0, 0, 4], [37.5, 2.4, 7.4, DY - 2.6, 0, 3.4], [40.5, 1.2, 3.6, DY - 1.8, 0, 2.6]], { sides: k.n(18) });
+    if (k.mid) { k.mat('frame'); for (const s of [-1, 1]) { g.box(5, DY - 0.55, s * 9.62, 58.4, 0.5, 0.25, {}); g.box(5, DY - 3.0, s * 9.66, 56, 0.3, 0.2, {}); }
+      for (let x = -20; x <= 32; x += 4) for (const s of [-1, 1]) g.box(x, DY - 3, s * 9.64, 0.3, 5.4, 0.18, {});
+      // portholes along the hull, lit at night
+      for (let x = -18; x <= 30; x += 4) for (const s of [-1, 1]) win([x + 2, DY - 2.4, s * 9.72], [0, 0, s], 0.7, 0.7, (x * 7 + s * 3) & 255, 'frame'); }
+    if (k.fine) for (const s of [-1, 1]) for (const y of [DY - 1.2, DY - 4.6]) k.rivets([-22, y, s * 9.7], [32, y, s * 9.7], 60, 0.04, [0, 0, s]);
+    // the keel: a girder under the hull, the hatch the discharge wire comes out of, the anchor's hawse
+    k.mat('frame'); g.box(8, DY - 6.0, 0, 46, 0.6, 1.4, {}); k.mat('dark'); g.box(10, DY - 5.9, 0, 2.2, 0.6, 2.2, {}); g.box(34, DY - 5.5, 0, 1.6, 0.8, 1.6, {});
+    // the landing deck: steel plate on a truss, open astern, a ring and chevrons painted on it, lamps along its edges
+    k.mat('deck'); g.box(-38.2, DY - 0.18, 0, 27.6, 0.36, 17.2, { grain: 'x' });
+    // under it, two deep Warren girders along its sides and one down its middle, cross girders, the stern faced in striped plate
+    { k.mat('frame'); const x0 = -51.9, x1 = -24.2, top = DY - 0.4, bot = DY - 3.1, nP = 8, px = (x1 - x0) / nP;
+      for (const z of [-8.45, 0, 8.45]) { g.box((x0 + x1) / 2, top - 0.15, z, x1 - x0, 0.3, 0.42, {}); g.box((x0 + x1) / 2, bot, z, x1 - x0, 0.36, 0.42, {});
+        if (k.lod < 2) for (let q = 0; q <= nP; q++) { const x = x0 + q * px; g.box(x, (top + bot) / 2, z, 0.26, top - bot, 0.3, {}); if (q < nP) g.beam([x, q % 2 ? top : bot, z], [x + px, q % 2 ? bot : top, z], 0.22, 0.22); } }
+      if (k.lod < 2) for (let q = 0; q <= nP; q += 2) g.box(x0 + q * px, bot, 0, 0.3, 0.3, 16.9, {});
+      k.mat('shell'); for (const s of [-1, 1]) g.box((x0 + x1) / 2, DY - 0.75, s * 8.66, x1 - x0, 0.75, 0.08, {}); g.box(x0 - 0.04, DY - 0.75, 0, 0.08, 0.75, 17.3, {});
+      if (k.mid) { k.stripes([x0 - 0.1, DY - 0.75, 0], [-1, 0, 0], 17, 0.7, 14, { up: [0, 1, 0], t: 0.04 }); for (const s of [-1, 1]) k.stripes([-48, DY - 0.75, s * 8.72], [0, 0, s], 6, 0.7, 6, { up: [0, 1, 0], t: 0.04 }); }
+      // struts from the gondola's stern up under the deck girders
+      k.mat('frame'); for (const s of [-1, 1]) { g.beam([-24.2, DY - 5.0, s * 7.5], [-34, bot, s * 8.45], 0.4, 0.4); g.beam([-24.2, DY - 5.0, s * 3], [-34, bot, 0], 0.35, 0.35); } }
+    if (k.mid) { k.mat('paint'); const cx = -38.2, y = DY + 0.012; grid((u, v) => { const r = 5.0 + v * 0.55, a = u * TAU; return [cx + r * Math.cos(a), y, r * Math.sin(a)]; }, k.fine ? 48 : 20, 1, { out: () => [0, 1, 0], Lu: 33, Lv: 0.55 });
+      for (const s of [-1, 1]) for (let q = 0; q < 3; q++) { const x0 = -49.5 + q * 2.2; g.poly([[x0, y, s * 0.2], [x0 + 1.4, y, s * 1.6], [x0 + 1.4 - 0.55, y, s * 1.6], [x0 - 0.55, y, s * 0.2]], { hint: [0, 1, 0] }); }
+      k.mat('canvas', { tint: '#e6e2d6' }); g.box(cx, y, 0, 0.5, 0.01, 4.2, {}); g.box(cx, y, 0, 4.2, 0.01, 0.5, {});
+      k.stripes([-51.85, DY + 0.01, 0], [0, 1, 0], 9, 0.5, 10, { up: [1, 0, 0] }); }
+    // the town: the bridge at the bow, the accumulator house astride the street, sheds and houses either side, tanks, lanterns
+    const house = (x0, x1, z0, z1, h, o = {}) => { const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, w = x1 - x0, d = z1 - z0; k.mat(o.wall || 'tin'); g.box(cx, DY + h / 2, cz, w, h, d, { grain: 'y' });
+      if (k.mid) { k.mat('frame'); for (const [px, pz] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]) g.box(px, DY + h / 2, pz, 0.28, h + 0.1, 0.28, {}); g.box(cx, DY + h + 0.06, cz, w + 0.3, 0.16, d + 0.3, {}); }
+      if (o.roof === 'gable') { const rz = o.ridge === 'z', hh = o.pitch || 1.6; k.mat(o.roofMat || 'rust'); const e = 0.35;
+        if (!rz) { for (const s of [-1, 1]) g.poly([[x0 - e, DY + h, cz + s * (d / 2 + e)], [x1 + e, DY + h, cz + s * (d / 2 + e)], [x1 + e, DY + h + hh, cz], [x0 - e, DY + h + hh, cz]], { hint: [0, 1, s * 0.6], two: true }); k.mat(o.wall || 'tin'); for (const x of [x0, x1]) g.poly([[x, DY + h, z0], [x, DY + h, z1], [x, DY + h + hh, cz]], { two: true }); }
+        else { for (const s of [-1, 1]) g.poly([[cx + s * (w / 2 + e), DY + h, z0 - e], [cx + s * (w / 2 + e), DY + h, z1 + e], [cx, DY + h + hh, z1 + e], [cx, DY + h + hh, z0 - e]], { hint: [s * 0.6, 1, 0], two: true }); k.mat(o.wall || 'tin'); for (const z of [z0, z1]) g.poly([[x0, DY + h, z], [x1, DY + h, z], [cx, DY + h + hh, z]], { two: true }); } }
+      if (k.lod < 2) for (const wd of o.win || []) win(wd[0], wd[1], wd[2] || 1.1, wd[3] || 1.0, wd[4] || 1, o.frame);
+      if (k.lod < 2) for (const dr of o.door || []) k.along(dr[0], dr[1], (gg) => { k.mat('wood', { tint: '#6c5a45' }); gg.box(0, 0.05, 0.95, 1.0, 0.1, 1.9, {}); k.mat('steel'); gg.box(0.32, 0.12, 0.95, 0.06, 0.06, 0.06, {}); }, [0, 1, 0]); };
+    // the bridge: a lower deck house and the wheelhouse on it with windows all round its front, its roof a platform
+    house(20, 34, -8, 8, 4.2, { wall: 'shell', frame: 'frame', win: [[[34.02, DY + 2.4, -4.5], [1, 0, 0], 1.4, 1.1, 11], [[34.02, DY + 2.4, 0], [1, 0, 0], 1.4, 1.1, 12], [[34.02, DY + 2.4, 4.5], [1, 0, 0], 1.4, 1.1, 13], [[26, DY + 2.4, -8.02], [0, 0, -1], 1.2, 1.0, 14], [[30, DY + 2.4, 8.02], [0, 0, 1], 1.2, 1.0, 15], [[23, DY + 2.4, 8.02], [0, 0, 1], 1.2, 1.0, 16]], door: [[[20.0, DY, 0], [-1, 0, 0]]] });
+    k.mat('shell'); g.box(28.5, DY + 4.2 + 1.6, 0, 9, 3.2, 12, {}); k.mat('frame'); g.box(28.5, DY + 7.5, 0, 9.6, 0.25, 12.6, {});
+    if (k.lod < 2) { for (let q = 0; q < 5; q++) win([33.03, DY + 6.0, -4.8 + q * 2.4], [1, 0, 0], 2.0, 1.5, 20 + q); for (const s of [-1, 1]) for (let q = 0; q < 3; q++) win([25.5 + q * 2.6, DY + 6.0, s * 6.03], [0, 0, s], 2.0, 1.4, 30 + q + (s > 0 ? 3 : 0)); }
+    k.rail([[24.2, DY + 7.62, -6.2], [33.2, DY + 7.62, -6.2], [33.2, DY + 7.62, 6.2], [24.2, DY + 7.62, 6.2]], 1.0);
+    k.mat('frame'); g.tube([[26, DY + 7.6, -2.2], [26, DY + 15.8, -2.2]], 0.1, { sides: 5, caps: true }); g.tube([[31, DY + 7.6, 2.4], [31, DY + 13.4, 2.4]], 0.07, { sides: 4, caps: true });
+    if (k.fine) { k.mat('steel'); g.tube([[26, DY + 15.4, -2.2], [-2, DY + 12.2, -2.4]], 0.02, { sides: 3 }); g.tube([[31, DY + 13.2, 2.4], [-6, DY + 9.8, 2.6]], 0.02, { sides: 3 }); }
+    k.mat('frame'); g.lathe(29.5, 0, [[0.9, DY + 7.6], [0.7, DY + 8.6], [0.4, DY + 9.6]], { sides: n6 });
+    // the accumulator house: astride the street (an arch to walk through), where the conductors come down; glass jars on its roof
+    k.mat('shell', { tint: '#5d6058' }); g.box(9.5, DY + 4.3, -5.8, 13, 8.6, 6.8, {}); g.box(9.5, DY + 4.3, 5.8, 13, 8.6, 6.8, {}); g.box(9.5, DY + 6.5, 0, 13, 4.2, 4.8, {});
+    k.mat('frame'); g.box(9.5, DY + 8.7, 0, 13.4, 0.22, 19.2, {}); for (const x of [3.1, 15.9]) for (const z of [-9.1, -2.45, 2.45, 9.1]) g.box(x, DY + 4.3, z, 0.3, 8.6, 0.3, {});
+    if (k.lod < 2) { for (const s of [-1, 1]) { k.stripes([15.92, DY + 3.6, s * 2.42], [1, 0, 0], 4.2, 0.4, 8, { up: [0, 1, 0] }); win([9.5, DY + 6.8, s * 9.22], [0, 0, s], 1.6, 0.9, 40 + s); win([5.5, DY + 6.8, s * 9.22], [0, 0, s], 1.6, 0.9, 42 + s); win([13.5, DY + 6.8, s * 9.22], [0, 0, s], 1.6, 0.9, 44 + s); }
+      k.gauge([15.95, DY + 6.4, -5.6], [1, 0, 0], 0.5); k.gauge([15.95, DY + 6.4, 5.6], [1, 0, 0], 0.5); k.jbox([15.95, DY + 2.2, -6.6], [1, 0, 0], 1.0, 1.4, 0.4); }
+    k.mat('copper'); g.box(9.5, DY + 9.15, 0, 11, 0.24, 0.5, {});
+    for (let q = 0; q < 6; q++) { const x = 5 + q * 1.8, z = q % 2 ? 1.2 : -1.2; k.mat('steel'); g.lathe(x, z, [[0.75, DY + 8.8], [0.75, DY + 9.1], [0.62, DY + 9.15]], { sides: n6 });
+      g.mat('glass', { tint: '#6f8a94' }); g.lathe(x, z, [[0.62, DY + 9.15], [0.64, DY + 10.6], [0.5, DY + 11.4], [0.2, DY + 11.6]], { sides: k.n(10) }); k.mat('copper'); g.tube([[x, DY + 11.5, z], [x, DY + 12.2, z]], 0.08, { sides: 4, caps: true }); }
+    for (let q = 0; q < 6; q++) glowBall('body', [5 + q * 1.8, DY + 10.1, q % 2 ? 1.2 : -1.2], 0.42, [0.35, 0.65, 1.0], 0.35);
+    for (const s of [-1, 1]) { k.mat('ceramic'); for (let q = 0; q < 7; q++) { const y = DY + 8.85 + q * 0.34; g.lathe(ACC[0] - 1.5, s * 3.2, [[0.2, y], [0.6, y + 0.07], [0.55, y + 0.16], [0.2, y + 0.24]], { sides: k.n(10) }); } }
+    // port: a store shed, the workshop (two floors, a stove pipe); starboard: water tanks, the crew house, a shed
+    house(-22, -13, -9.2, -2.6, 4.2, { roof: 'gable', roofMat: 'rust', win: [[[-17.5, DY + 2.4, -2.58], [0, 0, 1], 1.0, 0.8, 50]], door: [[[-15, DY, -2.58], [0, 0, 1]]] });
+    house(-11, 1, -9.2, -2.6, 6.6, { roof: 'gable', ridge: 'z', pitch: 2.0, wall: 'wood', roofMat: 'tin', win: [[[-8, DY + 1.8, -2.58], [0, 0, 1], 1.2, 1.0, 51], [[-2, DY + 1.8, -2.58], [0, 0, 1], 1.2, 1.0, 52], [[-8, DY + 4.8, -2.58], [0, 0, 1], 1.2, 1.0, 53], [[-2, DY + 4.8, -2.58], [0, 0, 1], 1.2, 1.0, 54], [[1.02, DY + 4.8, -6], [1, 0, 0], 1.0, 1.0, 55]], door: [[[-5, DY, -2.58], [0, 0, 1]]] });
+    k.stack([-9, DY + 6.6, -7.8], [-9, DY + 10.6, -7.8], 0.28);
+    for (const x of [-20.5, -16.2]) { k.tank([x, DY + 1.0, 6.4], [x, DY + 5.6, 6.4], 1.9, { role: 'shell' }); if (k.mid) { k.mat('frame'); for (const s of [-1, 1]) g.box(x + s * 1.3, DY + 0.5, 6.4, 0.2, 1.0, 3.2, {}); } }
+    house(-13, -3, 2.6, 9.2, 5.2, { roof: 'gable', pitch: 2.2, wall: 'wood', roofMat: 'rust', win: [[[-10.5, DY + 2.6, 2.58], [0, 0, -1], 1.1, 1.0, 60], [[-5.5, DY + 2.6, 2.58], [0, 0, -1], 1.1, 1.0, 61], [[-13.02, DY + 2.6, 5.9], [-1, 0, 0], 1.0, 1.0, 62]], door: [[[-8, DY, 2.58], [0, 0, -1]]] });
+    k.stack([-5, DY + 5.2, 7.2], [-5, DY + 8.4, 7.2], 0.2);
+    house(-1.2, 2.0, 3.4, 9.2, 3.6, { roof: 'gable', roofMat: 'tin', door: [[[0.4, DY, 3.38], [0, 0, -1]]] });
+    // vents on the roofs (their fans turn), a ladder up the suspension, crates, barrels and coiled rope in the street
+    if (k.lod < 2) { k.mat('frame'); g.lathe(-8, -5.5, [[0.8, DY + 7.0], [0.8, DY + 7.5]], { sides: n6 }); g.lathe(-17, 5.6, [[0.7, DY + 4.6], [0.7, DY + 5.05]], { sides: n6 }); g.lathe(13, 6.6, [[0.7, DY + 8.8], [0.7, DY + 9.95]], { sides: n6 });
+      k.ladder([-8.6, DY + 6.8, -2.8], [-8.6, DY + 12.5, -2.8], 0.6, [0, 0, 1]); }
+    if (k.mid) { const cr = LR.rng('nimbus-crates'); for (let q = 0; q < 14; q++) { const x = cr.range(-23, 19), z = (cr() < 0.5 ? -1 : 1) * cr.range(1.0, 2.0), s = cr.range(0.6, 1.1); if (x > 2.5 && x < 16.5) continue;
+        if (cr() < 0.55) { k.mat('wood', { tint: cr() < 0.5 ? '#8a7457' : '#6f5f4a' }); g.box(x, DY + s / 2, z, s, s, s * cr.range(0.8, 1.3), { soft: 0.05 }); } else { k.mat(cr() < 0.5 ? 'rust' : 'shell'); g.lathe(x, z, [[0.3, DY], [0.33, DY + 0.45], [0.3, DY + 0.9]], { sides: k.n(9) }); } }
+      // the landing deck's things: a bollard each corner, a coil of rope, a tool chest by the town
+      k.mat('frame'); for (const [x, z] of [[-51.3, -8.2], [-51.3, 8.2], [-25.0, -8.2]]) g.lathe(x, z, [[0.22, DY], [0.18, DY + 0.5], [0.3, DY + 0.6]], { sides: k.n(8) }); }
+    // lantern posts down the street and a string of lights across it
+    for (const [x, s] of [[-21, -1], [-14, 1], [-7, -1], [0, 1], [18, -1], [-26, 1], [-26, -1]]) { k.mat('frame'); g.tube([[x, DY, s * 2.2], [x, DY + 3.2, s * 2.2], [x, DY + 3.4, s * 1.7]], 0.07, { sides: 4, caps: true }); lantern([x, DY + 3.1, s * 1.7]); }
+    if (k.fine) for (const [x0, x1] of [[-21, -14], [-14, -7], [-7, 0]]) { const a = [x0, DY + 3.3, -1.7], b = [x1, DY + 3.3, 1.7]; k.mat('dark'); const pts = []; for (let q = 0; q <= 8; q++) { const p = lerp(a, b, q / 8); p[1] -= Math.sin((Math.PI * q) / 8) * 0.5; pts.push(p); } g.tube(pts, 0.015, { sides: 3 }); for (let q = 1; q < 8; q += 2) lantern(pts[q], 0.07); }
+    // rails round the decks: a gap astern and to port on the landing deck to come in by
+    k.rail([[-24.1, DY, -8.5], [-28, DY, -8.5], [-33, DY, -8.5]], 1.1); k.rail([[-42, DY, -8.5], [-46.5, DY, -8.5], [-51.6, DY, -8.5], [-51.6, DY, -4.6]], 1.1);
+    k.rail([[-51.6, DY, 4.6], [-51.6, DY, 8.5], [-46, DY, 8.5], [-40, DY, 8.5], [-34, DY, 8.5], [-28, DY, 8.5], [-24.1, DY, 8.5]], 1.1);
+    k.rail([[-23.9, DY, 9.5], [-21, DY, 9.5]], 1.1); k.rail([[-12.8, DY, -9.5], [-11.2, DY, -9.5]], 1.1); k.rail([[1.2, DY, -9.5], [3.0, DY, -9.5]], 1.1); k.rail([[16.0, DY, 9.5], [20, DY, 9.5]], 1.1); k.rail([[16.0, DY, -9.5], [20, DY, -9.5]], 1.1); k.rail([[2.2, DY, 9.5], [3.0, DY, 9.5]], 1.1);
+    // the landing deck's lamps along its rails, its floodlight on a pole, the windsock's mast
+    if (k.fine) { for (const s of [-1, 1]) for (let x = -50.5; x <= -26; x += 4.1) glowBall('body', [x, DY + 0.12, s * 8.25], 0.09, [1.0, 0.55, 0.14], 0.5);
+      for (let z = -3.4; z <= 3.41; z += 1.7) glowBall('body', [-51.35, DY + 0.12, z], 0.09, [0.2, 1.0, 0.35], 0.6); }
+    k.mat('frame'); g.tube([[-25.4, DY, 8.6], [-25.4, DY + 7.0, 8.6], [-26.2, DY + 7.3, 8.0]], 0.1, { sides: 5, caps: true }); k.lamp('body', { name: 'flood', at: [-26.3, DY + 7.2, 7.9], dir: [-0.71, -0.55, -0.44], color: [1.0, 0.86, 0.66], power: 55, cone: 34, range: 30, lens: 0.3 });
+    k.mat('frame'); g.tube([[-50.6, DY, -7.7], [-50.6, DY + 6.7, -7.7]], 0.08, { sides: 5, caps: true });
+    // ── the engine cars on their outriggers either side, the pushers behind them ──
+    for (const x of [14, -12]) for (const s of [-1, 1]) { const e = [x, DY + 4.4, s * 23]; k.mat('frame');
+      g.beam([x + 1.5, DY - 1.4, s * 9.6], [x + 1.0, e[1] - 0.6, s * 21.6], 0.5, 0.7); g.beam([x - 1.5, DY - 1.4, s * 9.6], [x - 1.0, e[1] - 0.6, s * 21.6], 0.5, 0.7); g.beam([x, DY + 1.0, s * 9.6], [x, e[1] + 0.3, s * 21.6], 0.4, 0.5);
+      if (k.fine) for (let f = 0.15; f < 0.95; f += 0.2) g.tube([lerp([x + 1.5, DY - 1.4, s * 9.6], [x + 1.0, e[1] - 0.6, s * 21.6], f), lerp([x, DY + 1.0, s * 9.6], [x, e[1] + 0.3, s * 21.6], f + 0.1)], 0.07, { sides: 3 });
+      k.mat('shell'); k.along([x + 3.9, e[1], e[2]], [-1, 0, 0], (gg) => { gg.lathe(0, 0, [[0.3, 0], [1.3, 0.25], [1.62, 1.2], [1.65, 5.2], [1.3, 7.0], [0.55, 7.7]], { sides: k.n(14) }); });
+      if (k.mid) { k.mat('dark'); k.grille([x + 3.95, e[1], e[2]], [1, 0, 0], 1.6, 1.6, { up: [0, 1, 0] }); k.mat('rust'); for (const q of [-0.5, 0.5]) k.stack([x + q * 2, e[1] + 1.4, e[2] + s * 0.4], [x + q * 2 - 0.6, e[1] + 2.9, e[2] + s * 0.6], 0.16, { role: 'rust' }); if (k.fine) k.ladder([x, e[1] - 1.6, s * 21.6], [x, e[1] - 1.6, s * 10.2], 0.5, [0, 1, 0]); } }
+    // the bridge's beacons and the others' housings
+    for (const b of V.skyBeacons) { k.mat('dark'); g.lathe(b[0], b[2], [[0.32, b[1] - 0.55], [0.36, b[1] - 0.3], [0.2, b[1] - 0.25]], { sides: k.n(8) }); glowBall('body', b, 0.24, [1.0, 0.07, 0.03], 1, { power: 1.6, range: 36, name: 'beacon' }); }
+    // what the walker steps off onto the town: the street from the landing deck in through the sheds to the arch
+  });
+  // the propellers: four blades of laminated wood with a twist and brass tips, on a hub
+  for (const n of ['prop_PF', 'prop_SF', 'prop_PA', 'prop_SA']) k.bone(n, () => { k.mat('steel'); g.lathe(0, 0, [[0.6, -0.9], [0.62, 0.3], [0.2, 0.9]].map(([r, y]) => [r, y]), { sides: k.n(10) });
+    k.along([0, 0, 0], [1, 0, 0], (gg) => { k.mat('steel'); gg.lathe(0, 0, [[0.55, -0.6], [0.6, 0.2], [0.3, 0.8], [0.05, 1.0]], { sides: k.n(10) }); });
+    for (let b = 0; b < 4; b++) { const a = (b / 4) * TAU, ca = Math.cos(a), sa = Math.sin(a), P = (u, v) => { const r = 0.5 + u * 3.3, ch = (0.62 - 0.32 * u) * (1 - Math.pow(u, 8) * 0.5), tw = (28 - 20 * u) * (Math.PI / 180), c = (v - 0.4) * ch; return [Math.sin(tw) * c, ca * r - sa * Math.cos(tw) * c, sa * r + ca * Math.cos(tw) * c]; };
+      k.mat('wood', { tint: '#7b5a3c' }); grid(P, k.fine ? 6 : 2, 1, { two: true, Lu: 3.3, Lv: 0.6 }); if (k.mid) { k.mat('copper'); grid((u, v) => P(0.86 + u * 0.14, v), 1, 1, { two: true }); } } });
+  // the tail's steered vanes: a frame with canvas, hinged on the fin's trailing edge (local: x aft, y along the span)
+  for (let i = 0; i < 4; i++) k.bone('vane_' + i, () => { const r0 = rad(-58.6) - 0.2, L = 19.5 - r0; k.mat('canvas', { tint: '#c9bea4' }); grid((u, v) => [0.15 + v * 4.6, 0.3 + u * (L - 0.6), 0], k.fine ? 3 : 1, 1, { two: true, Lu: L, Lv: 4.6 });
+    if (k.lod < 2) { k.mat('frame'); g.tube([[0, 0, 0], [0, L, 0], [4.8, L - 0.6, 0], [4.8, 0.4, 0]], 0.18, { sides: k.n(5), caps: true }); } });
+  // the cranes: a slewing post, a lattice jib out over the rail, a winch; the hook on its rope (the rope is the hook's bone)
+  for (const [n, s, jl] of [['crane_P', -1, 11.2], ['crane_S', 1, 11.2]]) k.bone(n, () => { k.mat('paint'); g.lathe(0, 0, [[0.9, 0], [0.9, 0.5], [0.55, 0.7]], { sides: k.n(10) }); k.mat('frame'); g.box(0, 3.0, 0, 0.7, 6, 0.7, {});
+    const root = [0, 5.4, 0], tip = [0, 7.6, s * jl]; k.mat('paint'); for (const dx of [-0.35, 0.35]) g.tube([[dx, 5.0, s * 0.3], [dx * 0.4, tip[1] + 0.1, tip[2]]], 0.1, { sides: 4, caps: true }); g.tube([[0, 5.9, s * 0.3], [0, tip[1] + 0.35, tip[2]]], 0.09, { sides: 4, caps: true });
+    if (k.fine) for (let f = 0.1; f < 0.95; f += 0.12) g.tube([lerp([-0.35, 5.0, s * 0.3], [0, tip[1] + 0.1, tip[2]], f), lerp([0, 5.9, s * 0.3], [0, tip[1] + 0.35, tip[2]], f + 0.06)], 0.04, { sides: 3 });
+    k.mat('dark'); g.box(0, 4.2, -s * 0.9, 1.2, 1.2, 1.0, {}); k.mat('steel'); g.tube([[0, 6.4, 0], [0, tip[1], tip[2]]], 0.025, { sides: 3 }); });
+  for (const [n, L] of [['hook_P', 9], ['hook_S', 6.5]]) k.bone(n, () => { k.mat('steel'); g.tube([[0, 0, 0], [0, L, 0]], 0.03, { sides: 3 }); k.mat('paint'); g.box(0, L + 0.2, 0, 0.35, 0.4, 0.35, {}); k.mat('steel'); g.tube([[0, L + 0.35, 0], [0, L + 0.7, 0], [0.18, L + 0.85, 0]], 0.05, { sides: 4 });
+    if (n === 'hook_P') { k.mat('wood', { tint: '#7a6750' }); g.box(0, L + 1.6, 0, 1.4, 1.1, 1.0, {}); k.mat('rope'); for (const s of [-1, 1]) g.tube([[0, L + 0.6, 0], [s * 0.65, L + 1.06, 0]], 0.02, { sides: 3 }); } });
+  // the anchor chain and the discharge wire with its weight
+  for (let j = 0; j < 3; j++) { k.bone('anchor_' + j, () => { k.mat('dark'); g.tube([[0, 0, 0], [0, 12, 0]], 0.09, { sides: 4 }); if (k.fine) { k.mat('steel'); for (let y = 0.4; y < 12; y += 0.8) g.box(0, y, 0, 0.06, 0.6, 0.28, {}); } if (j === 2) { k.mat('rust'); g.tube([[0, 11.6, 0], [0, 13.4, 0]], 0.16, { sides: 5, caps: true }); for (let q = 0; q < 4; q++) { const a = (q / 4) * TAU + 0.4; g.tube([[0, 13.2, 0], [Math.cos(a) * 0.9, 13.4, Math.sin(a) * 0.9], [Math.cos(a) * 1.1, 12.7, Math.sin(a) * 1.1]], 0.1, { sides: 4, caps: true }); } } });
+    k.bone('wire_' + j, () => { k.mat('copper'); g.tube([[0, 0, 0], [0, 16, 0]], 0.06, { sides: 4 }); if (j === 2) { k.mat('dark'); g.lathe(0, 0, [[0.05, 15.6], [0.7, 16.2], [0.75, 16.9], [0.3, 17.6], [0.05, 17.8]], { sides: k.n(10) }); k.mat('copper'); for (let q = 0; q < 6; q++) { const a = (q / 6) * TAU; g.tube([[0, 17.5, 0], [Math.cos(a) * 0.6, 18.4, Math.sin(a) * 0.6]], 0.03, { sides: 3 }); } } }); }
+  // the windsock: striped, on its swivel at the top of the mast (built pointing forward; the command turns it astern)
+  k.bone('sock', () => { k.mat('frame'); g.tube([[0, 0, 0], [0.4, 0, 0]], 0.06, { sides: 4 }); g.tube([[0.4, -0.45, 0], [0.4, 0.45, 0]], 0.03, { sides: 4 }); for (let q = 0; q < 5; q++) { const x0 = 0.45 + q * 0.62, r0 = 0.45 - q * 0.05, r1 = 0.45 - (q + 1) * 0.05; g.mat('cloth', { tint: q % 2 ? '#e8e4da' : '#e2621c' }); k.along([x0, -q * 0.07, 0], [1, -0.11, 0], (gg) => gg.lathe(0, 0, [[r0, 0], [r1, 0.62]], { sides: k.n(10) })); } });
+  // the searchlight on the bridge roof: a drum on a yoke, tilted down at the valley; it sweeps
+  k.bone('search', () => { k.mat('frame'); g.box(0, 0.5, 0, 0.3, 1.0, 1.6, {}); k.along([-0.4, 0.95, 0], [0.85, -0.53, 0], (gg) => { k.mat('dark'); gg.lathe(0, 0, [[0.4, -0.2], [0.62, 0.2], [0.66, 1.1], [0.6, 1.25]], { sides: k.n(12) }); });
+    k.lamp('search', { name: 'search', at: [0.22, 0.6, 0], dir: [0.85, -0.53, 0], color: [1.0, 0.93, 0.8], power: 320, cone: 5.5, range: 340, lens: 0.58 }); });
+  k.bone('anemo', () => { k.mat('steel'); for (let q = 0; q < 3; q++) { const a = (q / 3) * TAU; g.tube([[0, 0, 0], [Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5]], 0.02, { sides: 3 }); g.blob(Math.cos(a) * 0.55, 0, Math.sin(a) * 0.55, 0.09, { amp: 0, seg: 6, rings: 4 }); } });
+  for (let i = 0; i < 3; i++) k.bone('fan_' + i, () => { k.mat('steel'); for (let q = 0; q < 5; q++) { const a = (q / 5) * TAU; g.poly([[0, 0.05, 0], [Math.cos(a) * 0.62, 0.12, Math.sin(a) * 0.62], [Math.cos(a + 0.5) * 0.62, 0.0, Math.sin(a + 0.5) * 0.62]], { two: true }); } });
+  // the beacons' shades: a hood round each red lens with one window, turning — from anywhere it flashes as the window passes
+  for (let i = 0; i < V.skyBeacons.length; i++) k.bone('shade_' + i, () => { k.mat('dark'); grid((u, v) => { const a = 0.9 + u * (TAU - 1.8); return [Math.cos(a) * 0.34, -0.3 + v * 0.62, Math.sin(a) * 0.34]; }, k.n(8), 1, { two: true, Lu: 1.5, Lv: 0.6 }); g.lathe(0, 0, [[0.36, 0.3], [0.2, 0.42]], { sides: k.n(8) }); });
+};
+
+
 // ── src/30_details.js ──
 // Machine Wilds · the small things, and the scans placed by name: what stands on the old road and on the viaduct, the
 // camp in the hall, crags on the north bank, mossy rocks on the slopes, and what the machines have knocked down along
@@ -10386,6 +11082,25 @@ V.details = () => {
     { x: V.yard.x, z: V.yard.z, r: 16, name: 'Freight Yard', sub: 'where the porters stop' }, { x: V.ford.x, z: V.ford.z, r: 9, name: 'The Ford', sub: 'shallow water across the brook' });
   for (let i = 4; i < V.brook.length - 3; i += 3) W.sounds.push({ x: V.brook[i][0], y: V.brook[i][2], z: V.brook[i][1], kind: 'stream', r: 26, gain: 0.8 });
   W.sounds.push({ x: V.tarn.x, y: V.tarn.level, z: V.tarn.z, kind: 'frogs', r: 46, gain: 0.8 }); W.fireflyAreas = [{ x: V.tarn.x, z: V.tarn.z, r: 40 }, { x: V.hall.x, z: V.hall.z + 14, r: 18 }];
+};
+
+
+// ── src/31_skypad.js ──
+// Machine Wilds · the sky machine's deck as somewhere to come down (lib/80_player: LR.pads), and the storm as the wings'
+// charge.  Flying, the walker lands on Nimbus's deck where it meets it (the open plate aft of the town, src/28_sky.js:
+// V.skyDeck) and walks it and the street through the town while the ship drifts on; a double tap of Space takes it off again.
+// Near the ship in a storm its wings take their charge back fast, from the air the ship harvests (LR.wingCharge).
+V.skyPad = () => {
+  const M = LR.mech, P = LR.player, D = V.skyDeck; if (!D || !P) return;
+  const ship = () => M.units.find((u) => u.name === D.unit), frame = () => { const u = ship(); return u && u.pose && u.pose.W ? u.pose.W[D.bone || 'body'] : null; };
+  // walk the deck and the street: inside the nearest of its rectangles
+  const onShip = (x, z) => { let best = [x, z], bd = 1e9; for (const [x0, x1, z0, z1] of D.walk || [D.rect]) { const cx = LR.clamp(x, x0, x1), cz = LR.clamp(z, z0, z1), d = Math.hypot(cx - x, cz - z); if (d < bd) { bd = d; best = [cx, cz]; } } return best; };
+  const board = (l) => { const at = onShip(l[0], l[2]); P.ride = { unit: ship(), frame, local: [at[0], D.y, at[1]], clamp: onShip, slow: 0.85 }; };
+  LR.pads = LR.pads || []; for (const r of D.walk || [D.rect]) LR.pads.push({ name: D.unit, frame, rect: r, y: D.y, board });
+  // the wings' charge: a storm near the ship gives it back quickly (a little more the nearer), a storm anywhere a little
+  LR.wingCharge = (Pl) => { const F = frame(), storm = LR.sat(((LR.wx && LR.wx.rain) || 0) * 1.6 - 0.3); if (!storm) return 0; if (!F) return 0.02 * storm;
+    const d = Math.hypot(Pl.x - F.p[0], Pl.y - F.p[1], Pl.z - F.p[2]); return storm * (0.02 + 0.4 * LR.sat(1 - (d - 60) / 260)); };
+  V.skyBoard = board;
 };
 
 
@@ -10646,6 +11361,23 @@ V.plants = () => {
         if (!P.flying) return; const dist = Math.hypot(d[0] - P.x, d[2] - P.z), path = d[1] + 0.3 + Math.max(0, dist - 6) * 0.1; steer(d[0], d[2], dist < 12 ? 6 : 2.5);
         if (dist < 9) { if (P.y < d[1] + 0.5) K.Space = true; else K.KeyS = true; } else if (P.y < path - 0.4) K.Space = true; else if (P.y > path + 1.6) K.KeyW = true; },      /* (in close: flare, and beat if it sinks below the deck) */
       cam(s) { const d = deckAt(226 + s), e = at(-6.2, -2.4, 1.7); if (!P.flying) return [onBody([6.5, 12.5, -15]), [P.x, P.y + 0.8, P.z], 38];      /* (down: from off its port side, the walker on the walkway, the valley under) */ return [e, look(d, [P.x, P.y + 0.6, P.z], 0.55), 56]; } };
+    // ── the sky machine (src/28_sky.js, lib/64_cloud.js) ──
+    const ship = U('Nimbus'), shipB = (t) => V.skyAt(t), onShip = (t, v) => M.apply(shipB(t), v), SD = V.skyDeck, deckC = (t) => onShip(t, [(SD.rect[0] + SD.rect[1]) / 2, SD.y, 0]);
+    // rain, from the ground: a cloud low over the valley, nothing in it — then lightning inside it, and for a moment the shape of
+    // something enormous; a bolt finds its rods, and again the shape
+    shots.WS = { dur: 11, tod: 20.4, weather: 'rain', T0: 192, start: [156, 62, -110],      /* (the bog by the tarn, the ship some 350 m off to the west-south-west in its cloud) */
+      act(s, K, st) { if (!st.on) { st.on = true; LR.cloud.strikes = [192 + 1.25, { t: 192 + 5.95, kind: 'rod', rod: 2 }, 192 + 9.4]; } },
+      cam(s) { const B = shipB(192 + s), e = [154 - s * 0.3, 0, 66 + s * 0.12]; e[1] = floor(e[0], e[2], 40) + 1.7; return [e, [B.p[0], B.p[1] - 14, B.p[2]], 48 - s * 0.6]; } };
+    // up into its cloud on a clear evening: the hull coming out of the white as the walker beats toward it
+    shots.WA = { dur: 10, tod: 19.35, weather: 'clear', T0: 520, get start() { const B = shipB(520), p = [B.p[0] - B.x[0] * 230 + B.z[0] * 40, B.p[2] - B.x[2] * 230 + B.z[2] * 40]; return [p[0], p[1], 0]; },
+      act(s, K, st) { const d = deckC(520 + s); if (!st.air) { st.air = true; P.y = d[1] - 45; P.air = true; P.openWings({ speed: 12, lift: 0, keepView: true }); P.wings.tw = 9; P.energy = 1; } if (!P.flying) return; steer(d[0], d[2], 1.4); if (P.y < d[1] - 6) K.Space = true; },
+      cam(s) { const e = at(-7.5, 2.4, -1.2), d = deckC(520 + s); return [e, look([P.x, P.y + 1, P.z], d, 0.5), 54]; } };
+    // and down onto its deck: in over the stern, flare, set down on the plate under the envelope while the ship drifts on
+    shots.WL = { dur: 13, tod: 19.45, weather: 'clear', T0: 540, get start() { const B = shipB(540), d = deckC(540), p = [d[0] - B.x[0] * 62 + B.z[0] * 6, d[2] - B.x[2] * 62 + B.z[2] * 6]; return [p[0], p[1], 0]; },
+      act(s, K, st) { const d = deckC(540 + s); if (!st.air) { st.air = true; P.y = d[1] + 6; P.air = true; P.openWings({ speed: 10, lift: 0, keepView: true }); P.wings.tw = 9; P.energy = 0.9; }
+        if (!P.flying) { if (s > st.down + 1.2 && s < st.down + 4) K.KeyW = true; return; } st.down = s; const dist = Math.hypot(d[0] - P.x, d[2] - P.z), path = d[1] + 0.3 + Math.max(0, dist - 5) * 0.09; steer(d[0], d[2], dist < 12 ? 6 : 2.5);
+        if (dist < 9) { if (P.y < d[1] + 0.5) K.Space = true; else K.KeyS = true; } else if (P.y < path - 0.4) K.Space = true; else if (P.y > path + 1.6) K.KeyW = true; },
+      cam(s) { if (P.flying) { const d = deckC(540 + s); return [at(-6.5, -2.2, 1.6), look(d, [P.x, P.y + 0.6, P.z], 0.5), 56]; } return [onShip(540 + s, [-58, SD.y + 4.5, 9]), [P.x, P.y + 1.4, P.z], 50]; } };
     // beating up toward the clouds: from under it, its wings working against the sky
     shots.WC = { dur: 6, tod: 17.6, weather: 'clear', T0: 240, start: [-30, -60, 150],
       act(s, K, st) { inAir(st, 40, 10, 1); if (s > 0.4) K.Space = true; },
@@ -10693,7 +11425,7 @@ LR.start({
   // the automatic round of this valley: mist at dusk, into the night, a grey dawn with shafts through the trees, a clear noon, rain, and back
   round: [{ t: 0, weather: 'mist' }, { t: 26, tod: 23.2 }, { t: 60, tod: 5.6 }, { t: 92, weather: 'haze', tod: 7.4 }, { t: 110, weather: 'clear', tod: 11.5 }, { t: 138, weather: 'rain', tod: 16.5 }, { t: 176, weather: 'mist', tod: 18.8 }, { t: 200, tod: 20.4 }, { t: 226, end: true }],
   build: async () => {
-    V.land(); V.ruins(); V.machines(); LR.mech.plan(); V.details(); V.plants(); LR.mech.start(); V.lift();
+    V.land(); V.ruins(); V.machines(); LR.mech.plan(); V.details(); V.plants(); LR.mech.start(); V.lift(); if (V.skyPad) V.skyPad();
     LR.canopy.mist = 1.5; LR.wx.key = 0.2; LR.world.radius = 262;      /* out past the rim way (240 m, 38 m wide): the walker can go in under the relic */ LR.world.spawn = { x: V.spawn.x, z: V.spawn.z, yaw: 70 };
   },
   // the tour: in along the old road, out on the viaduct to its broken edge (the cranes pass below it), back, to the hall and its
