@@ -6,3 +6,6 @@ starter/index.html
 starter/assets/
 examples/*/assets
 starter/assets
+
+# agents' working copies (Claude Code worktrees)
+.claude/worktrees/
