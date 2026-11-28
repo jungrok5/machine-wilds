@@ -81,7 +81,10 @@ weather's (`thunder` above).
 its beds are settled and its birds already singing — and lays them end to end: a shot starts on its cut; the one before
 rings on 0.32 s under it. A call or a pump begun before the shot is heard from where it had got to. A strike seen late in a
 shot is heard in the next when that one is in the rain too. ffmpeg then brings it to −16 LUFS integrated with its true peak
-under −1 dBTP (`out/<name>/cine.wav`; `cine-raw.wav` before). `--join` muxes it.
+under −1 dBTP (`out/<name>/cine.wav`; `cine-raw.wav` before). `--join` muxes it. Onto a film already joined silent (the
+same cut, the card only at the end), without drawing it again:
+`ffmpeg -i <name>-master.mp4 -i out/<name>/cine.wav -map 0:v -map 1:a -c:v copy -af "afade=t=in:d=0.8,afade=t=out:st=<cut end − 0.9>:d=2.6,apad" -c:a aac -b:a 256k -t <film length> -movflags +faststart <out>.mp4`.
+The sound renders in about two minutes for a two-minute cut (no frames are drawn).
 
 Judge it with `node scripts/sound-check.mjs <realm>/out/<name>`: the events (`--kind`, `--near`, `--shot`), `--loud`
 (each shot's loudness), `--spec <png>` (a spectrogram, the cuts marked), `--strip <png> --frames <dir>` (each event's frame
