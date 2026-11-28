@@ -178,6 +178,32 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
 - **The work's name and where it lives.** → The owner asked for the repository's name small at the foot of every frame
   and on a card at both ends. `title.repo` in the realm's film; the page shows it (a card before the first shot, a mark
   at the bottom right, the card again at the end) and `--join` draws the same on the MP4. `--mute` for a silent copy.
+- **The film's sound did not fit the picture (the owner, on a generated try).** → It was laid on after the fact: effects
+  that did not belong to these machines, a tense bed, nothing on its frame. Even the engine's first film sound had one
+  hour and one weather for the whole film (`tod: 20, wind: 0.25`), heard from where the first shot stood, every event
+  quantised to the 25 ms control tick plus 20 ms. → The sound is heard where the picture is drawn: `lib/87_ear` reads
+  the world every frame from the camera (feet from `M.impacts` — the clock times the dust uses — faults from the
+  burst's own envelope, `VX.faultEnv`, strikes where lib/63_glow draws them, the wings' clicks from `wingPose`'s own
+  delays) and stamps each event with its time in the shot; every shot is rendered on its own with its listener and
+  weather frame by frame; each event is handed to its voice early and scheduled on its own sample (references/SOUND.md).
+  Checked by looking: `scripts/sound-check.mjs --strip` (the event's frame and the frames around it) — the turtle's foot
+  meets the brook on the frame its footfall is stamped; the wings' clicks run f49–60 as the fan opens on screen.
+- **A foot that had stood still five seconds made no sound when it came down.** → `M.impacts` lists each foot's last
+  two footfalls younger than 5 s; a foot not listed before was taken as "first seen" and skipped (the relic, slow,
+  stands that long between steps). → Only the ear's first frame is a warm-up; a footfall is new when its `k` is higher
+  than the last heard for that foot, or the foot was not listed before.
+- **The same burst was heard twice, and every shot began with a machine's glance.** → Two overlapping bursts made the
+  last-seen key flip; a shot's settling second (before its first frame) is when machines first see the walker. →
+  Bursts are remembered by unit and start; a glance from before the shot's first frame is dropped (a long call or a
+  pump begun earlier is kept and heard from where it had got to).
+- **A tripod's three feet and a file of woodlice came down as twelve blows at once (+10 dB).** → One kind's feet that
+  land within a thirtieth of a second are one footfall (`feet`, heard as feet^0.35).
+- **The mix was a low drone.** → A spectrogram (`sound-check.mjs --spec`) showed everything under 150 Hz lit for the whole
+  film: the wind's brown body, the forest's low wash, the machines' hum. Rain beds were 6–8 dB over every other shot.
+  → A high-pass under the wind's body, less of the forest's and the hum's low, rain down by 10 dB; the low end is left
+  to the footfalls, which come and go.
+- **`ffmpeg alimiter` turns the level up by itself.** → Its `level` option (auto make-up) is on by default: give it
+  `level=disabled`, and measure the result (true peak) after it, not before.
 
 ## Scans in the engine (scanned-realm)
 ## Scans
